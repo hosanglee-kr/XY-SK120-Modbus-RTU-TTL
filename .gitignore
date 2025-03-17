@@ -1,0 +1,12 @@
+# PlatformIO
+.pio/
+.pio
+
+# VS Code
+.vscode/
+.vscode
+*.code-workspace
+
+# Temporary files
+*.tmp
+*~
