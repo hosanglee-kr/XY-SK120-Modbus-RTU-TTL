@@ -10,3 +10,10 @@
 # Temporary files
 *.tmp
 *~
+
+# Partitions
+partitions.bin
+partitions.csv.md5
+
+# Old
+old/
