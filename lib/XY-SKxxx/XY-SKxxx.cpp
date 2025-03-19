@@ -741,3 +741,75 @@ bool XY_SKxxx::getTemperatureUnit(bool &celsius) {
   }
   return false;
 }
+
+// Convenience method to get just the voltage
+float XY_SKxxx::getVoltage() {
+  waitForSilentInterval();
+  beginTransmission();
+  float voltage = readInputVoltage(); // Use the dedicated method for reading input voltage
+  endTransmission();
+  return voltage;
+}
+
+// Convenience method to get just the current
+float XY_SKxxx::getCurrent() {
+  float voltage = 0.0, current = 0.0, power = 0.0;
+  if (readOutput(voltage, current, power)) { // Use readOutput to fetch current
+    return current;
+  }
+  return 0.0; // Return 0.0 if the read fails
+}
+
+// Convenience method to get just the power
+float XY_SKxxx::getPower() {
+  float voltage = 0.0, current = 0.0, power = 0.0;
+  if (readOutput(voltage, current, power)) { // Use readOutput to fetch power
+    return power;
+  }
+  return 0.0; // Return 0.0 if the read fails
+}
+
+// Simplified version that just returns whether output is enabled
+bool XY_SKxxx::getOutputStatus() {
+  waitForSilentInterval();
+  beginTransmission();
+  uint16_t status = readProtectionStatus(); // Use readProtectionStatus to check output state
+  endTransmission();
+  return (status & 0x01); // Check the least significant bit for output state
+}
+
+// Get protection status from the device
+uint16_t XY_SKxxx::getProtectionStatus() {
+  waitForSilentInterval();
+  beginTransmission();
+  uint16_t protectionStatus = readProtectionStatus(); // Use readProtectionStatus directly
+  endTransmission();
+  return protectionStatus;
+}
+
+// Get temperature (using internal temperature)
+float XY_SKxxx::getTemperature() {
+  waitForSilentInterval();
+  beginTransmission();
+  float temperature = readInternalTemperature(); // Use readInternalTemperature directly
+  endTransmission();
+  return temperature;
+}
+
+// Convenience method to enable output
+bool XY_SKxxx::enableOutput() {
+  waitForSilentInterval();
+  beginTransmission();
+  bool success = setOutputState(true); // Use setOutputState to enable output
+  endTransmission();
+  return success;
+}
+
+// Convenience method to disable output
+bool XY_SKxxx::disableOutput() {
+  waitForSilentInterval();
+  beginTransmission();
+  bool success = setOutputState(false); // Use setOutputState to disable output
+  endTransmission();
+  return success;
+}

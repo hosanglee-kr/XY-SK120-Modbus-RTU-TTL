@@ -148,6 +148,16 @@ public:
   bool turnOutputOff();
   bool getOutputStatus(float &voltage, float &current, float &power, bool &isOn);
   
+  // Basic helper methods
+  float getVoltage();
+  float getCurrent();
+  float getPower();
+  bool getOutputStatus();
+  uint16_t getProtectionStatus();
+  float getTemperature();
+  bool enableOutput();
+  bool disableOutput();
+  
   // Improved Modbus RTU timing methods
   unsigned long silentInterval(unsigned long baudRate);
   void waitForSilentInterval();

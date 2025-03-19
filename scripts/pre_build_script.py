@@ -44,11 +44,27 @@ def before_build(source, target, env):
     
     if regenerate:
         print("Generating partition binary from CSV...")
+        
+        # Check if partition generation script exists
+        if not os.path.exists(script_file):
+            sys.stderr.write(f"Error: Partition script {script_file} not found!\n")
+            return
+            
         try:
-            subprocess.check_call(['python3', script_file, '--input', csv_file, '--output', bin_file])
-            print("Partition binary generated successfully")
+            result = subprocess.run(
+                ['python3', script_file, '--input', csv_file, '--output', bin_file],
+                capture_output=True, text=True, check=True
+            )
+            print(f"Partition binary generated successfully: {bin_file}")
+            if result.stdout:
+                print(f"Output: {result.stdout}")
         except subprocess.CalledProcessError as e:
-            print(f"Error generating partition binary: {e}")
+            sys.stderr.write(f"Error generating partition binary: {e}\n")
+            if e.stdout:
+                sys.stderr.write(f"Output: {e.stdout}\n")
+            if e.stderr:
+                sys.stderr.write(f"Error: {e.stderr}\n")
+            # Don't stop the build - let PlatformIO handle failures later
 
 # Register the callback
 env.AddPreAction("buildprog", before_build)
