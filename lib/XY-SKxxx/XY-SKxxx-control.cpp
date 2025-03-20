@@ -45,8 +45,17 @@ bool XY_SKxxx::setVoltageAndCurrent(float voltage, float current) {
 }
 
 bool XY_SKxxx::setOutputState(bool on) {
-  uint8_t result = node.writeSingleRegister(REG_ONOFF, on ? 1 : 0);
-  return (result == node.ku8MBSuccess);
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.writeSingleRegister(REG_ONOFF, on ? 1 : 0);
+  _lastCommsTime = millis();
+  
+  if (result == modbus.ku8MBSuccess) {
+    _status.outputEnabled = on;
+    return true;
+  }
+  
+  return false;
 }
 
 bool XY_SKxxx::turnOutputOn() {
@@ -100,39 +109,61 @@ bool XY_SKxxx::getOutputStatus(float &voltage, float &current, float &power, boo
 }
 
 bool XY_SKxxx::setKeyLock(bool lock) {
-  // 1 is lock, 0 is unlock
-  uint8_t result = node.writeSingleRegister(REG_LOCK, lock ? 1 : 0);
-  return (result == node.ku8MBSuccess);
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.writeSingleRegister(REG_LOCK, lock ? 1 : 0);
+  _lastCommsTime = millis();
+  
+  if (result == modbus.ku8MBSuccess) {
+    _status.keyLocked = lock;
+    return true;
+  }
+  
+  return false;
 }
 
 uint16_t XY_SKxxx::getBaudRate(bool refresh) {
   if (refresh) {
     waitForSilentInterval();
-    preTransmission();
-    uint8_t result = node.readHoldingRegisters(REG_BAUDRATE_L, 1);
-    postTransmission();
     
-    if (result == node.ku8MBSuccess) {
-      return node.getResponseBuffer(0);
+    uint8_t result = modbus.readHoldingRegisters(REG_BAUDRATE_L, 1);
+    _lastCommsTime = millis();
+    
+    if (result == modbus.ku8MBSuccess) {
+      // Convert the baudrate code to the actual baudrate
+      return modbus.getResponseBuffer(0);  // Changed node to modbus
     }
   }
+  
   return 0; // Default or error value
 }
 
 bool XY_SKxxx::setConstantVoltage(float voltage) {
-  uint16_t voltageValue = (uint16_t)(voltage * 100); // 2 decimal places
+  uint16_t voltageValue = (uint16_t)(voltage * 100);
   waitForSilentInterval();
-  preTransmission();
-  uint8_t result = node.writeSingleRegister(REG_CV_SET, voltageValue);
-  postTransmission();
-  return (result == node.ku8MBSuccess);
+  
+  uint8_t result = modbus.writeSingleRegister(REG_CV_SET, voltageValue);
+  _lastCommsTime = millis();
+  
+  if (result == modbus.ku8MBSuccess) {
+    _protection.constantVoltage = voltage;
+    return true;
+  }
+  
+  return false;
 }
 
 bool XY_SKxxx::setConstantCurrent(float current) {
-  uint16_t currentValue = (uint16_t)(current * 1000); // 3 decimal places
+  uint16_t currentValue = (uint16_t)(current * 1000);
   waitForSilentInterval();
-  preTransmission();
-  uint8_t result = node.writeSingleRegister(REG_CC_SET, currentValue);
-  postTransmission();
-  return (result == node.ku8MBSuccess);
+  
+  uint8_t result = modbus.writeSingleRegister(REG_CC_SET, currentValue);
+  _lastCommsTime = millis();
+  
+  if (result == modbus.ku8MBSuccess) {
+    _protection.constantCurrent = current;
+    return true;
+  }
+  
+  return false;
 }

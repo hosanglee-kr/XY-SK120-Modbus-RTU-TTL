@@ -61,30 +61,24 @@
 #define REG_CV_SET         0x0050    // CV (constant voltage) setting, 2 bytes, 2 decimal places, unit: V, Read and Write
 #define REG_CC_SET         0x0051    // CC (constant current) setting, 2 bytes, 3 decimal places, unit: A, Read and Write
 
-// done
 #define REG_S_VLP          0x0052    // LVP (input under voltage protection) setting, 2 bytes, 2 decimal places, unit: W, Read and Write
 #define REG_S_OVP          0x0053    // OVP (output over voltage protection) setting, 2 bytes, 2 decimal places, unit: V, Read and Write
 
-//done
 #define REG_S_OCP          0x0054    // OCP (output over current protection) setting, 2 bytes, 3 decimal places, unit: A, Read and Write
 #define REG_S_OPP          0x0055    // OPP (output over power protection) setting, 2 bytes, 2 decimal places, unit: W, Read and Write
 
-// done
 #define REG_S_OHP_H        0x0056    // OHP_H (output high power protection - hours) setting, 2 bytes, 0 decimal places, unit: h, Read and Write
 #define REG_S_OHP_M        0x0057    // OHP_M (output high power protection - minutes) setting, 2 bytes, 0 decimal places, unit: min, Read and Write
 
-// done
 #define REG_S_OAH_L        0x0058    // OAH_LOW (over-amp-hour protection - low) setting, 2 bytes, 0 decimal places, unit: mAh, Read and Write
 #define REG_S_OAH_H        0x0059    // OAH_HIGH (over-amp-hour protection - high) setting, 2 bytes, 0 decimal places, unit: mAh, Read and Write
 
-// done
 #define REG_S_OWH_L        0x005A    // OWH_LOW (over-watt-hour protection - low) setting, 2 bytes, 0 decimal places, unit: 10mWh, Read and Write
 #define REG_S_OWH_H        0x005B    // OWH_HIGH (over-watt-hour protection - high) setting, 2 bytes, 0 decimal places, unit: 10mWh, Read and Write
 
-// done
 #define REG_S_OTP          0x005C   // Over temperature protection setting, 2 bytes, 1 decimal place, unit: °F / °C, Read and Write
 
-#define REG_S_INI          0x005D    // WIP: Power-on initialization setting, 2 bytes, 0 decimal places, unit: 0/1 (0: output off upon power on, 1: output on upon power on), Read and Write
+#define REG_S_INI          0x005D    // Power-on initialization setting, 2 bytes, 0 decimal places, unit: 0/1 (0: output off upon power on, 1: output on upon power on), Read and Write
 
 // Additional Modbus register addresses for XY-SK120 0x0100 - 0x0103, will not implement these as it's related to RTC (Real Time Clock) settings
 
@@ -315,10 +309,23 @@ public:
   bool setProtectionStatus(uint16_t status);
   bool setSystemStatus(uint16_t status);
 
+  // Add direct register access methods for memory groups
+  bool readRegisters(uint16_t addr, uint16_t count, uint16_t* buffer);
+  bool writeRegister(uint16_t addr, uint16_t value);
+  bool writeRegisters(uint16_t addr, uint16_t count, uint16_t* buffer);
+
+  // Make ModbusMaster available to external code
+  ModbusMaster modbus;
+
+  // Debug functions for direct register access
+  bool debugReadRegisters(uint16_t addr, uint8_t count, uint16_t* values);
+  bool debugWriteRegister(uint16_t addr, uint16_t value);
+  bool debugWriteRegisters(uint16_t addr, uint8_t count, const uint16_t* values);
+
 private:
   uint8_t _rxPin;
   uint8_t _txPin;
-  ModbusMaster node;
+  // ModbusMaster node; // Changed to public modbus
   uint8_t _slaveID;
   unsigned long _baudRate;
   unsigned long _lastCommsTime;
