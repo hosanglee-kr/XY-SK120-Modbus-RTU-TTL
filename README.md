@@ -1,5 +1,7 @@
 # XY-SK120 Modbus RTU Communication Library
 
+Version: 0.0.1
+
 This library provides a simple interface to communicate with the XY-SK series DC-DC buck-boost power supply modules (specifically the XY-SK120) digital power supply (DPS) using Modbus RTU protocol over a TTL serial connection.
 
 ## Overview
@@ -73,28 +75,27 @@ For XIAO ESP32S3 (default in example code):
 ```cpp
 #include <Arduino.h>
 #include "XY-SKxxx.h"
+#include "XY-SKxxx_Config.h"  // Include the configuration header
 
-// Define hardware serial pins
-#define RX_PIN D7 // RX pin
-#define TX_PIN D6 // TX pin
-
-// Define Modbus baud rate (XY-SK120 default is 115200)
-#define MODBUS_BAUD_RATE 115200
-
-// Create XY_SKxxx instance with the serial pins and slave ID (usually 1)
-XY_SKxxx XY_SK120(RX_PIN, TX_PIN, 1);
+// Initialize configuration
+XYModbusConfig config;
+XY_SKxxx* powerSupply = nullptr;
 
 void setup() {
   Serial.begin(115200);
   
-  // Initialize hardware serial
-  Serial1.begin(MODBUS_BAUD_RATE, SERIAL_8N1, RX_PIN, TX_PIN);
+  // Initialize configuration manager (loads from NVS on ESP32)
+  XYConfigManager::begin();
+  config = XYConfigManager::loadConfig();
   
-  // Initialize the XY-SK120 library
-  XY_SK120.begin(MODBUS_BAUD_RATE);
+  // Create power supply instance with loaded configuration
+  powerSupply = new XY_SKxxx(config.rxPin, config.txPin, config.slaveId);
+  
+  // Initialize the power supply with the configured baud rate
+  powerSupply->begin(config.baudRate);
   
   // Test connection
-  if (XY_SK120.testConnection()) {
+  if (powerSupply->testConnection()) {
     Serial.println("Connection successful.");
   } else {
     Serial.println("Connection failed.");
@@ -102,15 +103,30 @@ void setup() {
 }
 ```
 
+### Configuration Management
+
+The library includes a configuration management system that stores connection settings in non-volatile storage on ESP32:
+
+```cpp
+// Save current configuration
+XYConfigManager::saveConfig(config);
+
+// Reset to default configuration
+XYConfigManager::resetConfig();
+
+// Check if configuration exists
+bool hasConfig = XYConfigManager::configExists();
+```
+
 ### Setting Voltage and Current
 
 ```cpp
 // Set voltage to 5.0V and current to 1.0A
-XY_SK120.setVoltageAndCurrent(5.0, 1.0);
+powerSupply->setVoltageAndCurrent(5.0, 1.0);
 
 // Or set them individually
-XY_SK120.setVoltage(5.0);  // Set to 5.0V
-XY_SK120.setCurrent(1.0);  // Set to 1.0A
+powerSupply->setVoltage(5.0);  // Set to 5.0V
+powerSupply->setCurrent(1.0);  // Set to 1.0A
 ```
 
 ### Constant Voltage/Current Modes
@@ -146,8 +162,8 @@ XY_SK120.turnOutputOff();
 float voltage, current, power;
 bool isOn;
 
-if (XY_SK120.getOutputStatus(voltage, current, power, isOn)) {
-  Serial.print("Voltage: "); Serial.print(voltage); Serial.println(" V");
+if (powerSupply->getOutputStatus(voltage, current, power, isOn)) {
+  Serial.print("Voltage: "); Serial.print(voltage, 2); Serial.println(" V");
   Serial.print("Current: "); Serial.print(current, 3); Serial.println(" A");
   Serial.print("Power: "); Serial.print(power, 3); Serial.println(" W");
   Serial.print("Output: "); Serial.println(isOn ? "ON" : "OFF");
@@ -203,15 +219,15 @@ The library maps all known Modbus registers from the XY-SK120 documentation. Her
 |------------------|-------------|-----------|------|----------------|
 | 0x0000 (REG_V_SET) | Voltage setting | WORD | V (2 decimal) | `setVoltage()`, `setVoltageAndCurrent()` |
 | 0x0001 (REG_I_SET) | Current setting | WORD | A (3 decimal) | `setCurrent()`, `setVoltageAndCurrent()` |
-| 0x0002 (REG_VOUT) | Output voltage display | WORD | V (2 decimal) | Read via `readOutput()`, `getOutputStatus()` |
-| 0x0003 (REG_IOUT) | Output current display | WORD | A (3 decimal) | Read via `readOutput()`, `getOutputStatus()` |
-| 0x0004 (REG_POWER) | Output power display | WORD | W (3 decimal) | Read via `readOutput()`, `getOutputStatus()` |
-| 0x0005 (REG_UIN) | Input voltage display | WORD | V (2 decimal) | `readInputVoltage()` |
-| 0x0006/0x0007 (REG_AH_LOW/HIGH) | Amp-hour counter | DWORD | mAh | `readAmpHours()` |
-| 0x0008/0x0009 (REG_WH_LOW/HIGH) | Watt-hour counter | DWORD | mWh | `readWattHours()` |
-| 0x000A/B/C (REG_OUT_H/M/S) | Output time | 3×WORD | h/min/s | `readOutputTime()` |
-| 0x000D (REG_T_IN) | Internal temperature | WORD | °C/°F (1 decimal) | `readInternalTemperature()` |
-| 0x000E (REG_T_EX) | External temperature | WORD | °C/°F (1 decimal) | `readExternalTemperature()` |
+| 0x0002 (REG_VOUT) | Output voltage display | WORD | V (2 decimal) | Read via `getOutput()`, `getOutputStatus()` |
+| 0x0003 (REG_IOUT) | Output current display | WORD | A (3 decimal) | Read via `getOutput()`, `getOutputStatus()` |
+| 0x0004 (REG_POWER) | Output power display | WORD | W (2 decimal) | Read via `getOutput()`, `getOutputStatus()` |
+| 0x0005 (REG_UIN) | Input voltage display | WORD | V (2 decimal) | `getInputVoltage()` |
+| 0x0006/0x0007 (REG_AH_LOW/HIGH) | Amp-hour counter | DWORD | mAh | `getAmpHours()` |
+| 0x0008/0x0009 (REG_WH_LOW/HIGH) | Watt-hour counter | DWORD | mWh | `getWattHours()` |
+| 0x000A/B/C (REG_OUT_H/M/S) | Output time | 3×WORD | h/min/s | `getOutputTime()` |
+| 0x000D (REG_T_IN) | Internal temperature | WORD | °C/°F (1 decimal) | `getInternalTemperature()` |
+| 0x000E (REG_T_EX) | External temperature | WORD | °C/°F (1 decimal) | `getExternalTemperature()` |
 | 0x000F (REG_LOCK) | Key lock status | WORD | 0/1 | `setKeyLock()` |
 | 0x0010 (REG_PROTECT) | Protection status | WORD | Bits | `readProtectionStatus()` |
 | 0x0011 (REG_CVCC) | CC/CV mode status | WORD | 0/1 | `isInConstantCurrentMode()`, `isInConstantVoltageMode()` |
@@ -305,6 +321,7 @@ These timing controls ensure reliable communication with the device following th
 - **No communication:** Check baud rate, wiring, and slave ID
 - **Erratic behavior:** Ensure proper timing between commands (library handles this internally)
 - **Protection trips:** Check your protection settings and load conditions
+- **Configuration issues:** Make sure XY-SKxxx_Config.h is included in your project and the pins match your hardware
 
 ## Contributing
 

@@ -203,7 +203,7 @@ public:
   bool setCurrent(float current);
   bool getOutput(float &voltage, float &current, float &power); // rename readOutput to getOutput
   
-  // Measurements
+  // Measurements - rename read* to get*
   float getInputVoltage();
   uint32_t getAmpHours();
   uint32_t getWattHours();
@@ -211,7 +211,7 @@ public:
   float getInternalTemperature();
   float getExternalTemperature();
   
-  // System control
+  // System control - rename read* to get*
   bool setKeyLock(bool lock);
   uint16_t getProtectionStatus();
   uint16_t getCVCCState();
@@ -319,7 +319,7 @@ private:
   uint8_t _rxPin;
   uint8_t _txPin;
   ModbusMaster node;
-  uint8_t _slaveID;
+  uint8_t slaveID;
   unsigned long _baudRate;
   unsigned long _lastCommsTime;
   unsigned long _silentIntervalTime;
