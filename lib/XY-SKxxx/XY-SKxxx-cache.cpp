@@ -32,105 +32,107 @@ bool XY_SKxxx::updateAllStatus(bool force) {
 }
 
 bool XY_SKxxx::updateDeviceState(bool force) {
+  // Check if update is needed based on timeout or force flag
   unsigned long now = millis();
   if (!force && (now - _lastStateUpdate < _cacheTimeout)) {
-    return true; // Cache is still valid
+    return true;
   }
   
-  bool result = true;
+  bool success = true;  // Add success flag to track overall operation success
+  waitForSilentInterval();
   
   // Read output state
-  waitForSilentInterval();
-  preTransmission();
-  uint8_t outputResult = node.readHoldingRegisters(REG_ONOFF, 1);
-  postTransmission();
-  
-  if (outputResult == node.ku8MBSuccess) {
-    _status.outputEnabled = (node.getResponseBuffer(0) != 0);
+  uint8_t outputResult = modbus.readHoldingRegisters(REG_ONOFF, 1);
+  if (outputResult == modbus.ku8MBSuccess) {
+    _status.outputEnabled = (modbus.getResponseBuffer(0) != 0);
   } else {
-    result = false;
+    _lastCommsTime = millis();
+    return false;
   }
   
   delay(_silentIntervalTime * 2);
   
   // Read key lock status
   preTransmission();
-  uint8_t lockResult = node.readHoldingRegisters(REG_LOCK, 1);
+  uint8_t lockResult = modbus.readHoldingRegisters(REG_LOCK, 1);
   postTransmission();
   
-  if (lockResult == node.ku8MBSuccess) {
-    _status.keyLocked = (node.getResponseBuffer(0) != 0);
+  if (lockResult == modbus.ku8MBSuccess) {
+    _status.keyLocked = (modbus.getResponseBuffer(0) != 0);
   } else {
-    result = false;
+    success = false;  // Use success instead of undeclared result
   }
   
   delay(_silentIntervalTime * 2);
   
   // Read protection status
   preTransmission();
-  uint8_t protResult = node.readHoldingRegisters(REG_PROTECT, 1);
+  uint8_t protResult = modbus.readHoldingRegisters(REG_PROTECT, 1);
   postTransmission();
   
-  if (protResult == node.ku8MBSuccess) {
-    _status.protectionStatus = node.getResponseBuffer(0);
+  if (protResult == modbus.ku8MBSuccess) {
+    _status.protectionStatus = modbus.getResponseBuffer(0);
   } else {
-    result = false;
+    success = false;  // Use success instead of undeclared result
   }
   
   delay(_silentIntervalTime * 2);
   
   // Read CC/CV mode
   preTransmission();
-  uint8_t cvccResult = node.readHoldingRegisters(REG_CVCC, 1);
+  uint8_t cvccResult = modbus.readHoldingRegisters(REG_CVCC, 1);
   postTransmission();
   
-  if (cvccResult == node.ku8MBSuccess) {
-    _status.cvccMode = node.getResponseBuffer(0);
+  if (cvccResult == modbus.ku8MBSuccess) {
+    _status.cvccMode = modbus.getResponseBuffer(0);
   } else {
-    result = false;
+    success = false;  // Use success instead of undeclared result
   }
   
   delay(_silentIntervalTime * 2);
   
   // Read system status
   preTransmission();
-  uint8_t sysResult = node.readHoldingRegisters(REG_SYS_STATUS, 1);
+  uint8_t sysResult = modbus.readHoldingRegisters(REG_SYS_STATUS, 1);
   postTransmission();
   
-  if (sysResult == node.ku8MBSuccess) {
-    _status.systemStatus = node.getResponseBuffer(0);
+  if (sysResult == modbus.ku8MBSuccess) {
+    _status.systemStatus = modbus.getResponseBuffer(0);
   } else {
-    result = false;
+    success = false;  // Use success instead of undeclared result
   }
   
-  if (result) {
+  if (success) {  // Use success instead of undeclared result
     _lastStateUpdate = now;
   }
   
-  return result;
+  return success;  // Use success instead of undeclared result
 }
 
 bool XY_SKxxx::updateOutputStatus(bool force) {
+  // Check if update is needed based on timeout or force flag
   unsigned long now = millis();
   if (!force && (now - _lastOutputUpdate < _cacheTimeout)) {
-    return true; // Cache is still valid
-  }
-  
-  // Read VOUT, IOUT, POWER, UIN in a single transaction
-  waitForSilentInterval();
-  preTransmission();
-  uint8_t result = node.readHoldingRegisters(REG_VOUT, 4);
-  postTransmission();
-  
-  if (result == node.ku8MBSuccess) {
-    _status.outputVoltage = (float)node.getResponseBuffer(0) / 100.0;
-    _status.outputCurrent = (float)node.getResponseBuffer(1) / 1000.0;
-    _status.outputPower = (float)node.getResponseBuffer(2) / 100.0;
-    _status.inputVoltage = (float)node.getResponseBuffer(3) / 100.0;
-    _lastOutputUpdate = now;
     return true;
   }
   
+  waitForSilentInterval();
+  
+  // Read output voltage, current, power, and input voltage
+  uint8_t result = modbus.readHoldingRegisters(REG_VOUT, 4);
+  if (result == modbus.ku8MBSuccess) {
+    _status.outputVoltage = modbus.getResponseBuffer(0) / 100.0f;
+    _status.outputCurrent = modbus.getResponseBuffer(1) / 1000.0f;
+    _status.outputPower = modbus.getResponseBuffer(2) / 100.0f;
+    _status.inputVoltage = modbus.getResponseBuffer(3) / 100.0f;
+    
+    _lastOutputUpdate = now;
+    _cacheValid = true;
+    _lastCommsTime = millis();
+    return true;
+  }
+  
+  _lastCommsTime = millis();
   return false;
 }
 

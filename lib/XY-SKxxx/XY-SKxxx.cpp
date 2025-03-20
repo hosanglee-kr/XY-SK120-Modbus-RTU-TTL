@@ -25,11 +25,11 @@ void XY_SKxxx::begin(long baudRate) {
   Serial1.begin(baudRate, SERIAL_8N1, _rxPin, _txPin);
   
   // Initialize ModbusMaster with Serial1
-  node.begin(_slaveID, Serial1);
+  modbus.begin(_slaveID, Serial1);
   
   // Set up pre and post transmission callbacks using static functions
-  node.preTransmission(staticPreTransmission);
-  node.postTransmission(staticPostTransmission);
+  modbus.preTransmission(staticPreTransmission);
+  modbus.postTransmission(staticPostTransmission);
 }
 
 /* Modbus RTU timing methods */
@@ -79,4 +79,45 @@ bool XY_SKxxx::testConnection() {
   postTransmission();
   
   return model > 0; // Return true if we got a valid model number
+}
+
+// Direct register access methods for memory groups
+bool XY_SKxxx::readRegisters(uint16_t addr, uint16_t count, uint16_t* buffer) {
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.readHoldingRegisters(addr, count);
+  if (result == modbus.ku8MBSuccess) {
+    for (uint16_t i = 0; i < count; i++) {
+      buffer[i] = modbus.getResponseBuffer(i);
+    }
+    _lastCommsTime = millis();
+    return true;
+  }
+  
+  _lastCommsTime = millis();
+  return false;
+}
+
+bool XY_SKxxx::writeRegister(uint16_t addr, uint16_t value) {
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.writeSingleRegister(addr, value);
+  _lastCommsTime = millis();
+  
+  return (result == modbus.ku8MBSuccess);
+}
+
+bool XY_SKxxx::writeRegisters(uint16_t addr, uint16_t count, uint16_t* buffer) {
+  waitForSilentInterval();
+  
+  // First set all the response/transmit buffers
+  for (uint16_t i = 0; i < count; i++) {
+    modbus.setTransmitBuffer(i, buffer[i]);
+  }
+  
+  // Then do the write
+  uint8_t result = modbus.writeMultipleRegisters(addr, count);
+  _lastCommsTime = millis();
+  
+  return (result == modbus.ku8MBSuccess);
 }

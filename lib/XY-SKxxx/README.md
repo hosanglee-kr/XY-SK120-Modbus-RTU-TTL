@@ -12,6 +12,7 @@ This library provides a complete interface to the XY-SK series digital power sup
 - Set constant voltage (CV) or constant current (CC) modes
 - Configure protection settings (OVP, OCP, OPP, OTP, etc.)
 - Read and control device status (keypad lock, brightness, etc.)
+- Direct register access for debugging
 
 ## Installation
 
@@ -192,6 +193,52 @@ powerSupply.setBacklightBrightness(3);
 // Set sleep timeout in minutes
 powerSupply.setSleepTimeout(5);
 ```
+
+### Memory Group Access
+
+The library supports accessing memory groups (M0-M9) for storing and recalling device settings:
+
+```cpp
+// Call a memory group (activate it)
+powerSupply.callMemoryGroup(xy_sk::MemoryGroup::M1);
+
+// Read from a memory group
+uint16_t data[xy_sk::DATA_GROUP_REGISTERS];
+powerSupply.readMemoryGroup(xy_sk::MemoryGroup::M2, data);
+
+// Write to a memory group
+powerSupply.writeMemoryGroup(xy_sk::MemoryGroup::M3, data);
+```
+
+### Debug Register Access
+
+For advanced users and debugging purposes, the library provides direct register access methods:
+
+```cpp
+// Read registers directly
+uint16_t values[10];
+powerSupply.debugReadRegisters(0x0000, 10, values);  // Read 10 registers starting at 0x0000
+
+// Write to a register directly
+powerSupply.debugWriteRegister(0x0000, 1250);  // Write 1250 (12.50V) to voltage register
+
+// Write to multiple registers
+uint16_t writeValues[2] = {1250, 2000};  // 12.50V, 2.000A
+powerSupply.debugWriteRegisters(0x0000, 2, writeValues);  // Write to voltage and current registers
+```
+
+## Serial Monitor Interface
+
+When used with the project's serial monitor interface, you can use these debug commands:
+
+- `read addr count` - Read 'count' registers starting at address 'addr'
+- `write addr value` - Write 'value' to register at address 'addr'
+- `writes addr v1 v2 ...` - Write multiple values to consecutive registers
+
+Examples:
+- `read 0x0000 1` - Read the voltage setting register
+- `write 0x0000 1250` - Set voltage to 12.50V (1250/100)
+- `read 0x0002 3` - Read output voltage, current, and power
 
 ## Cache System
 

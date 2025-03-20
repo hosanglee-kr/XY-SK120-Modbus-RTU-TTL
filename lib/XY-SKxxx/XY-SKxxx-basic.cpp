@@ -6,64 +6,74 @@
 #include "XY-SKxxx.h"
 
 uint16_t XY_SKxxx::getModel() {
-  uint8_t result = node.readHoldingRegisters(REG_MODEL, 1);
-  if (result == node.ku8MBSuccess) {
-    return node.getResponseBuffer(0);
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.readHoldingRegisters(REG_MODEL, 1);
+  if (result == modbus.ku8MBSuccess) {
+    _lastCommsTime = millis();
+    return modbus.getResponseBuffer(0);
   }
+  
+  _lastCommsTime = millis();
   return 0;
 }
 
 uint16_t XY_SKxxx::getVersion() {
-  uint8_t result = node.readHoldingRegisters(REG_VERSION, 1);
-  if (result == node.ku8MBSuccess) {
-    return node.getResponseBuffer(0);
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.readHoldingRegisters(REG_VERSION, 1);
+  if (result == modbus.ku8MBSuccess) {
+    _lastCommsTime = millis();
+    return modbus.getResponseBuffer(0);
   }
+  
+  _lastCommsTime = millis();
   return 0;
 }
 
 bool XY_SKxxx::setVoltage(float voltage) {
-  uint16_t voltageValue = (uint16_t)(voltage * 100);
-  
-  // Retry up to 3 times if fails
-  for (int attempt = 0; attempt < 3; attempt++) {
-    uint8_t result = node.writeSingleRegister(REG_V_SET, voltageValue);
-    if (result == node.ku8MBSuccess) {
+  if (voltage >= 0.0f && voltage <= 30.0f) { // Adjust based on your device's specifications
+    uint16_t voltageValue = (uint16_t)(voltage * 100);
+    waitForSilentInterval();
+    uint8_t result = modbus.writeSingleRegister(REG_V_SET, voltageValue);
+    _lastCommsTime = millis();
+    
+    if (result == modbus.ku8MBSuccess) {
+      _status.setVoltage = voltage;
       return true;
     }
-    // Wait before retry
-    delay(_silentIntervalTime * 2);
   }
   return false;
 }
 
 bool XY_SKxxx::setCurrent(float current) {
-  uint16_t currentValue = (uint16_t)(current * 1000);
-  
-  // Retry up to 3 times if fails
-  for (int attempt = 0; attempt < 3; attempt++) {
-    uint8_t result = node.writeSingleRegister(REG_I_SET, currentValue);
-    if (result == node.ku8MBSuccess) {
+  if (current >= 0.0f && current <= 5.1f) { // Adjust based on your device's specifications
+    uint16_t currentValue = (uint16_t)(current * 1000);
+    waitForSilentInterval();
+    uint8_t result = modbus.writeSingleRegister(REG_I_SET, currentValue);
+    _lastCommsTime = millis();
+    
+    if (result == modbus.ku8MBSuccess) {
+      _status.setCurrent = current;
       return true;
     }
-    // Wait before retry
-    delay(_silentIntervalTime * 2);
   }
   return false;
 }
 
 bool XY_SKxxx::getOutput(float &voltage, float &current, float &power) {
-  // More robust implementation with retries
-  for (int attempt = 0; attempt < 3; attempt++) {
-    uint8_t result = node.readHoldingRegisters(REG_VOUT, 3);
-    if (result == node.ku8MBSuccess) {
-      voltage = (float)node.getResponseBuffer(0) / 100.0;
-      current = (float)node.getResponseBuffer(1) / 1000.0;
-      power = (float)node.getResponseBuffer(2) / 100.0;
-      return true;
-    }
-    // Wait before retry
-    delay(_silentIntervalTime * 2);
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.readHoldingRegisters(REG_VOUT, 3);
+  _lastCommsTime = millis();
+  
+  if (result == modbus.ku8MBSuccess) {
+    voltage = modbus.getResponseBuffer(0) / 100.0f;
+    current = modbus.getResponseBuffer(1) / 1000.0f;
+    power = modbus.getResponseBuffer(2) / 100.0f;
+    return true;
   }
+  
   return false;
 }
 
