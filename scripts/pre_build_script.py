@@ -52,3 +52,8 @@ def before_build(source, target, env):
 
 # Register the callback
 env.AddPreAction("buildprog", before_build)
+
+Import("env")
+
+# Remove the BuildSources call to prevent duplicate compilation
+# env.BuildSources("$BUILD_DIR/liba74", "$PROJECT_DIR/lib/XY-SKxxx")
