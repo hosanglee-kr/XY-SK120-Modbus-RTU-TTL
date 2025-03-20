@@ -136,6 +136,259 @@ bool XY_SKxxx::updateOutputStatus(bool force) {
   return false;
 }
 
-// ...continue with other cache update methods...
+bool XY_SKxxx::updateDeviceSettings(bool force) {
+  // Check if update is needed based on timeout or force flag
+  unsigned long now = millis();
+  if (!force && (now - _lastSettingsUpdate < _cacheTimeout)) {
+    return true;
+  }
+  
+  waitForSilentInterval();
+  
+  // Read voltage and current settings
+  uint8_t result = modbus.readHoldingRegisters(REG_V_SET, 2);
+  if (result == modbus.ku8MBSuccess) {
+    _status.setVoltage = modbus.getResponseBuffer(0) / 100.0f;
+    _status.setCurrent = modbus.getResponseBuffer(1) / 1000.0f;
+    
+    // Also read backlight and sleep timeout settings
+    delay(_silentIntervalTime * 2);
+    result = modbus.readHoldingRegisters(REG_B_LED, 2);
+    if (result == modbus.ku8MBSuccess) {
+      _status.backlightLevel = modbus.getResponseBuffer(0);
+      _status.sleepTimeout = modbus.getResponseBuffer(1);
+      
+      _lastSettingsUpdate = now;
+      _lastCommsTime = millis();
+      return true;
+    }
+  }
+  
+  _lastCommsTime = millis();
+  return false;
+}
+
+bool XY_SKxxx::updateEnergyMeters(bool force) {
+  // Check if update is needed based on timeout or force flag
+  unsigned long now = millis();
+  if (!force && (now - _lastEnergyUpdate < _cacheTimeout)) {
+    return true;
+  }
+  
+  waitForSilentInterval();
+  
+  // Read amp-hour counter (low and high registers)
+  uint8_t result = modbus.readHoldingRegisters(REG_AH_LOW, 2);
+  if (result != modbus.ku8MBSuccess) {
+    _lastCommsTime = millis();
+    return false;
+  }
+  
+  uint16_t ahLow = modbus.getResponseBuffer(0);
+  uint16_t ahHigh = modbus.getResponseBuffer(1);
+  _status.ampHours = (uint32_t)ahHigh << 16 | ahLow;
+  
+  // Read watt-hour counter (low and high registers)
+  delay(_silentIntervalTime * 2);
+  result = modbus.readHoldingRegisters(REG_WH_LOW, 2);
+  if (result != modbus.ku8MBSuccess) {
+    _lastCommsTime = millis();
+    return false;
+  }
+  
+  uint16_t whLow = modbus.getResponseBuffer(0);
+  uint16_t whHigh = modbus.getResponseBuffer(1);
+  _status.wattHours = (uint32_t)whHigh << 16 | whLow;
+  
+  // Read output time (hours, minutes, seconds)
+  delay(_silentIntervalTime * 2);
+  result = modbus.readHoldingRegisters(REG_OUT_H, 3);
+  if (result != modbus.ku8MBSuccess) {
+    _lastCommsTime = millis();
+    return false;
+  }
+  
+  uint16_t hours = modbus.getResponseBuffer(0);
+  uint16_t minutes = modbus.getResponseBuffer(1);
+  uint16_t seconds = modbus.getResponseBuffer(2);
+  _status.outputTime = hours * 3600 + minutes * 60 + seconds;
+  
+  _lastEnergyUpdate = now;
+  _lastCommsTime = millis();
+  return true;
+}
+
+bool XY_SKxxx::updateTemperatures(bool force) {
+  // Check if update is needed based on timeout or force flag
+  unsigned long now = millis();
+  if (!force && (now - _lastTempUpdate < _cacheTimeout)) {
+    return true;
+  }
+  
+  waitForSilentInterval();
+  
+  // Read internal and external temperatures
+  uint8_t result = modbus.readHoldingRegisters(REG_T_IN, 2);
+  if (result == modbus.ku8MBSuccess) {
+    _status.internalTemp = modbus.getResponseBuffer(0) / 10.0f;
+    _status.externalTemp = modbus.getResponseBuffer(1) / 10.0f;
+    
+    _lastTempUpdate = now;
+    _lastCommsTime = millis();
+    return true;
+  }
+  
+  _lastCommsTime = millis();
+  return false;
+}
+
+bool XY_SKxxx::updateCalibrationSettings(bool force) {
+  // Check if update is needed based on timeout or force flag
+  unsigned long now = millis();
+  if (!force && (now - _lastCalibrationUpdate < _cacheTimeout)) {
+    return true;
+  }
+  
+  waitForSilentInterval();
+  
+  // Read temperature calibration values
+  uint8_t result = modbus.readHoldingRegisters(REG_T_IN_CAL, 2);
+  if (result == modbus.ku8MBSuccess) {
+    _internalTempCalibration = modbus.getResponseBuffer(0) / 10.0f;
+    _externalTempCalibration = modbus.getResponseBuffer(1) / 10.0f;
+    
+    // Read buzzer state
+    delay(_silentIntervalTime * 2);
+    result = modbus.readHoldingRegisters(REG_BUZZER, 1);
+    if (result == modbus.ku8MBSuccess) {
+      _buzzerEnabled = (modbus.getResponseBuffer(0) != 0);
+      
+      // Read selected data group
+      delay(_silentIntervalTime * 2);
+      result = modbus.readHoldingRegisters(REG_EXTRACT_M, 1);
+      if (result == modbus.ku8MBSuccess) {
+        _selectedDataGroup = modbus.getResponseBuffer(0);
+        
+        _lastCalibrationUpdate = now;
+        _lastCommsTime = millis();
+        return true;
+      }
+    }
+  }
+  
+  _lastCommsTime = millis();
+  return false;
+}
+
+// Energy meter access methods
+uint32_t XY_SKxxx::getAmpHours(bool refresh) {
+  if (refresh) {
+    updateEnergyMeters(true);
+  }
+  return _status.ampHours;
+}
+
+uint32_t XY_SKxxx::getWattHours(bool refresh) {
+  if (refresh) {
+    updateEnergyMeters(true);
+  }
+  return _status.wattHours;
+}
+
+uint32_t XY_SKxxx::getOutputTime(bool refresh) {
+  if (refresh) {
+    updateEnergyMeters(true);
+  }
+  return _status.outputTime;
+}
+
+// Temperature access methods
+float XY_SKxxx::getInternalTemperature(bool refresh) {
+  if (refresh) {
+    updateTemperatures(true);
+  }
+  return _status.internalTemp;
+}
+
+float XY_SKxxx::getExternalTemperature(bool refresh) {
+  if (refresh) {
+    updateTemperatures(true);
+  }
+  return _status.externalTemp;
+}
+
+// Device state access methods
+bool XY_SKxxx::isOutputEnabled(bool refresh) {
+  if (refresh) {
+    updateDeviceState(true);
+  }
+  return _status.outputEnabled;
+}
+
+bool XY_SKxxx::isKeyLocked(bool refresh) {
+  if (refresh) {
+    updateDeviceState(true);
+  }
+  return _status.keyLocked;
+}
+
+uint16_t XY_SKxxx::getProtectionStatus(bool refresh) {
+  if (refresh) {
+    updateDeviceState(true);
+  }
+  return _status.protectionStatus;
+}
+
+uint16_t XY_SKxxx::getSystemStatus(bool refresh) {
+  if (refresh) {
+    updateDeviceState(true);
+  }
+  return _status.systemStatus;
+}
+
+// Device settings access methods
+float XY_SKxxx::getSetVoltage(bool refresh) {
+  if (refresh) {
+    updateDeviceSettings(true);
+  }
+  return _status.setVoltage;
+}
+
+float XY_SKxxx::getSetCurrent(bool refresh) {
+  if (refresh) {
+    updateDeviceSettings(true);
+  }
+  return _status.setCurrent;
+}
+
+bool XY_SKxxx::getBacklightBrightness(uint8_t &level, bool refresh) {
+  if (refresh) {
+    updateDeviceSettings(true);
+  }
+  level = _status.backlightLevel;
+  return true;
+}
+
+uint8_t XY_SKxxx::getSleepTimeout(bool refresh) {
+  if (refresh) {
+    updateDeviceSettings(true);
+  }
+  return _status.sleepTimeout;
+}
+
+// Calibration settings access methods
+float XY_SKxxx::getInternalTempCalibration(bool refresh) {
+  if (refresh) {
+    updateCalibrationSettings(true);
+  }
+  return _internalTempCalibration;
+}
+
+float XY_SKxxx::getExternalTempCalibration(bool refresh) {
+  if (refresh) {
+    updateCalibrationSettings(true);
+  }
+  return _externalTempCalibration;
+}
 
 #endif // XY_SKXXX_CACHE_IMPL
