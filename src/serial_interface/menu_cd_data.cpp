@@ -30,28 +30,49 @@ void handleCDDataMenu(const String& input, XY_SKxxx* ps) {
       uint16_t groupData[xy_sk::DATA_GROUP_REGISTERS];
       
       // Add a small delay between reads to avoid overwhelming the device
-      if (i > 0) delay(100);
+      if (i > 0) delay(200);
       
-      if (ps->readMemoryGroup(group, groupData)) {
+      // Force a refresh - don't use cached values since they may be incorrect
+      bool success = false;
+      for (int attempt = 0; attempt < 3 && !success; attempt++) {
+        if (attempt > 0) {
+          delay(200);  // Wait longer between retries
+          Serial.print(".");
+        }
+        
+        // Read directly from device, bypassing cache
+        uint16_t addr = xy_sk::DataGroupManager::getGroupStartAddress(group);
+        success = ps->readRegisters(addr, xy_sk::DATA_GROUP_REGISTERS, groupData);
+      }
+      
+      if (success) {
         // Extract voltage and current values from the group data
+        // Make sure we're using the correct offsets based on the actual device memory layout
         float voltage = groupData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::VOLTAGE_SET)] / 100.0f;
         float current = groupData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::CURRENT_SET)] / 1000.0f;
         
-        // Also extract OVP and OCP for more comprehensive information
-        float ovp = groupData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::OVP_SET)] / 100.0f;
-        float ocp = groupData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::OCP_SET)] / 1000.0f;
+        // Use explicit offsets for OVP and OCP rather than enum values which might be incorrect
+        float ovp = groupData[3] / 100.0f;  // OVP is at offset 3
+        float ocp = groupData[4] / 1000.0f; // OCP is at offset 4
         
-        Serial.print("Group ");
-        Serial.print(i);
-        Serial.print(": V=");
-        Serial.print(voltage, 2);
-        Serial.print("V, I=");
-        Serial.print(current, 3);
-        Serial.print("A, OVP=");
-        Serial.print(ovp, 2);
-        Serial.print("V, OCP=");
-        Serial.print(ocp, 3);
-        Serial.println("A");
+        // Apply sanity checks on values to detect corruption
+        if (voltage > 100 || current > 10 || ovp > 100 || ocp > 10) {
+          Serial.print("Group ");
+          Serial.print(i);
+          Serial.println(": Potentially invalid data");
+        } else {
+          Serial.print("Group ");
+          Serial.print(i);
+          Serial.print(": V=");
+          Serial.print(voltage, 2);
+          Serial.print("V, I=");
+          Serial.print(current, 3);
+          Serial.print("A, OVP=");
+          Serial.print(ovp, 2);
+          Serial.print("V, OCP=");
+          Serial.print(ocp, 3);
+          Serial.println("A");
+        }
       } else {
         Serial.print("Group ");
         Serial.print(i);
@@ -121,9 +142,25 @@ void handleCDDataMenu(const String& input, XY_SKxxx* ps) {
     if (parseUInt8(input.substring(7), groupNum) && groupNum <= 9) {
       xy_sk::MemoryGroup group = static_cast<xy_sk::MemoryGroup>(groupNum);
       
-      if (ps->callMemoryGroup(group)) {
+      // Clear cache before operation
+      ps->updateAllStatus(true);
+      
+      // Try multiple times if needed
+      bool success = false;
+      for (int attempt = 0; attempt < 3 && !success; attempt++) {
+        if (attempt > 0) {
+          delay(300);  // Add longer delay between attempts
+          Serial.print("Retrying... ");
+        }
+        success = ps->callMemoryGroup(group);
+      }
+      
+      if (success) {
         Serial.print("Settings recalled from group ");
         Serial.println(groupNum);
+        
+        // Give device time to update internal registers
+        delay(250);
         
         // Display the recalled settings by reading M0 (active group)
         uint16_t activeData[xy_sk::DATA_GROUP_REGISTERS];
