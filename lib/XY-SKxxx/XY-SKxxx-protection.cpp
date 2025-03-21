@@ -29,32 +29,32 @@ float XY_SKxxx::getCachedOverVoltageProtection(bool refresh) {
   return _protection.overVoltageProtection;
 }
 
-// Under Voltage Protection (UVP)
-bool XY_SKxxx::setUnderVoltageProtection(float voltage) {
+// Input Low Voltage Protection (LVP)
+bool XY_SKxxx::setLowVoltageProtection(float voltage) {
   uint16_t voltageValue = (uint16_t)(voltage * 100);
   waitForSilentInterval();
   
-  uint8_t result = modbus.writeSingleRegister(REG_S_VLP, voltageValue);
+  uint8_t result = modbus.writeSingleRegister(REG_S_LVP, voltageValue);
   _lastCommsTime = millis();
   
   if (result == modbus.ku8MBSuccess) {
-    _protection.underVoltageProtection = voltage;
+    _protection.lowVoltageProtection = voltage;
     return true;
   }
   
   return false;
 }
 
-bool XY_SKxxx::getUnderVoltageProtection(float &voltage) {
-  voltage = getCachedUnderVoltageProtection(true);
+bool XY_SKxxx::getLowVoltageProtection(float &voltage) {
+  voltage = getCachedLowVoltageProtection(true);
   return true;
 }
 
-float XY_SKxxx::getCachedUnderVoltageProtection(bool refresh) {
+float XY_SKxxx::getCachedLowVoltageProtection(bool refresh) {
   if (refresh) {
     updateVoltageCurrentProtection(true);
   }
-  return _protection.underVoltageProtection;
+  return _protection.lowVoltageProtection;
 }
 
 // Over Current Protection (OCP)
@@ -87,23 +87,24 @@ float XY_SKxxx::getCachedOverCurrentProtection(bool refresh) {
 
 // Over Power Protection (OPP)
 bool XY_SKxxx::setOverPowerProtection(float power) {
-  uint16_t powerValue = (uint16_t)(power * 100);
-  waitForSilentInterval();
-  
-  uint8_t result = modbus.writeSingleRegister(REG_S_OPP, powerValue);
-  _lastCommsTime = millis();
-  
-  if (result == modbus.ku8MBSuccess) {
+  uint16_t value = static_cast<uint16_t>(power * 10.0f); // Use 10 for 1 decimal place
+  bool success = writeRegister(REG_S_OPP, value);
+  if (success) {
     _protection.overPowerProtection = power;
-    return true;
+    _lastPowerProtectionUpdate = millis();
   }
-  
-  return false;
+  return success;
 }
 
 bool XY_SKxxx::getOverPowerProtection(float &power) {
-  power = getCachedOverPowerProtection(true);
-  return true;
+  uint16_t value;
+  bool success = readRegister(REG_S_OPP, value);
+  if (success) {
+    power = value / 10.0f; // Use 10 for 1 decimal place
+    _protection.overPowerProtection = power;
+    _lastPowerProtectionUpdate = millis();
+  }
+  return success;
 }
 
 float XY_SKxxx::getCachedOverPowerProtection(bool refresh) {
@@ -336,12 +337,12 @@ bool XY_SKxxx::updateVoltageCurrentProtection(bool force) {
   
   waitForSilentInterval();
   
-  // Read under voltage, over voltage, and over current protection values
-  uint8_t result = modbus.readHoldingRegisters(REG_S_VLP, 3);
+  // Read low voltage, over voltage, and over current protection values
+  uint8_t result = modbus.readHoldingRegisters(REG_S_LVP, 3);
   _lastCommsTime = millis();
   
   if (result == modbus.ku8MBSuccess) {
-    _protection.underVoltageProtection = modbus.getResponseBuffer(0) / 100.0f;
+    _protection.lowVoltageProtection = modbus.getResponseBuffer(0) / 100.0f;
     _protection.overVoltageProtection = modbus.getResponseBuffer(1) / 100.0f;
     _protection.overCurrentProtection = modbus.getResponseBuffer(2) / 1000.0f;
     
@@ -365,7 +366,7 @@ bool XY_SKxxx::updatePowerProtection(bool force) {
   _lastCommsTime = millis();
   
   if (result == modbus.ku8MBSuccess) {
-    _protection.overPowerProtection = modbus.getResponseBuffer(0) / 100.0f;
+    _protection.overPowerProtection = modbus.getResponseBuffer(0) / 10.0f; // Use 10 for 1 decimal place
     _protection.highPowerHours = modbus.getResponseBuffer(1);
     _protection.highPowerMinutes = modbus.getResponseBuffer(2);
     

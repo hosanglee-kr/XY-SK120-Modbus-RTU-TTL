@@ -62,11 +62,11 @@
 #define REG_CV_SET         0x0050    // CV (constant voltage) setting, 2 bytes, 2 decimal places, unit: V, Read and Write
 #define REG_CC_SET         0x0051    // CC (constant current) setting, 2 bytes, 3 decimal places, unit: A, Read and Write
 
-#define REG_S_VLP          0x0052    // LVP (input under voltage protection) setting, 2 bytes, 2 decimal places, unit: W, Read and Write
+#define REG_S_LVP          0x0052    // LVP (input low voltage protection) setting, 2 bytes, 2 decimal places, unit: V, Read and Write
 #define REG_S_OVP          0x0053    // OVP (output over voltage protection) setting, 2 bytes, 2 decimal places, unit: V, Read and Write
 
 #define REG_S_OCP          0x0054    // OCP (output over current protection) setting, 2 bytes, 3 decimal places, unit: A, Read and Write
-#define REG_S_OPP          0x0055    // OPP (output over power protection) setting, 2 bytes, 2 decimal places, unit: W, Read and Write
+#define REG_S_OPP          0x0055    // OPP (output over power protection) setting, 2 bytes, 1 decimal place, unit: W, Read and Write
 
 #define REG_S_OHP_H        0x0056    // OHP_H (output high power protection - hours) setting, 2 bytes, 0 decimal places, unit: h, Read and Write
 #define REG_S_OHP_M        0x0057    // OHP_M (output high power protection - minutes) setting, 2 bytes, 0 decimal places, unit: min, Read and Write
@@ -135,7 +135,7 @@ struct ProtectionSettings {
   float constantCurrent;    // CC setting (A)
   
   // Protection thresholds
-  float underVoltageProtection;  // Input under voltage protection (V)
+  float lowVoltageProtection;   // Input low voltage protection (LVP) (V)
   float overVoltageProtection;   // Output over voltage protection (V)
   float overCurrentProtection;   // Output over current protection (A)
   float overPowerProtection;     // Output over power protection (W)
@@ -254,12 +254,12 @@ public:
   bool setOverVoltageProtection(float voltage);
   bool setOverCurrentProtection(float current);
   bool setOverPowerProtection(float power);
-  bool setUnderVoltageProtection(float voltage);
+  bool setLowVoltageProtection(float voltage);
   
   bool getOverVoltageProtection(float &voltage);
   bool getOverCurrentProtection(float &current);
   bool getOverPowerProtection(float &power);
-  bool getUnderVoltageProtection(float &voltage);
+  bool getLowVoltageProtection(float &voltage);
   
   // Amp-hour protection methods
   bool setOverAmpHourProtection(uint16_t ampHoursLow, uint16_t ampHoursHigh);
@@ -299,7 +299,7 @@ public:
   // Cached protection value access methods
   float getCachedConstantVoltage(bool refresh = false);
   float getCachedConstantCurrent(bool refresh = false);
-  float getCachedUnderVoltageProtection(bool refresh = false);
+  float getCachedLowVoltageProtection(bool refresh = false);
   float getCachedOverVoltageProtection(bool refresh = false);
   float getCachedOverCurrentProtection(bool refresh = false);
   float getCachedOverPowerProtection(bool refresh = false);

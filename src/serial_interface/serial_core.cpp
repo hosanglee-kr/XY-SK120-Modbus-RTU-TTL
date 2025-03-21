@@ -22,7 +22,7 @@ void setMenuState(MenuState state) {
 
 void initializeSerialInterface() {
   Serial.println("\n===== XY-SK Power Supply Interface =====");
-  Serial.println("Type 'help' at any time to see available commands");
+  Serial.println("Type 'help' for menu, 'status' for current readings, 'prot' for protection settings");
   displayMainMenu();
 }
 
@@ -55,8 +55,10 @@ void processSerialCommand(const String& input, XY_SKxxx* ps, XYModbusConfig& con
     }
     return;
   } else if (input.equalsIgnoreCase("status")) {
-    // Use the single displayDeviceStatus function
     displayDeviceStatus(ps);
+    return;
+  } else if (input.equalsIgnoreCase("prot")) {
+    displayDeviceProtectionStatus(ps);
     return;
   }
   
@@ -185,6 +187,103 @@ void displayDeviceStatus(XY_SKxxx* ps) {
   Serial.print("Internal Temperature: ");
   Serial.print(internalTemp, 1);
   Serial.println(isCelsius ? " °C" : " °F");
+}
+
+void displayDeviceProtectionStatus(XY_SKxxx* ps) {
+  if (!ps) {
+    Serial.println("Error: Power supply not initialized");
+    return;
+  }
+
+  Serial.println("\n==== Protection Settings ====");
+  
+  // Update all protection settings first
+  ps->updateAllProtectionSettings(true);
+  
+  // Voltage protection settings
+  float ovp = ps->getCachedOverVoltageProtection(true);
+  float lvp = ps->getCachedLowVoltageProtection(true);
+  Serial.print("Over Voltage Protection (OVP): ");
+  Serial.print(ovp, 2);
+  Serial.println(" V");
+  Serial.print("Input Low Voltage Protection (LVP): ");
+  Serial.print(lvp, 2);
+  Serial.println(" V");
+  
+  // Current protection
+  float ocp = ps->getCachedOverCurrentProtection(true);
+  Serial.print("Over Current Protection (OCP): ");
+  Serial.print(ocp, 3);
+  Serial.println(" A");
+  
+  // Power protection
+  float opp = ps->getCachedOverPowerProtection(true);
+  Serial.print("Over Power Protection (OPP): ");
+  Serial.print(opp, 1); // Show only 1 decimal place to match the precision
+  Serial.println(" W");
+  
+  // Time-based protection
+  uint16_t hours, minutes;
+  ps->getCachedHighPowerProtectionTime(hours, minutes, true);
+  Serial.print("High Power Protection Time: ");
+  Serial.print(hours);
+  Serial.print(" hours, ");
+  Serial.print(minutes);
+  Serial.println(" minutes");
+  
+  // Energy-based protection
+  uint16_t ahLow, ahHigh;
+  ps->getCachedOverAmpHourProtection(ahLow, ahHigh, true);
+  Serial.print("Over Amp-Hour Protection: ");
+  if (ahHigh > 0) {
+    Serial.print(ahLow + (ahHigh * 65536));
+  } else {
+    Serial.print(ahLow);
+  }
+  Serial.println(" mAh");
+  
+  uint16_t whLow, whHigh;
+  ps->getCachedOverWattHourProtection(whLow, whHigh, true);
+  Serial.print("Over Watt-Hour Protection: ");
+  if (whHigh > 0) {
+    Serial.print((whLow + (whHigh * 65536)) * 10); // Multiply by 10 to get mWh
+  } else {
+    Serial.print(whLow * 10);
+  }
+  Serial.println(" mWh");
+  
+  // Temperature protection
+  float otp = ps->getCachedOverTemperatureProtection(true);
+  bool isCelsius;
+  ps->getTemperatureUnit(isCelsius);
+  Serial.print("Over Temperature Protection (OTP): ");
+  Serial.print(otp, 1);
+  Serial.println(isCelsius ? " °C" : " °F");
+  
+  // Startup behavior
+  bool onAtStartup = ps->getCachedPowerOnInitialization(true);
+  Serial.print("Power-On Output State: ");
+  Serial.println(onAtStartup ? "ON" : "OFF");
+  
+  // Protection status register
+  uint16_t protStatus = ps->getProtectionStatus(true);
+  Serial.print("Protection Status Register: 0x");
+  Serial.println(protStatus, HEX);
+  
+  // Note on protection status interpretation
+  if (protStatus > 0) {
+    Serial.println("\nActive Protections:");
+    if (protStatus & 0x0001) Serial.println("- Output Over Voltage Protection (OVP) triggered");
+    if (protStatus & 0x0002) Serial.println("- Output Over Current Protection (OCP) triggered");
+    if (protStatus & 0x0004) Serial.println("- Output Over Power Protection (OPP) triggered");
+    if (protStatus & 0x0008) Serial.println("- Input Low Voltage Protection (LVP) triggered");
+    if (protStatus & 0x0010) Serial.println("- Over Temperature Protection (OTP) triggered");
+    if (protStatus & 0x0020) Serial.println("- Over Amp-Hour Protection triggered");
+    if (protStatus & 0x0040) Serial.println("- Over Watt-Hour Protection triggered");
+    if (protStatus & 0x0080) Serial.println("- High Power Protection Time exceeded");
+  } else {
+    Serial.println("\nNo active protections.");
+  }
 }
 
 void displayConfig(XYModbusConfig& config) {

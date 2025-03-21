@@ -16,6 +16,7 @@ void displayMainMenu() {
   Serial.println("5. Debug (Register R/W)");
   Serial.println("6. CD Data Groups");  // Add the new menu option
   Serial.println("status - Show power supply status");
+  Serial.println("prot - Show protection settings and status");
   Serial.println("config - Show current configuration");
   Serial.println("info - Display device information");
   Serial.println("help - Show this menu");

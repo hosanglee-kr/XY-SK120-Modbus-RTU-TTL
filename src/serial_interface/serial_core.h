@@ -21,3 +21,6 @@ void displayDeviceInfo(XY_SKxxx* ps);
 
 // Display power supply status
 void displayDeviceStatus(XY_SKxxx* ps);
+
+// Display protection settings
+void displayDeviceProtectionStatus(XY_SKxxx* ps);
