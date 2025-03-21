@@ -35,7 +35,7 @@
 
 #define REG_ONOFF 0x0012        // Output on/off status, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
 
-#define REG_F_C 0x0013          // WIP: temperature unit, 2 bytes, 0 decimal places, unit: 0/1 (°F / °C), Read and Write
+#define REG_F_C 0x0013          // temperature unit, 2 bytes, 0 decimal places, unit: 0=Celsius, 1=Fahrenheit, Read and Write
 
 #define REG_B_LED 0x0014        // WIP: Backlight brightness, 2 bytes, 0 decimal places, unit: 0-5, Read and Write, factory default: 5 (brightest)
 
@@ -85,7 +85,15 @@
 
 // Additional Modbus register addresses for XY-SK120 0x0110 - 0x011D, will not implement these as it's related to weather infomration???
 
-// undocumented / missing registers, available in the XY-SK120 manual and OSD (On-Screen Display) but not in the Modbus register map documentation
+/* Below are undocumented registers, available in the XY-SK120 manual and OSD (On-Screen Display) 
+but not in the Modbus register map documentation
+*/
+/*
+REG_S_ETP: both 0x005E and 0x005F stores the ETP (External Temperature Protection) value, but 0x005E is read-write and 0x005F is read-only and both values seems to be mirrored. 
+However, writing to 0x005E does not seem to have any effect on the device, so it's likely not implemented or used.
+*/
+#define REG_S_ETP          0x005E    // WIP: Not implemented.
+
 // beeper settings (beeper enable)
 // FET setting (quick adjustment of voltage, current or power)
 // PPT Setting (MPPT Solar Charging Settings)
@@ -394,7 +402,6 @@ public:
 private:
   uint8_t _rxPin;
   uint8_t _txPin;
-  // ModbusMaster node; // Changed to public modbus
   uint8_t _slaveID;
   unsigned long _baudRate;
   unsigned long _lastCommsTime;
@@ -422,7 +429,7 @@ private:
   static void staticPreTransmission();
   static void staticPostTransmission();
 
-  // Additional cache fields if needed
+  // Additional cache fields 
   float _internalTempCalibration;
   float _externalTempCalibration;
   bool _buzzerEnabled;

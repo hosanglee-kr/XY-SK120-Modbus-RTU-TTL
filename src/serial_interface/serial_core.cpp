@@ -186,7 +186,7 @@ void displayDeviceStatus(XY_SKxxx* ps) {
   
   Serial.print("Internal Temperature: ");
   Serial.print(internalTemp, 1);
-  Serial.println(isCelsius ? " °C" : " °F");
+  Serial.println(isCelsius ? " °F" : " °C"); // Flip the interpretation: 0=Celsius, 1=Fahrenheit
 }
 
 void displayDeviceProtectionStatus(XY_SKxxx* ps) {
@@ -203,11 +203,11 @@ void displayDeviceProtectionStatus(XY_SKxxx* ps) {
   // Voltage protection settings
   float ovp = ps->getCachedOverVoltageProtection(true);
   float lvp = ps->getCachedLowVoltageProtection(true);
-  Serial.print("Over Voltage Protection (OVP): ");
-  Serial.print(ovp, 2);
-  Serial.println(" V");
   Serial.print("Input Low Voltage Protection (LVP): ");
   Serial.print(lvp, 2);
+  Serial.println(" V");
+  Serial.print("Over Voltage Protection (OVP): ");
+  Serial.print(ovp, 2);
   Serial.println(" V");
   
   // Current protection
@@ -222,19 +222,10 @@ void displayDeviceProtectionStatus(XY_SKxxx* ps) {
   Serial.print(opp, 1); // Show only 1 decimal place to match the precision
   Serial.println(" W");
   
-  // Time-based protection
-  uint16_t hours, minutes;
-  ps->getCachedHighPowerProtectionTime(hours, minutes, true);
-  Serial.print("High Power Protection Time: ");
-  Serial.print(hours);
-  Serial.print(" hours, ");
-  Serial.print(minutes);
-  Serial.println(" minutes");
-  
   // Energy-based protection
   uint16_t ahLow, ahHigh;
   ps->getCachedOverAmpHourProtection(ahLow, ahHigh, true);
-  Serial.print("Over Amp-Hour Protection: ");
+  Serial.print("Over Amp-Hour Protection (OAH): ");
   if (ahHigh > 0) {
     Serial.print(ahLow + (ahHigh * 65536));
   } else {
@@ -244,7 +235,7 @@ void displayDeviceProtectionStatus(XY_SKxxx* ps) {
   
   uint16_t whLow, whHigh;
   ps->getCachedOverWattHourProtection(whLow, whHigh, true);
-  Serial.print("Over Watt-Hour Protection: ");
+  Serial.print("Over Power-Hour Protection (OPH): ");
   if (whHigh > 0) {
     Serial.print((whLow + (whHigh * 65536)) * 10); // Multiply by 10 to get mWh
   } else {
@@ -252,13 +243,23 @@ void displayDeviceProtectionStatus(XY_SKxxx* ps) {
   }
   Serial.println(" mWh");
   
+  // Time-based protection
+  uint16_t hours, minutes;
+  ps->getCachedHighPowerProtectionTime(hours, minutes, true);
+  Serial.print("High Power Protection Time: ");
+  Serial.print(hours);
+  Serial.print(" hours, ");
+  Serial.print(minutes);
+  Serial.println(" minutes");
+  
   // Temperature protection
   float otp = ps->getCachedOverTemperatureProtection(true);
   bool isCelsius;
   ps->getTemperatureUnit(isCelsius);
+  
   Serial.print("Over Temperature Protection (OTP): ");
-  Serial.print(otp, 1);
-  Serial.println(isCelsius ? " °C" : " °F");
+  Serial.print((int)otp);
+  Serial.println(isCelsius ? " °F" : " °C");
   
   // Startup behavior
   bool onAtStartup = ps->getCachedPowerOnInitialization(true);
@@ -278,8 +279,8 @@ void displayDeviceProtectionStatus(XY_SKxxx* ps) {
     if (protStatus & 0x0004) Serial.println("- Output Over Power Protection (OPP) triggered");
     if (protStatus & 0x0008) Serial.println("- Input Low Voltage Protection (LVP) triggered");
     if (protStatus & 0x0010) Serial.println("- Over Temperature Protection (OTP) triggered");
-    if (protStatus & 0x0020) Serial.println("- Over Amp-Hour Protection triggered");
-    if (protStatus & 0x0040) Serial.println("- Over Watt-Hour Protection triggered");
+    if (protStatus & 0x0020) Serial.println("- Over Amp-Hour Protection (OAH) triggered");
+    if (protStatus & 0x0040) Serial.println("- Over Power-Hour Protection (OPH) triggered");
     if (protStatus & 0x0080) Serial.println("- High Power Protection Time exceeded");
   } else {
     Serial.println("\nNo active protections.");

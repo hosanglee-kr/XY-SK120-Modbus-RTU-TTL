@@ -415,7 +415,8 @@ bool XY_SKxxx::updateTemperatureProtection(bool force) {
   _lastCommsTime = millis();
   
   if (result == modbus.ku8MBSuccess) {
-    _protection.overTemperature = modbus.getResponseBuffer(0) / 10.0f;
+    // Don't divide by 10.0f - OTP is stored as a whole number with no decimal places
+    _protection.overTemperature = modbus.getResponseBuffer(0);
     
     _lastTempProtectionUpdate = now;
     return true;

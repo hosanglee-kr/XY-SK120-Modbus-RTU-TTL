@@ -11,6 +11,7 @@ void displayProtectionMenu() {
   Serial.println("lvp [value] - Set Input Low Voltage Protection (V)");
   Serial.println("otp [value] - Set Over Temperature Protection (°C)");
   Serial.println("status - Read protection settings and status");
+  Serial.println("prot - Show protection settings and status");
   Serial.println("clear - Clear protection triggers");
   Serial.println("menu - Return to main menu");
   Serial.println("help - Show this menu");
