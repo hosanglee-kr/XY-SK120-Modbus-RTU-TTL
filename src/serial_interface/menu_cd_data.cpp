@@ -6,9 +6,9 @@
 void displayCDDataMenu() {
   Serial.println("\n==== Data Group Menu ====");
   Serial.println("list - List all data groups");
-  Serial.println("set [group] - Select a data group (0-9)");
+  Serial.println("set [group] - Select a data group (0-9) without applying settings");
   Serial.println("store [group] - Store current settings to a data group (0-9)");
-  Serial.println("recall [group] - Recall settings from a data group (0-9)");
+  Serial.println("recall [group] - Recall settings from a data group (0-9) and apply them");
   Serial.println("readc [group] - Read current from a group (0-9)");
   Serial.println("readv [group] - Read voltage from a group (0-9)");
   Serial.println("menu - Return to main menu");
@@ -80,27 +80,30 @@ void handleCDDataMenu(const String& input, XY_SKxxx* ps) {
       }
     }
   } else if (input.startsWith("set ")) {
-    // Set a data group
+    // Set a data group - ONLY SELECTS without applying settings
     uint8_t groupNum;
     if (parseUInt8(input.substring(4), groupNum) && groupNum <= 9) {
       xy_sk::MemoryGroup group = static_cast<xy_sk::MemoryGroup>(groupNum);
-      if (ps->callMemoryGroup(group)) {
+      
+      // Read the group data directly without calling the memory group
+      uint16_t groupData[xy_sk::DATA_GROUP_REGISTERS];
+      bool success = ps->readMemoryGroup(group, groupData, true);
+      
+      if (success) {
         Serial.print("Selected data group ");
         Serial.println(groupNum);
         
-        // Display the current settings after selection for confirmation
-        uint16_t groupData[xy_sk::DATA_GROUP_REGISTERS];
-        if (ps->readMemoryGroup(xy_sk::MemoryGroup::M0, groupData, true)) { // Force refresh
-          float voltage = groupData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::VOLTAGE_SET)] / 100.0f;
-          float current = groupData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::CURRENT_SET)] / 1000.0f;
-          Serial.print("Active settings: ");
-          Serial.print(voltage, 2);
-          Serial.print("V, ");
-          Serial.print(current, 3);
-          Serial.println("A");
-        }
+        // Display the selected group's stored values (not making them active)
+        float voltage = groupData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::VOLTAGE_SET)] / 100.0f;
+        float current = groupData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::CURRENT_SET)] / 1000.0f;
+        Serial.print("Stored settings: ");
+        Serial.print(voltage, 2);
+        Serial.print("V, ");
+        Serial.print(current, 3);
+        Serial.println("A");
+        Serial.println("Note: Settings are NOT applied. Use 'recall' to apply settings.");
       } else {
-        Serial.println("Failed to select data group");
+        Serial.println("Failed to read data group");
       }
     } else {
       Serial.println("Invalid group number. Use 0-9.");
@@ -111,27 +114,30 @@ void handleCDDataMenu(const String& input, XY_SKxxx* ps) {
     if (parseUInt8(input.substring(6), groupNum) && groupNum <= 9) {
       xy_sk::MemoryGroup group = static_cast<xy_sk::MemoryGroup>(groupNum);
       
-      // First read the current active values
-      uint16_t activeData[xy_sk::DATA_GROUP_REGISTERS];
-      if (ps->readMemoryGroup(xy_sk::MemoryGroup::M0, activeData)) {
-        // Then write them to the specified group
-        if (ps->writeMemoryGroup(group, activeData)) {
-          Serial.print("Current settings stored to group ");
-          Serial.println(groupNum);
-          
-          // Display what was stored
-          float voltage = activeData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::VOLTAGE_SET)] / 100.0f;
-          float current = activeData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::CURRENT_SET)] / 1000.0f;
-          Serial.print("Stored: ");
-          Serial.print(voltage, 2);
-          Serial.print("V, ");
-          Serial.print(current, 3);
-          Serial.println("A");
-        } else {
-          Serial.println("Failed to store settings");
-        }
+      // First read current device settings directly from registers instead of memory group
+      float voltage = ps->getSetVoltage(true);  // Get directly from device
+      float current = ps->getSetCurrent(true);  // Get directly from device
+      
+      // Create data array with valid values
+      uint16_t activeData[xy_sk::DATA_GROUP_REGISTERS] = {0};
+      
+      // Set the values we care about (voltage and current)
+      activeData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::VOLTAGE_SET)] = (uint16_t)(voltage * 100.0f);
+      activeData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::CURRENT_SET)] = (uint16_t)(current * 1000.0f);
+      
+      // Write the prepared data to the specified group
+      if (ps->writeMemoryGroup(group, activeData)) {
+        Serial.print("Current settings stored to group ");
+        Serial.println(groupNum);
+        
+        // Display what was stored
+        Serial.print("Stored: ");
+        Serial.print(voltage, 2);
+        Serial.print("V, ");
+        Serial.print(current, 3);
+        Serial.println("A");
       } else {
-        Serial.println("Failed to read current settings");
+        Serial.println("Failed to store settings");
       }
     } else {
       Serial.println("Invalid group number. Use 0-9.");
@@ -142,41 +148,56 @@ void handleCDDataMenu(const String& input, XY_SKxxx* ps) {
     if (parseUInt8(input.substring(7), groupNum) && groupNum <= 9) {
       xy_sk::MemoryGroup group = static_cast<xy_sk::MemoryGroup>(groupNum);
       
-      // Clear cache before operation
-      ps->updateAllStatus(true);
+      // First read the values directly from the group registers
+      uint16_t groupData[xy_sk::DATA_GROUP_REGISTERS];
+      bool readSuccess = ps->readMemoryGroup(group, groupData, true);
       
-      // Try multiple times if needed
-      bool success = false;
-      for (int attempt = 0; attempt < 3 && !success; attempt++) {
-        if (attempt > 0) {
-          delay(300);  // Add longer delay between attempts
-          Serial.print("Retrying... ");
+      if (readSuccess) {
+        // Extract voltage and current with proper divisors
+        float voltage = groupData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::VOLTAGE_SET)] / 100.0f;
+        float current = groupData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::CURRENT_SET)] / 1000.0f;
+        
+        // Check for invalid values that might indicate data corruption
+        if (voltage > 60.0f || current > 10.0f) {
+          Serial.println("Warning: Retrieved values appear invalid.");
+          Serial.print("Raw voltage register: 0x");
+          Serial.print(groupData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::VOLTAGE_SET)], HEX);
+          Serial.print(", Raw current register: 0x");
+          Serial.println(groupData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::CURRENT_SET)], HEX);
+          
+          // Attempt to use default safe values
+          voltage = 5.0f;
+          current = 1.0f;
+          Serial.println("Using safe default values instead.");
         }
-        success = ps->callMemoryGroup(group);
-      }
-      
-      if (success) {
-        Serial.print("Settings recalled from group ");
-        Serial.println(groupNum);
         
-        // Give device time to update internal registers
-        delay(250);
+        // Check against device limits (XY-SK120 likely can't go above 5A)
+        if (current > 5.0f) {
+          float originalCurrent = current;
+          current = 5.0f;
+          Serial.print("Warning: Current value (");
+          Serial.print(originalCurrent, 3);
+          Serial.print("A) exceeds device limit, reduced to ");
+          Serial.print(current, 3);
+          Serial.println("A");
+        }
         
-        // Display the recalled settings by reading M0 (active group)
-        uint16_t activeData[xy_sk::DATA_GROUP_REGISTERS];
-        if (ps->readMemoryGroup(xy_sk::MemoryGroup::M0, activeData, true)) { // force refresh
-          float voltage = activeData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::VOLTAGE_SET)] / 100.0f;
-          float current = activeData[static_cast<uint8_t>(xy_sk::GroupRegisterOffset::CURRENT_SET)] / 1000.0f;
-          Serial.print("Recalled: ");
+        // Now try to apply the validated values
+        bool success = ps->setVoltageAndCurrent(voltage, current);
+        
+        if (success) {
+          Serial.print("Settings recalled from group ");
+          Serial.println(groupNum);
+          Serial.print("Applied: ");
           Serial.print(voltage, 2);
           Serial.print("V, ");
           Serial.print(current, 3);
           Serial.println("A");
         } else {
-          Serial.println("Failed to read recalled settings");
+          Serial.println("Failed to apply settings");
         }
       } else {
-        Serial.println("Failed to recall settings");
+        Serial.println("Failed to read memory group data");
       }
     } else {
       Serial.println("Invalid group number. Use 0-9.");
