@@ -56,6 +56,11 @@ void setup() {
     Serial.println("Connection failed. Please check wiring and settings.");
   }
   
+  // Initialize serial monitor interface
+  Serial.println("Initializing serial monitor interface...");
+  setupSerialMonitorControl();
+  Serial.println("Enter commands to control the power supply.");
+  
   // You can initialize other interfaces here in the future:
   // setupWebSocketInterface();
   // setupRestApiInterface();
@@ -78,4 +83,7 @@ void loop() {
     lastStatusUpdate = millis();
     // Perform any periodic updates here
   }
+  
+  // Add a small delay to prevent throttling the CPU
+  delay(10);
 }

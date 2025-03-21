@@ -1,7 +1,7 @@
 #include "XY-SKxxx-internal.h"
 #include "XY-SKxxx.h"
 
-/* Cached value access methods */
+/* Cached value access methods for output measurements */
 float XY_SKxxx::getOutputVoltage(bool refresh) {
   if (refresh) {
     updateOutputStatus(true);
@@ -30,7 +30,7 @@ float XY_SKxxx::getInputVoltage(bool refresh) {
   return _status.inputVoltage;
 }
 
-/* Check if the power supply is in CC or CV mode */
+/* Operation mode indicator methods */
 bool XY_SKxxx::isInConstantCurrentMode(bool refresh) {
   if (refresh) {
     updateDeviceState(true);
@@ -45,38 +45,80 @@ bool XY_SKxxx::isInConstantVoltageMode(bool refresh) {
   return (_status.cvccMode == 0);
 }
 
-// Non-cached versions for backward compatibility
-float XY_SKxxx::getInputVoltage() {
-  return getInputVoltage(false);
-}
-
-uint32_t XY_SKxxx::getAmpHours() {
-  return getAmpHours(false);
-}
-
-uint32_t XY_SKxxx::getWattHours() {
-  return getWattHours(false);
-}
-
-uint32_t XY_SKxxx::getOutputTime() {
-  return getOutputTime(false);
-}
-
-float XY_SKxxx::getInternalTemperature() {
-  return getInternalTemperature(false);
-}
-
-float XY_SKxxx::getExternalTemperature() {
-  return getExternalTemperature(false);
-}
-
-uint16_t XY_SKxxx::getProtectionStatus() {
-  return getProtectionStatus(false);
-}
-
-uint16_t XY_SKxxx::getCVCCState() {
-  if (updateDeviceState(false)) {
-    return _status.cvccMode;
+/* Protection and status methods */
+uint16_t XY_SKxxx::getProtectionStatus(bool refresh) {
+  if (refresh) {
+    updateDeviceState(true);
   }
-  return 0;
+  return _status.protectionStatus;
+}
+
+/* Combined measurement method for convenience */
+bool XY_SKxxx::getMeasurements(float &outVoltage, float &outCurrent, float &outPower, 
+                              float &inVoltage, bool refresh) {
+  if (refresh) {
+    if (!updateOutputStatus(true)) {
+      return false;
+    }
+  }
+  
+  outVoltage = _status.outputVoltage;
+  outCurrent = _status.outputCurrent;
+  outPower = _status.outputPower;
+  inVoltage = _status.inputVoltage;
+  
+  return true;
+}
+
+/* Complete energy measurement method */
+bool XY_SKxxx::getEnergyMeasurements(uint32_t &ampHours, uint32_t &wattHours, 
+                                   uint32_t &outputTime, bool refresh) {
+  if (refresh) {
+    if (!updateEnergyMeters(true)) {
+      return false;
+    }
+  }
+  
+  ampHours = _status.ampHours;
+  wattHours = _status.wattHours;
+  outputTime = _status.outputTime;
+  
+  return true;
+}
+
+/* Combined temperature measurement method */
+bool XY_SKxxx::getTemperatures(float &internalTemp, float &externalTemp, bool refresh) {
+  if (refresh) {
+    if (!updateTemperatures(true)) {
+      return false;
+    }
+  }
+  
+  internalTemp = _status.internalTemp;
+  externalTemp = _status.externalTemp;
+  
+  return true;
+}
+
+/* Individual temperature measurement methods */
+float XY_SKxxx::getInternalTemperature(bool refresh) {
+  if (refresh) {
+    updateTemperatures(true);
+  }
+  return _status.internalTemp;
+}
+
+float XY_SKxxx::getExternalTemperature(bool refresh) {
+  if (refresh) {
+    updateTemperatures(true);
+  }
+  return _status.externalTemp;
+}
+
+/* CV/CC status method */
+uint16_t XY_SKxxx::getCVCCState(bool refresh) {
+  if (refresh) {
+    updateDeviceState(true);
+  }
+  return _status.cvccMode;
 }

@@ -1,4 +1,5 @@
 #include "XY-SKxxx-internal.h" // Include internal header
+#include "XY-SKxxx-cd-data-group.h" // Add include for the memory group header
 
 /* Initialize static member */
 XY_SKxxx* XY_SKxxx::_instance = nullptr;
@@ -14,7 +15,13 @@ XY_SKxxx::XY_SKxxx(uint8_t rxPin, uint8_t txPin, uint8_t slaveID)
   
   // Initialize device status with default values
   memset(&_status, 0, sizeof(DeviceStatus));
-  memset(&_protection, 0, sizeof(ProtectionSettings));
+  memset(&_protection, 0, sizeof(ProtectionSettings)); 
+  
+  // Initialize memory group cache
+  for (int i = 0; i < 10; i++) {
+    groupCache[i].valid = false;
+    groupCache[i].lastUpdate = 0;
+  }
 }
 
 void XY_SKxxx::begin(long baudRate) {
@@ -73,18 +80,15 @@ void XY_SKxxx::staticPostTransmission() {
 
 bool XY_SKxxx::testConnection() {
   waitForSilentInterval();
-  
   preTransmission();
   uint16_t model = getModel();
   postTransmission();
-  
   return model > 0; // Return true if we got a valid model number
 }
 
 // Direct register access methods for memory groups
 bool XY_SKxxx::readRegisters(uint16_t addr, uint16_t count, uint16_t* buffer) {
   waitForSilentInterval();
-  
   uint8_t result = modbus.readHoldingRegisters(addr, count);
   if (result == modbus.ku8MBSuccess) {
     for (uint16_t i = 0; i < count; i++) {
@@ -93,31 +97,164 @@ bool XY_SKxxx::readRegisters(uint16_t addr, uint16_t count, uint16_t* buffer) {
     _lastCommsTime = millis();
     return true;
   }
-  
   _lastCommsTime = millis();
   return false;
 }
 
 bool XY_SKxxx::writeRegister(uint16_t addr, uint16_t value) {
   waitForSilentInterval();
-  
   uint8_t result = modbus.writeSingleRegister(addr, value);
   _lastCommsTime = millis();
-  
   return (result == modbus.ku8MBSuccess);
 }
 
 bool XY_SKxxx::writeRegisters(uint16_t addr, uint16_t count, uint16_t* buffer) {
   waitForSilentInterval();
-  
-  // First set all the response/transmit buffers
   for (uint16_t i = 0; i < count; i++) {
     modbus.setTransmitBuffer(i, buffer[i]);
   }
-  
-  // Then do the write
   uint8_t result = modbus.writeMultipleRegisters(addr, count);
   _lastCommsTime = millis();
-  
   return (result == modbus.ku8MBSuccess);
+}
+
+// Add a single register read method
+bool XY_SKxxx::readRegister(uint16_t addr, uint16_t& value) {
+  waitForSilentInterval();
+  uint16_t buffer[1];
+  bool success = readRegisters(addr, 1, buffer);
+  if (success) {
+    value = buffer[0];
+  }
+  return success;
+}
+
+// Add memory group methods implementation
+bool XY_SKxxx::readMemoryGroup(xy_sk::MemoryGroup group, uint16_t* data, bool force) {
+    // Try to get from cache first unless forced refresh is requested
+    if (!force && getCachedMemoryGroup(group, data, false)) {
+        return true;
+    }
+    
+    // Cache miss or forced refresh - read from device
+    uint16_t startAddr = xy_sk::DataGroupManager::getGroupStartAddress(group);
+    bool success = readRegisters(startAddr, xy_sk::DATA_GROUP_REGISTERS, data);
+    
+    // Update cache if read was successful
+    if (success) {
+        uint8_t groupIdx = static_cast<uint8_t>(group);
+        memcpy(groupCache[groupIdx].values, data, xy_sk::DATA_GROUP_REGISTERS * sizeof(uint16_t));
+        groupCache[groupIdx].valid = true;
+        groupCache[groupIdx].lastUpdate = millis();
+    }
+    
+    return success;
+}
+
+bool XY_SKxxx::writeMemoryGroup(xy_sk::MemoryGroup group, const uint16_t* data) {
+    uint16_t startAddr = xy_sk::DataGroupManager::getGroupStartAddress(group);
+    bool success = writeRegisters(startAddr, xy_sk::DATA_GROUP_REGISTERS, const_cast<uint16_t*>(data));
+    
+    // Update cache if write was successful
+    if (success) {
+        uint8_t groupIdx = static_cast<uint8_t>(group);
+        memcpy(groupCache[groupIdx].values, data, xy_sk::DATA_GROUP_REGISTERS * sizeof(uint16_t));
+        groupCache[groupIdx].valid = true;
+        groupCache[groupIdx].lastUpdate = millis();
+    }
+    
+    return success;
+}
+
+bool XY_SKxxx::callMemoryGroup(xy_sk::MemoryGroup group) {
+    // M0 is already active, no need to call it
+    if (group == xy_sk::MemoryGroup::M0) {
+        return true;
+    }
+    
+    // Write memory group number to EXTRACT_M register (001DH)
+    bool success = writeRegister(xy_sk::EXTRACT_M_REGISTER, static_cast<uint16_t>(group));
+    
+    // If successful, invalidate M0 cache as it will now contain data from the called group
+    if (success) {
+        groupCache[0].valid = false;
+    }
+    
+    return success;
+}
+
+bool XY_SKxxx::readGroupRegister(xy_sk::MemoryGroup group, xy_sk::GroupRegisterOffset regOffset, uint16_t& value) {
+    // Try to get from cache first
+    uint8_t groupIdx = static_cast<uint8_t>(group);
+    uint8_t offsetIdx = static_cast<uint8_t>(regOffset);
+    
+    if (groupCache[groupIdx].valid && offsetIdx < xy_sk::DATA_GROUP_REGISTERS) {
+        value = groupCache[groupIdx].values[offsetIdx];
+        return true;
+    }
+    
+    // Cache miss - read individual register from device
+    uint16_t addr = xy_sk::DataGroupManager::getRegisterAddress(group, regOffset);
+    return readRegister(addr, value);
+}
+
+bool XY_SKxxx::writeGroupRegister(xy_sk::MemoryGroup group, xy_sk::GroupRegisterOffset regOffset, uint16_t value) {
+    uint16_t addr = xy_sk::DataGroupManager::getRegisterAddress(group, regOffset);
+    bool success = writeRegister(addr, value);
+    
+    // Update cache if write was successful
+    if (success) {
+        uint8_t groupIdx = static_cast<uint8_t>(group);
+        uint8_t offsetIdx = static_cast<uint8_t>(regOffset);
+        
+        if (groupCache[groupIdx].valid && offsetIdx < xy_sk::DATA_GROUP_REGISTERS) {
+            groupCache[groupIdx].values[offsetIdx] = value;
+        } else {
+            // Invalidate cache entry if it wasn't already valid
+            groupCache[groupIdx].valid = false;
+        }
+    }
+    
+    return success;
+}
+
+bool XY_SKxxx::getCachedMemoryGroup(xy_sk::MemoryGroup group, uint16_t* data, bool refresh) {
+    uint8_t groupIdx = static_cast<uint8_t>(group);
+    
+    // Check if refresh is requested or if cache is invalid
+    if (refresh || !groupCache[groupIdx].valid) {
+        return updateMemoryGroupCache(group, true);
+    }
+    
+    // Check if cache is stale (older than 5 seconds)
+    unsigned long currentTime = millis();
+    unsigned long cacheAge = currentTime - groupCache[groupIdx].lastUpdate;
+    if (cacheAge > 5000) { // 5 seconds cache validity
+        return updateMemoryGroupCache(group, true);
+    }
+    
+    // Copy data from cache
+    memcpy(data, groupCache[groupIdx].values, xy_sk::DATA_GROUP_REGISTERS * sizeof(uint16_t));
+    return true;
+}
+
+bool XY_SKxxx::updateMemoryGroupCache(xy_sk::MemoryGroup group, bool force) {
+    uint8_t groupIdx = static_cast<uint8_t>(group);
+    
+    // Only update if forced or cache is invalid
+    if (force || !groupCache[groupIdx].valid) {
+        uint16_t startAddr = xy_sk::DataGroupManager::getGroupStartAddress(group);
+        bool success = readRegisters(startAddr, xy_sk::DATA_GROUP_REGISTERS, groupCache[groupIdx].values);
+        
+        if (success) {
+            groupCache[groupIdx].valid = true;
+            groupCache[groupIdx].lastUpdate = millis();
+        } else {
+            groupCache[groupIdx].valid = false;
+        }
+        
+        return success;
+    }
+    
+    return true;
 }
