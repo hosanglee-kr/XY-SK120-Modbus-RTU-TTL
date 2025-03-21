@@ -29,9 +29,9 @@
       "XY-SKxxx-internal.h",
       "XY-SKxxx-basic.cpp",
       "XY-SKxxx-cache.cpp",
-      "XY-SKxxx-control.cpp",
       "XY-SKxxx-measurement.cpp",
       "XY-SKxxx-protection.cpp",
+      "XY-SKxxx-settings.cpp",
       "include/XY-SKxxx_Config.h"
     ]
   }

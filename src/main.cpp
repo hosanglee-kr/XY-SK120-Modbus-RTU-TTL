@@ -2,6 +2,7 @@
 #include "XY-SKxxx.h"
 #include "XY-SKxxx_Config.h"
 #include "serial_monitor_interface.h"
+#include "serial_interface/serial_core.h"
 
 // Global configuration instance
 XYModbusConfig config;
@@ -48,18 +49,15 @@ void setup() {
     Serial.print("Version: "); Serial.println(version);
     
     // Display initial status
-    displayStatus(powerSupply);
+    displayDeviceStatus(powerSupply);
     
-    // Initialize the serial monitor control
+    // Initialize serial monitor interface - MOVED ALL RELATED CODE TO HERE
+    Serial.println("\nInitializing serial monitor interface...");
     setupSerialMonitorControl();
+    Serial.println("Enter commands to control the power supply.");
   } else {
     Serial.println("Connection failed. Please check wiring and settings.");
   }
-  
-  // You can initialize other interfaces here in the future:
-  // setupWebSocketInterface();
-  // setupRestApiInterface();
-  // setupMqttInterface();
 }
 
 void loop() {
@@ -78,4 +76,7 @@ void loop() {
     lastStatusUpdate = millis();
     // Perform any periodic updates here
   }
+  
+  // Add a small delay to prevent throttling the CPU
+  delay(10);
 }

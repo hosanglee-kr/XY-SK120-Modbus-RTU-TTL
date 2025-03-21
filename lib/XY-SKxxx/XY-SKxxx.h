@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <ModbusMaster.h>
+#include "XY-SKxxx-cd-data-group.h" // Add this include for Memory Group definitions
 
 // Define Modbus register addresses (follow protocol naming convention, p.3 of documentation)
 #define REG_V_SET 0x0000        // Voltage setting, 2 bytes, 2 decimal places, unit: V, Read and Write
@@ -34,7 +35,7 @@
 
 #define REG_ONOFF 0x0012        // Output on/off status, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
 
-#define REG_F_C 0x0013          // WIP: temperature unit, 2 bytes, 0 decimal places, unit: 0/1 (°F / °C), Read and Write
+#define REG_F_C 0x0013          // temperature unit, 2 bytes, 0 decimal places, unit: 0=Celsius, 1=Fahrenheit, Read and Write
 
 #define REG_B_LED 0x0014        // WIP: Backlight brightness, 2 bytes, 0 decimal places, unit: 0-5, Read and Write, factory default: 5 (brightest)
 
@@ -61,11 +62,11 @@
 #define REG_CV_SET         0x0050    // CV (constant voltage) setting, 2 bytes, 2 decimal places, unit: V, Read and Write
 #define REG_CC_SET         0x0051    // CC (constant current) setting, 2 bytes, 3 decimal places, unit: A, Read and Write
 
-#define REG_S_VLP          0x0052    // LVP (input under voltage protection) setting, 2 bytes, 2 decimal places, unit: W, Read and Write
+#define REG_S_LVP          0x0052    // LVP (input low voltage protection) setting, 2 bytes, 2 decimal places, unit: V, Read and Write
 #define REG_S_OVP          0x0053    // OVP (output over voltage protection) setting, 2 bytes, 2 decimal places, unit: V, Read and Write
 
 #define REG_S_OCP          0x0054    // OCP (output over current protection) setting, 2 bytes, 3 decimal places, unit: A, Read and Write
-#define REG_S_OPP          0x0055    // OPP (output over power protection) setting, 2 bytes, 2 decimal places, unit: W, Read and Write
+#define REG_S_OPP          0x0055    // OPP (output over power protection) setting, 2 bytes, 1 decimal place, unit: W, Read and Write
 
 #define REG_S_OHP_H        0x0056    // OHP_H (output high power protection - hours) setting, 2 bytes, 0 decimal places, unit: h, Read and Write
 #define REG_S_OHP_M        0x0057    // OHP_M (output high power protection - minutes) setting, 2 bytes, 0 decimal places, unit: min, Read and Write
@@ -84,7 +85,15 @@
 
 // Additional Modbus register addresses for XY-SK120 0x0110 - 0x011D, will not implement these as it's related to weather infomration???
 
-// undocumented / missing registers, available in the XY-SK120 manual and OSD (On-Screen Display) but not in the Modbus register map documentation
+/* Below are undocumented registers, available in the XY-SK120 manual and OSD (On-Screen Display) 
+but not in the Modbus register map documentation
+*/
+/*
+REG_S_ETP: both 0x005E and 0x005F stores the ETP (External Temperature Protection) value, but 0x005E is read-write and 0x005F is read-only and both values seems to be mirrored. 
+However, writing to 0x005E does not seem to have any effect on the device, so it's likely not implemented or used.
+*/
+#define REG_S_ETP          0x005E    // WIP: Not implemented.
+
 // beeper settings (beeper enable)
 // FET setting (quick adjustment of voltage, current or power)
 // PPT Setting (MPPT Solar Charging Settings)
@@ -134,7 +143,7 @@ struct ProtectionSettings {
   float constantCurrent;    // CC setting (A)
   
   // Protection thresholds
-  float underVoltageProtection;  // Input under voltage protection (V)
+  float lowVoltageProtection;   // Input low voltage protection (LVP) (V)
   float overVoltageProtection;   // Output over voltage protection (V)
   float overCurrentProtection;   // Output over current protection (A)
   float overPowerProtection;     // Output over power protection (W)
@@ -162,7 +171,7 @@ public:
   void begin(long baudRate);
   bool testConnection();
   
-  // Basic device information - rename read* to get*
+  // Basic device information
   uint16_t getModel();
   uint16_t getVersion();
   
@@ -195,31 +204,47 @@ public:
   // Output settings
   bool setVoltage(float voltage);
   bool setCurrent(float current);
-  bool getOutput(float &voltage, float &current, float &power); // rename readOutput to getOutput
+  bool getOutput(float &voltage, float &current, float &power);
   
-  // Measurements
-  float getInputVoltage();
-  uint32_t getAmpHours();
-  uint32_t getWattHours();
-  uint32_t getOutputTime();
-  float getInternalTemperature();
-  float getExternalTemperature();
+  // Combined measurement methods for convenience
+  bool getMeasurements(float &outVoltage, float &outCurrent, float &outPower, 
+                      float &inVoltage, bool refresh = true);
+  bool getEnergyMeasurements(uint32_t &ampHours, uint32_t &wattHours, 
+                           uint32_t &outputTime, bool refresh = true);
+  bool getTemperatures(float &internalTemp, float &externalTemp, bool refresh = true);
   
   // System control
   bool setKeyLock(bool lock);
-  uint16_t getProtectionStatus();
-  uint16_t getCVCCState();
+  uint16_t getCVCCState(bool refresh = false);
   bool setOutputState(bool on);
+
+  // Device settings - direct register access without caching
   bool setBacklightBrightness(uint8_t level);
+  uint8_t getBacklightBrightness();
   bool setSleepTimeout(uint8_t minutes);
+  uint8_t getSleepTimeout();
   bool setSlaveAddress(uint8_t address);
+  bool getSlaveAddress(uint8_t &address);
   bool setBaudRate(uint8_t baudRate);
-  uint16_t getBaudRate(bool refresh = false);
+  uint8_t getBaudRateCode();
+  long getActualBaudRate();
+  bool setBuzzer(bool enabled);
+  bool getBuzzer(bool &enabled);
+  bool setTemperatureUnit(bool celsius);
+  bool getTemperatureUnit(bool &celsius);
+  bool setDataGroup(uint8_t group);
+  uint8_t getSelectedDataGroup();
+  
+  // Temperature calibration
   bool setInternalTempCalibration(float offset);
   bool setExternalTempCalibration(float offset);
-  bool setBuzzer(bool on);
-  bool setDataGroup(uint8_t group);
+  float getInternalTempCalibration(bool refresh = false);
+  float getExternalTempCalibration(bool refresh = false);
+
+  // System status
   uint16_t getSystemStatus(bool refresh = false);
+  bool setProtectionStatus(uint16_t status);
+  bool setSystemStatus(uint16_t status);
   
   // Higher-level convenience methods with built-in timing
   bool setVoltageAndCurrent(float voltage, float current);
@@ -237,12 +262,12 @@ public:
   bool setOverVoltageProtection(float voltage);
   bool setOverCurrentProtection(float current);
   bool setOverPowerProtection(float power);
-  bool setUnderVoltageProtection(float voltage);
+  bool setLowVoltageProtection(float voltage);
   
   bool getOverVoltageProtection(float &voltage);
   bool getOverCurrentProtection(float &current);
   bool getOverPowerProtection(float &power);
-  bool getUnderVoltageProtection(float &voltage);
+  bool getLowVoltageProtection(float &voltage);
   
   // Amp-hour protection methods
   bool setOverAmpHourProtection(uint16_t ampHoursLow, uint16_t ampHoursHigh);
@@ -264,10 +289,6 @@ public:
   bool setPowerOnInitialization(bool outputOnAtStartup);
   bool getPowerOnInitialization(bool &outputOnAtStartup);
 
-  // Temperature unit control
-  bool setTemperatureUnit(bool celsius); // true for Celsius, false for Fahrenheit
-  bool getTemperatureUnit(bool &celsius);
-
   // Constant Voltage (CV) and Constant Current (CC) mode methods
   bool setConstantVoltage(float voltage);
   bool getConstantVoltage(float &voltage);
@@ -286,7 +307,7 @@ public:
   // Cached protection value access methods
   float getCachedConstantVoltage(bool refresh = false);
   float getCachedConstantCurrent(bool refresh = false);
-  float getCachedUnderVoltageProtection(bool refresh = false);
+  float getCachedLowVoltageProtection(bool refresh = false);
   float getCachedOverVoltageProtection(bool refresh = false);
   float getCachedOverCurrentProtection(bool refresh = false);
   float getCachedOverPowerProtection(bool refresh = false);
@@ -296,21 +317,9 @@ public:
   float getCachedOverTemperatureProtection(bool refresh = false);
   bool getCachedPowerOnInitialization(bool refresh = false);
 
-  // Additional get methods for existing settings
-  bool getBacklightBrightness(uint8_t &level, bool refresh = false);
-  uint8_t getSleepTimeout(bool refresh = false);
-  bool getSlaveAddress(uint8_t &address);  // Direct read, no caching needed
-  float getInternalTempCalibration(bool refresh = false);
-  float getExternalTempCalibration(bool refresh = false);
-  bool getBuzzer(bool &enabled);  // Direct read, no caching needed
-  uint8_t getSelectedDataGroup();  // Direct read, no caching needed
-  
-  // If REG_PROTECT and REG_SYS_STATUS are writable (check documentation):
-  bool setProtectionStatus(uint16_t status);
-  bool setSystemStatus(uint16_t status);
-
   // Add direct register access methods for memory groups
   bool readRegisters(uint16_t addr, uint16_t count, uint16_t* buffer);
+  bool readRegister(uint16_t addr, uint16_t& value); // Add this method
   bool writeRegister(uint16_t addr, uint16_t value);
   bool writeRegisters(uint16_t addr, uint16_t count, uint16_t* buffer);
 
@@ -322,10 +331,77 @@ public:
   bool debugWriteRegister(uint16_t addr, uint16_t value);
   bool debugWriteRegisters(uint16_t addr, uint8_t count, const uint16_t* values);
 
+  // Memory Group Methods
+  
+  /**
+   * Read all registers from a memory group
+   * 
+   * @param group Memory group to read from
+   * @param data Array to store the read data (must be able to hold DATA_GROUP_REGISTERS values)
+   * @param force Force read from device even if cache is valid
+   * @return true if successful
+   */
+  bool readMemoryGroup(xy_sk::MemoryGroup group, uint16_t* data, bool force = false);
+  
+  /**
+   * Write all registers to a memory group
+   * 
+   * @param group Memory group to write to
+   * @param data Array containing the data to write (must contain DATA_GROUP_REGISTERS values)
+   * @return true if successful
+   */
+  bool writeMemoryGroup(xy_sk::MemoryGroup group, const uint16_t* data);
+  
+  /**
+   * Call a memory group to make it active (copy to M0)
+   * 
+   * @param group Memory group to call (M1-M9, M0 is ignored)
+   * @return true if successful
+   */
+  bool callMemoryGroup(xy_sk::MemoryGroup group);
+  
+  /**
+   * Read a specific register from a memory group
+   * 
+   * @param group Memory group to read from
+   * @param regOffset Specific register offset from GroupRegisterOffset enum
+   * @param value Reference to store the read value
+   * @return true if successful
+   */
+  bool readGroupRegister(xy_sk::MemoryGroup group, xy_sk::GroupRegisterOffset regOffset, uint16_t& value);
+  
+  /**
+   * Write to a specific register in a memory group
+   * 
+   * @param group Memory group to write to
+   * @param regOffset Specific register offset from GroupRegisterOffset enum
+   * @param value Value to write
+   * @return true if successful
+   */
+  bool writeGroupRegister(xy_sk::MemoryGroup group, xy_sk::GroupRegisterOffset regOffset, uint16_t value);
+  
+  /**
+   * Get memory group data from cache, optionally refreshing from device
+   * 
+   * @param group Memory group to get
+   * @param data Array to store the group data
+   * @param refresh Whether to refresh the cache from device
+   * @return true if successful
+   */
+  bool getCachedMemoryGroup(xy_sk::MemoryGroup group, uint16_t* data, bool refresh = false);
+  
+  /**
+   * Update the memory group cache from the device
+   * 
+   * @param group Memory group to update
+   * @param force Force update even if cache is still valid
+   * @return true if successful
+   */
+  bool updateMemoryGroupCache(xy_sk::MemoryGroup group, bool force = false);
+
 private:
   uint8_t _rxPin;
   uint8_t _txPin;
-  // ModbusMaster node; // Changed to public modbus
   uint8_t _slaveID;
   unsigned long _baudRate;
   unsigned long _lastCommsTime;
@@ -353,7 +429,7 @@ private:
   static void staticPreTransmission();
   static void staticPostTransmission();
 
-  // Additional cache fields if needed
+  // Additional cache fields 
   float _internalTempCalibration;
   float _externalTempCalibration;
   bool _buzzerEnabled;
@@ -362,6 +438,9 @@ private:
   
   // Update methods for new cached values
   bool updateCalibrationSettings(bool force = false);
+
+  // Memory group cache to avoid repeated reads
+  xy_sk::MemoryGroupData groupCache[10]; // 10 groups: M0-M9
 };
 
 #endif // XY_SKXXX_H

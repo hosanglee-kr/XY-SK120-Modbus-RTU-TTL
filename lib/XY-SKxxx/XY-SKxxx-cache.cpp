@@ -60,7 +60,7 @@ bool XY_SKxxx::updateDeviceState(bool force) {
   if (lockResult == modbus.ku8MBSuccess) {
     _status.keyLocked = (modbus.getResponseBuffer(0) != 0);
   } else {
-    success = false;  // Use success instead of undeclared result
+    success = false;
   }
   
   delay(_silentIntervalTime * 2);
@@ -73,7 +73,7 @@ bool XY_SKxxx::updateDeviceState(bool force) {
   if (protResult == modbus.ku8MBSuccess) {
     _status.protectionStatus = modbus.getResponseBuffer(0);
   } else {
-    success = false;  // Use success instead of undeclared result
+    success = false;
   }
   
   delay(_silentIntervalTime * 2);
@@ -86,7 +86,7 @@ bool XY_SKxxx::updateDeviceState(bool force) {
   if (cvccResult == modbus.ku8MBSuccess) {
     _status.cvccMode = modbus.getResponseBuffer(0);
   } else {
-    success = false;  // Use success instead of undeclared result
+    success = false;
   }
   
   delay(_silentIntervalTime * 2);
@@ -99,14 +99,14 @@ bool XY_SKxxx::updateDeviceState(bool force) {
   if (sysResult == modbus.ku8MBSuccess) {
     _status.systemStatus = modbus.getResponseBuffer(0);
   } else {
-    success = false;  // Use success instead of undeclared result
+    success = false;
   }
   
-  if (success) {  // Use success instead of undeclared result
+  if (success) {
     _lastStateUpdate = now;
   }
   
-  return success;  // Use success instead of undeclared result
+  return success;
 }
 
 bool XY_SKxxx::updateOutputStatus(bool force) {
@@ -280,43 +280,6 @@ bool XY_SKxxx::updateCalibrationSettings(bool force) {
   return false;
 }
 
-// Energy meter access methods
-uint32_t XY_SKxxx::getAmpHours(bool refresh) {
-  if (refresh) {
-    updateEnergyMeters(true);
-  }
-  return _status.ampHours;
-}
-
-uint32_t XY_SKxxx::getWattHours(bool refresh) {
-  if (refresh) {
-    updateEnergyMeters(true);
-  }
-  return _status.wattHours;
-}
-
-uint32_t XY_SKxxx::getOutputTime(bool refresh) {
-  if (refresh) {
-    updateEnergyMeters(true);
-  }
-  return _status.outputTime;
-}
-
-// Temperature access methods
-float XY_SKxxx::getInternalTemperature(bool refresh) {
-  if (refresh) {
-    updateTemperatures(true);
-  }
-  return _status.internalTemp;
-}
-
-float XY_SKxxx::getExternalTemperature(bool refresh) {
-  if (refresh) {
-    updateTemperatures(true);
-  }
-  return _status.externalTemp;
-}
-
 // Device state access methods
 bool XY_SKxxx::isOutputEnabled(bool refresh) {
   if (refresh) {
@@ -330,13 +293,6 @@ bool XY_SKxxx::isKeyLocked(bool refresh) {
     updateDeviceState(true);
   }
   return _status.keyLocked;
-}
-
-uint16_t XY_SKxxx::getProtectionStatus(bool refresh) {
-  if (refresh) {
-    updateDeviceState(true);
-  }
-  return _status.protectionStatus;
 }
 
 uint16_t XY_SKxxx::getSystemStatus(bool refresh) {
@@ -359,21 +315,6 @@ float XY_SKxxx::getSetCurrent(bool refresh) {
     updateDeviceSettings(true);
   }
   return _status.setCurrent;
-}
-
-bool XY_SKxxx::getBacklightBrightness(uint8_t &level, bool refresh) {
-  if (refresh) {
-    updateDeviceSettings(true);
-  }
-  level = _status.backlightLevel;
-  return true;
-}
-
-uint8_t XY_SKxxx::getSleepTimeout(bool refresh) {
-  if (refresh) {
-    updateDeviceSettings(true);
-  }
-  return _status.sleepTimeout;
 }
 
 // Calibration settings access methods
