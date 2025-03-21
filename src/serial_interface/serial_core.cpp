@@ -55,7 +55,8 @@ void processSerialCommand(const String& input, XY_SKxxx* ps, XYModbusConfig& con
     }
     return;
   } else if (input.equalsIgnoreCase("status")) {
-    displayStatus(ps);
+    // Use the single displayDeviceStatus function
+    displayDeviceStatus(ps);
     return;
   }
   
@@ -117,7 +118,8 @@ void displayDeviceInfo(XY_SKxxx* ps) {
   }
 }
 
-void displayStatus(XY_SKxxx* ps) {
+// Main implementation of status display
+void displayDeviceStatus(XY_SKxxx* ps) {
   if (!ps) {
     Serial.println("Error: Power supply not initialized");
     return;
@@ -127,7 +129,7 @@ void displayStatus(XY_SKxxx* ps) {
   
   // Check if output is enabled
   bool outputEnabled = ps->isOutputEnabled(true);
-  Serial.print("Output: ");
+  Serial.print("Power Supply Output: ");
   Serial.println(outputEnabled ? "ON" : "OFF");
   
   // Read current output values
@@ -152,6 +154,11 @@ void displayStatus(XY_SKxxx* ps) {
   Serial.print("Operating Mode: ");
   Serial.println(ccMode ? "Constant Current (CC)" : "Constant Voltage (CV)");
   
+  // Front panel keys status - IMPORTANT ADDITION
+  bool keyLocked = ps->isKeyLocked(true); // Force refresh
+  Serial.print("Front Panel Keys: ");
+  Serial.println(keyLocked ? "LOCKED" : "UNLOCKED");
+  
   // Read settings
   float setVoltage = ps->getSetVoltage(true);
   float setCurrent = ps->getSetCurrent(true);
@@ -165,16 +172,19 @@ void displayStatus(XY_SKxxx* ps) {
   Serial.println(" A");
   
   // Read input voltage
-  float inputVoltage = ps->getInputVoltage(false);
+  float inputVoltage = ps->getInputVoltage(true);
   Serial.print("Input Voltage: ");
   Serial.print(inputVoltage, 2);
   Serial.println(" V");
   
   // Read temperature
   float internalTemp = ps->getInternalTemperature(true);
+  bool isCelsius;
+  ps->getTemperatureUnit(isCelsius);
+  
   Serial.print("Internal Temperature: ");
   Serial.print(internalTemp, 1);
-  Serial.println(" °C");
+  Serial.println(isCelsius ? " °C" : " °F");
 }
 
 void displayConfig(XYModbusConfig& config) {

@@ -127,6 +127,45 @@ void handleBasicControl(const String& input, XY_SKxxx* ps) {
         Serial.println("Failed to set constant current");
       }
     }
+  } else if (input == "status") {
+    // Get current readings
+    float voltage, current, power;
+    bool isOn;
+    
+    if (ps->getOutputStatus(voltage, current, power, isOn)) {
+      Serial.println("\n==== Output Status ====");
+      
+      Serial.print("Voltage: ");
+      Serial.print(voltage, 2);
+      Serial.println(" V");
+      
+      Serial.print("Current: ");
+      Serial.print(current, 3);
+      Serial.println(" A");
+      
+      Serial.print("Power:   ");
+      Serial.print(power, 2);
+      Serial.println(" W");
+      
+      Serial.print("Output:  ");
+      if (isOn) {
+        Serial.println("ON");
+      } else {
+        Serial.println("OFF");
+      }
+      
+      // Front panel keys status
+      bool keyLocked = ps->isKeyLocked(true); // Force refresh
+      Serial.print("Keypad:  ");
+      Serial.println(keyLocked ? "LOCKED" : "UNLOCKED");
+      
+      // Display CC/CV mode
+      uint16_t cvccMode = ps->getCVCCState(true); // Force refresh
+      Serial.print("Mode:    ");
+      Serial.println(cvccMode == 0 ? "Constant Voltage (CV)" : "Constant Current (CC)");
+    } else {
+      Serial.println("Failed to retrieve output status");
+    }
   } else {
     Serial.println("Unknown command. Type 'help' for options.");
   }

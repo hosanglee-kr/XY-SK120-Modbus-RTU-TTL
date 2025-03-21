@@ -20,4 +20,4 @@ void setMenuState(MenuState state);
 void displayDeviceInfo(XY_SKxxx* ps);
 
 // Display power supply status
-void displayStatus(XY_SKxxx* ps);
+void displayDeviceStatus(XY_SKxxx* ps);

@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include "XY-SKxxx.h"
 #include "XY-SKxxx_Config.h"
+#include "serial_core.h" // Add this to access displayDeviceStatus
 
 // Display the main menu
 void displayMainMenu();

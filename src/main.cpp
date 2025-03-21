@@ -2,6 +2,7 @@
 #include "XY-SKxxx.h"
 #include "XY-SKxxx_Config.h"
 #include "serial_monitor_interface.h"
+#include "serial_interface/serial_core.h"
 
 // Global configuration instance
 XYModbusConfig config;
@@ -48,7 +49,7 @@ void setup() {
     Serial.print("Version: "); Serial.println(version);
     
     // Display initial status
-    displayStatus(powerSupply);
+    displayDeviceStatus(powerSupply);
     
     // Initialize the serial monitor control
     setupSerialMonitorControl();

@@ -41,9 +41,16 @@ void handleMainMenu(const String& input, XY_SKxxx* ps, XYModbusConfig& config) {
   } else if (input == "6") {  // Add handler for the new menu option
     setMenuState(MenuState::CD_DATA_MENU);
     displayCDDataMenu();
+  } else if (input.equalsIgnoreCase("status")) {
+    // Call the displayDeviceStatus function from serial_core.cpp
+    displayDeviceStatus(ps);
   } else if (input.equalsIgnoreCase("config")) {
     // Load and display the configuration
     displayConfig(config);
+  } else if (input.equalsIgnoreCase("help")) {
+    displayMainMenu();
+  } else if (input.equalsIgnoreCase("info")) {
+    displayDeviceInfo(ps);
   } else {
     Serial.println("Unknown command. Type 'help' for options.");
   }
