@@ -51,21 +51,13 @@ void setup() {
     // Display initial status
     displayDeviceStatus(powerSupply);
     
-    // Initialize the serial monitor control
+    // Initialize serial monitor interface - MOVED ALL RELATED CODE TO HERE
+    Serial.println("\nInitializing serial monitor interface...");
     setupSerialMonitorControl();
+    Serial.println("Enter commands to control the power supply.");
   } else {
     Serial.println("Connection failed. Please check wiring and settings.");
   }
-  
-  // Initialize serial monitor interface
-  Serial.println("Initializing serial monitor interface...");
-  setupSerialMonitorControl();
-  Serial.println("Enter commands to control the power supply.");
-  
-  // You can initialize other interfaces here in the future:
-  // setupWebSocketInterface();
-  // setupRestApiInterface();
-  // setupMqttInterface();
 }
 
 void loop() {
