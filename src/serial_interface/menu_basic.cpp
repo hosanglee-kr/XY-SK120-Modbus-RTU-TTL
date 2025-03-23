@@ -90,7 +90,7 @@ void handleBasicControl(const String& input, XY_SKxxx* ps) {
       Serial.print("V, Current: ");
       Serial.print(current, 3);
       Serial.print("A, Power: ");
-      Serial.print(power, 2);
+      Serial.print(power, 3);
       Serial.println("W");
     } else {
       Serial.println("Failed to read output values");

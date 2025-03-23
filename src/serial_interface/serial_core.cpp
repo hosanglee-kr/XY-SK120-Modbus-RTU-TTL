@@ -148,7 +148,7 @@ void displayDeviceStatus(XY_SKxxx* ps) {
   Serial.println(" A");
   
   Serial.print("Output Power: ");
-  Serial.print(power, 2);
+  Serial.print(power, 3); // Changed from 2 to 3 decimal places
   Serial.println(" W");
   
   // Check operating mode
