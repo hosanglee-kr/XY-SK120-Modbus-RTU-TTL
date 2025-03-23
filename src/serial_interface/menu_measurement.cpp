@@ -32,7 +32,7 @@ void handleMeasurementMenu(const String& input, XY_SKxxx* ps) {
   } else if (input == "power") {
     float power = ps->getOutputPower(true);
     Serial.print("Output Power: ");
-    Serial.print(power, 2);
+    Serial.print(power, 3); // Changed from 2 to 3 decimal places
     Serial.println(" W");
   } else if (input == "input") {
     float inVoltage = ps->getInputVoltage(true);
@@ -61,7 +61,7 @@ void handleMeasurementMenu(const String& input, XY_SKxxx* ps) {
     Serial.println(" A");
     
     Serial.print("Output Power: ");
-    Serial.print(power, 2);
+    Serial.print(power, 3); // Changed from 2 to 3 decimal places
     Serial.println(" W");
     
     Serial.print("Input Voltage: ");
