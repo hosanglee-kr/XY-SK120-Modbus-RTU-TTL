@@ -23,7 +23,10 @@ void handleProtectionMenu(const String& input, XY_SKxxx* ps) {
     return;
   }
   
-  if (input.startsWith("ovp ")) {
+  if (input == "get") {
+    // Display all protection settings
+    displayDeviceProtectionStatus(ps);
+  } else if (input.startsWith("ovp ")) {
     float voltage;
     if (parseFloat(input.substring(4), voltage)) {
       if (ps->setOverVoltageProtection(voltage)) {
