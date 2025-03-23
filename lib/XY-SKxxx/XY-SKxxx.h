@@ -50,7 +50,7 @@
 #define REG_T_IN_CAL 0x001A     // Internal temperature calibration, 2 bytes, 1 decimal place, unit: °F / °C, Read and Write
 #define REG_T_EXT_CAL 0x001B    // External temperature calibration, 2 bytes, 1 decimal place, unit: °F / °C, Read and Write
 
-#define REG_BUZZER 0x001C       // Buzzer enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
+#define REG_BEEPER 0x001C       // Beeper enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
 
 #define REG_EXTRACT_M 0x001D    // Data group selection, 2 bytes, 0 decimal places, unit: 0-9, Read and Write
 
@@ -228,8 +228,8 @@ public:
   bool setBaudRate(uint8_t baudRate);
   uint8_t getBaudRateCode();
   long getActualBaudRate();
-  bool setBuzzer(bool enabled);
-  bool getBuzzer(bool &enabled);
+  bool setBeeper(bool enabled);
+  bool getBeeper(bool &enabled);
   bool setTemperatureUnit(bool celsius);
   bool getTemperatureUnit(bool &celsius);
   bool setDataGroup(uint8_t group);
@@ -432,7 +432,7 @@ private:
   // Additional cache fields 
   float _internalTempCalibration;
   float _externalTempCalibration;
-  bool _buzzerEnabled;
+  bool _beeperEnabled;
   uint8_t _selectedDataGroup;
   unsigned long _lastCalibrationUpdate;
   

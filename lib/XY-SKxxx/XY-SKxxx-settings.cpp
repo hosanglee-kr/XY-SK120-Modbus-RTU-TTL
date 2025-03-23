@@ -223,47 +223,6 @@ uint8_t XY_SKxxx::getSleepTimeout() {
 }
 
 /**
- * Enable or disable the buzzer
- * 
- * @param enabled true to enable, false to disable
- * @return true if successful
- */
-bool XY_SKxxx::setBuzzer(bool enabled) {
-  waitForSilentInterval();
-  
-  uint8_t result = modbus.writeSingleRegister(REG_BUZZER, enabled ? 1 : 0);
-  _lastCommsTime = millis();
-  
-  if (result == modbus.ku8MBSuccess) {
-    _buzzerEnabled = enabled;
-    return true;
-  }
-  
-  return false;
-}
-
-/**
- * Get the current buzzer state
- * 
- * @param enabled Reference to store the state (true if enabled)
- * @return true if successful
- */
-bool XY_SKxxx::getBuzzer(bool &enabled) {
-  waitForSilentInterval();
-  
-  uint8_t result = modbus.readHoldingRegisters(REG_BUZZER, 1);
-  _lastCommsTime = millis();
-  
-  if (result == modbus.ku8MBSuccess) {
-    enabled = (modbus.getResponseBuffer(0) != 0);
-    _buzzerEnabled = enabled;
-    return true;
-  }
-  
-  return false;
-}
-
-/**
  * Set the temperature unit
  * 
  * @param celsius true for Celsius, false for Fahrenheit

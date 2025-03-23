@@ -243,7 +243,6 @@ bool XY_SKxxx::updateTemperatures(bool force) {
 }
 
 bool XY_SKxxx::updateCalibrationSettings(bool force) {
-  // Check if update is needed based on timeout or force flag
   unsigned long now = millis();
   if (!force && (now - _lastCalibrationUpdate < _cacheTimeout)) {
     return true;
@@ -251,29 +250,43 @@ bool XY_SKxxx::updateCalibrationSettings(bool force) {
   
   waitForSilentInterval();
   
-  // Read temperature calibration values
-  uint8_t result = modbus.readHoldingRegisters(REG_T_IN_CAL, 2);
+  // Read internal temperature calibration
+  uint8_t result = modbus.readHoldingRegisters(REG_T_IN_CAL, 1);
+  _lastCommsTime = millis();
+  
   if (result == modbus.ku8MBSuccess) {
-    _internalTempCalibration = modbus.getResponseBuffer(0) / 10.0f;
-    _externalTempCalibration = modbus.getResponseBuffer(1) / 10.0f;
+    _internalTempCalibration = (int16_t)modbus.getResponseBuffer(0) / 10.0f;
+  }
+  
+  delay(_silentIntervalTime * 2);
+  
+  // Read external temperature calibration
+  result = modbus.readHoldingRegisters(REG_T_EXT_CAL, 1);
+  _lastCommsTime = millis();
+  
+  if (result == modbus.ku8MBSuccess) {
+    _externalTempCalibration = (int16_t)modbus.getResponseBuffer(0) / 10.0f;
+  }
+  
+  delay(_silentIntervalTime * 2);
+  
+  // Read beeper setting
+  result = modbus.readHoldingRegisters(REG_BEEPER, 1);
+  _lastCommsTime = millis();
+  
+  if (result == modbus.ku8MBSuccess) {
+    _beeperEnabled = (modbus.getResponseBuffer(0) != 0);
+  }
+  
+  // Read selected data group
+  delay(_silentIntervalTime * 2);
+  result = modbus.readHoldingRegisters(REG_EXTRACT_M, 1);
+  if (result == modbus.ku8MBSuccess) {
+    _selectedDataGroup = modbus.getResponseBuffer(0);
     
-    // Read buzzer state
-    delay(_silentIntervalTime * 2);
-    result = modbus.readHoldingRegisters(REG_BUZZER, 1);
-    if (result == modbus.ku8MBSuccess) {
-      _buzzerEnabled = (modbus.getResponseBuffer(0) != 0);
-      
-      // Read selected data group
-      delay(_silentIntervalTime * 2);
-      result = modbus.readHoldingRegisters(REG_EXTRACT_M, 1);
-      if (result == modbus.ku8MBSuccess) {
-        _selectedDataGroup = modbus.getResponseBuffer(0);
-        
-        _lastCalibrationUpdate = now;
-        _lastCommsTime = millis();
-        return true;
-      }
-    }
+    _lastCalibrationUpdate = now;
+    _lastCommsTime = millis();
+    return true;
   }
   
   _lastCommsTime = millis();

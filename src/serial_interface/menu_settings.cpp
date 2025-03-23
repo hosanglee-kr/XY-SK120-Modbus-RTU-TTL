@@ -10,6 +10,7 @@ void displaySettingsMenu() {
   Serial.println("default - Restore device to factory defaults");
   Serial.println("update [pin] [value] - Update local configuration");
   Serial.println("saveconfig - Save local configuration to flash");
+  Serial.println("beeper [on/off] - Enable/disable beeper");
   Serial.println("menu - Return to main menu");
   Serial.println("help - Show this menu");
 }
@@ -116,6 +117,25 @@ void handleSettingsMenu(const String& input, XY_SKxxx* ps, XYModbusConfig& confi
       Serial.println("Please restart the device for changes to take effect");
     } else {
       Serial.println("Failed to save configuration");
+    }
+  } else if (input.startsWith("beeper ")) {
+    String subCmd = input.substring(7);
+    subCmd.trim();
+    
+    if (subCmd == "on") {
+      if (ps->setBeeper(true)) {
+        Serial.println("Beeper enabled");
+      } else {
+        Serial.println("Failed to enable beeper");
+      }
+    } else if (subCmd == "off") {
+      if (ps->setBeeper(false)) {
+        Serial.println("Beeper disabled");
+      } else {
+        Serial.println("Failed to disable beeper");
+      }
+    } else {
+      Serial.println("Invalid option. Use 'on' or 'off'");
     }
   } else {
     Serial.println("Unknown command. Type 'help' for options.");
