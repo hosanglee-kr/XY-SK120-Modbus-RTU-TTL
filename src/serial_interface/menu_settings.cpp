@@ -13,12 +13,11 @@ void displaySettingsMenu() {
   Serial.println("update [pin] [value] - Update local configuration");
   Serial.println("saveconfig - Save local configuration to flash");
   Serial.println("beeper [on/off] - Enable/disable beeper");
-  Serial.println("led [0-5] - Set backlight brightness (0:off, 5:max)");
+  // Removed "led [0-5]" command as it's redundant with "brightness"
   Serial.println("sleep [0-30] - Set sleep timeout (minutes, 0:off)");
   Serial.println("slave [1-247] - Set Modbus slave address");
   Serial.println("baud [0-8] - Set baudrate (0:9600, 1:14400, 2:19200, 3:38400,");
   Serial.println("              4:56000, 5:57600, 6:115200, 7:2400, 8:4800)");
-  Serial.println("status - Show basic current settings");
   Serial.println("showsettings - Display all device settings");
   Serial.println("menu - Return to main menu");
   Serial.println("help - Show this menu");
@@ -30,9 +29,7 @@ void handleSettingsMenu(const String& input, XY_SKxxx* ps, XYModbusConfig& confi
     return;
   }
   
-  if (input == "status") {
-    displayDeviceSettings(ps);
-  } else if (input == "showsettings") {
+  if (input == "showsettings") {
     displayAllDeviceSettings(ps);
   } else if (input.startsWith("baudrate ")) {
     uint8_t baudCode;
