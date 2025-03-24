@@ -10,7 +10,7 @@ XY_SKxxx::XY_SKxxx(uint8_t rxPin, uint8_t txPin, uint8_t slaveID)
     _lastStateUpdate(0), _lastConstantVCUpdate(0), _lastVoltageCurrentProtectionUpdate(0),
     _lastPowerProtectionUpdate(0), _lastEnergyProtectionUpdate(0), _lastTempProtectionUpdate(0),
     _lastStartupSettingUpdate(0), _lastBatteryCutoffUpdate(0), _lastCommunicationSettingsUpdate(0),
-    _cacheTimeout(5000), _cacheValid(false) {
+    _lastConstantPowerUpdate(0), _cacheTimeout(5000), _cacheValid(false) {
   // Store instance pointer for static callback use
   _instance = this;
   

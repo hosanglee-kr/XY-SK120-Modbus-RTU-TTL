@@ -25,6 +25,9 @@ bool XY_SKxxx::updateAllStatus(bool force) {
   delay(_silentIntervalTime * 2);
   
   success &= updateDeviceState(force);
+  delay(_silentIntervalTime * 2);
+  
+  success &= updateConstantPowerSettings(force);
   
   _cacheValid = success;
   
@@ -415,6 +418,38 @@ float XY_SKxxx::getExternalTempCalibration(bool refresh) {
     updateCalibrationSettings(true);
   }
   return _externalTempCalibration;
+}
+
+// Constant Power settings update method
+bool XY_SKxxx::updateConstantPowerSettings(bool force) {
+  unsigned long now = millis();
+  if (!force && (now - _lastConstantPowerUpdate < _cacheTimeout)) {
+    return true;
+  }
+  
+  waitForSilentInterval();
+  
+  // Read CP mode enable state
+  uint8_t result = modbus.readHoldingRegisters(REG_CP_ENABLE, 1);
+  if (result != modbus.ku8MBSuccess) {
+    _lastCommsTime = millis();
+    return false;
+  }
+  
+  _status.cpModeEnabled = (modbus.getResponseBuffer(0) != 0);
+  
+  // Read CP value
+  delay(_silentIntervalTime * 2);
+  result = modbus.readHoldingRegisters(REG_CP_SET, 1);
+  if (result != modbus.ku8MBSuccess) {
+    _lastCommsTime = millis();
+    return false;
+  }
+  
+  _status.constantPower = modbus.getResponseBuffer(0) / 10.0f;
+  _lastConstantPowerUpdate = now;
+  _lastCommsTime = millis();
+  return true;
 }
 
 #endif // XY_SKXXX_CACHE_IMPL

@@ -107,6 +107,10 @@ but not in the Modbus register map documentation
 // BTF setting (Battery Full)
 #define REG_BTF             0x0021 // Battery charge cut off current, 2 bytes, 3 decimal places, unit: A, Read and Write, set 0 to turn off
 
+// CP Setting (Constant Power Mode)
+#define REG_CP_ENABLE     0x0022  // Constant Power mode enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
+#define REG_CP_SET        0x0023  // Constant Power setting, 2 bytes, 1 decimal place, unit: W, Read and Write
+
 // BCH setting (Battery Charging)
 
 
@@ -152,6 +156,10 @@ struct DeviceStatus {
   float setCurrent;        // Set current (A)
   uint8_t backlightLevel;  // Backlight level
   uint8_t sleepTimeout;    // Sleep timeout in minutes
+
+  // Add Constant Power mode related fields
+  bool cpModeEnabled;       // Constant Power mode enabled state
+  float constantPower;      // Constant Power setting (W)
 };
 
 // Protection settings cache structure
@@ -320,6 +328,15 @@ public:
   bool setConstantCurrent(float current);
   bool getConstantCurrent(float &current);
   
+  // Constant Power (CP) mode methods
+  bool setConstantPowerMode(bool enabled);
+  bool getConstantPowerMode(bool &enabled);
+  bool isConstantPowerModeEnabled(bool refresh = false);
+  
+  bool setConstantPower(float power);
+  bool getConstantPower(float &power);
+  float getCachedConstantPower(bool refresh = false);
+  
   // Protection cache methods
   bool updateAllProtectionSettings(bool force = false);
   bool updateConstantVoltageCurrentSettings(bool force = false);
@@ -486,6 +503,10 @@ private:
 
   // Memory group cache to avoid repeated reads
   xy_sk::MemoryGroupData groupCache[10]; // 10 groups: M0-M9
+
+  // Add CP mode cache management
+  bool updateConstantPowerSettings(bool force = false);
+  unsigned long _lastConstantPowerUpdate;
 };
 
 #endif // XY_SKXXX_H

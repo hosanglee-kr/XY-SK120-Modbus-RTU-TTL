@@ -351,6 +351,123 @@ bool XY_SKxxx::getMPPTThreshold(float &threshold) {
 }
 
 /**
+ * Enable or disable Constant Power (CP) mode
+ * 
+ * @param enabled true to enable, false to disable
+ * @return true if successful
+ */
+bool XY_SKxxx::setConstantPowerMode(bool enabled) {
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.writeSingleRegister(REG_CP_ENABLE, enabled ? 1 : 0);
+  _lastCommsTime = millis();
+  
+  if (result == modbus.ku8MBSuccess) {
+    _status.cpModeEnabled = enabled;
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Get current Constant Power (CP) mode state
+ * 
+ * @param enabled Reference to store the state (true if enabled)
+ * @return true if successful
+ */
+bool XY_SKxxx::getConstantPowerMode(bool &enabled) {
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.readHoldingRegisters(REG_CP_ENABLE, 1);
+  _lastCommsTime = millis();
+  
+  if (result == modbus.ku8MBSuccess) {
+    enabled = (modbus.getResponseBuffer(0) != 0);
+    _status.cpModeEnabled = enabled;  // Update cache
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Get current Constant Power (CP) mode state from cache
+ * 
+ * @param refresh Force refresh from device
+ * @return true if CP mode is enabled
+ */
+bool XY_SKxxx::isConstantPowerModeEnabled(bool refresh) {
+  if (refresh) {
+    bool enabled;
+    getConstantPowerMode(enabled);
+  }
+  return _status.cpModeEnabled;
+}
+
+/**
+ * Set the Constant Power value
+ * 
+ * @param power Power value in watts (W)
+ * @return true if successful
+ */
+bool XY_SKxxx::setConstantPower(float power) {
+  if (power < 0.0f) {
+    return false; // Invalid power value
+  }
+  
+  // Convert to integer representation (1 decimal place)
+  uint16_t powerValue = (uint16_t)(power * 10);
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.writeSingleRegister(REG_CP_SET, powerValue);
+  _lastCommsTime = millis();
+  
+  if (result == modbus.ku8MBSuccess) {
+    _status.constantPower = power;
+    _lastConstantPowerUpdate = millis();
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Get the current Constant Power value
+ * 
+ * @param power Reference to store the power value (W)
+ * @return true if successful
+ */
+bool XY_SKxxx::getConstantPower(float &power) {
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.readHoldingRegisters(REG_CP_SET, 1);
+  _lastCommsTime = millis();
+  
+  if (result == modbus.ku8MBSuccess) {
+    power = modbus.getResponseBuffer(0) / 10.0f;
+    _status.constantPower = power;
+    _lastConstantPowerUpdate = millis();
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Get the Constant Power value from cache
+ * 
+ * @param refresh Force refresh from device
+ * @return Current Constant Power value (W)
+ */
+float XY_SKxxx::getCachedConstantPower(bool refresh) {
+  if (refresh) {
+    updateConstantPowerSettings(true);
+  }
+  return _status.constantPower;
+}
+
+/**
  * Restore factory default settings
  * 
  * @return true if command was sent successfully
