@@ -8,8 +8,10 @@ void displayDebugMenu() {
   Serial.println("readhex [register] - Read register (hex)");
   Serial.println("write [register] [value] - Write register (decimal)");
   Serial.println("writehex [register] [value] - Write register (hex)");
+  Serial.println("writerange [start] [end] [value] [delay_ms] - Write value to range of registers");
   Serial.println("mwrite [reg1] [val1] [reg2] [val2] ... - Write multiple registers (decimal)");
   Serial.println("mwritehex [reg1] [val1] [reg2] [val2] ... - Write multiple registers (hex)");
+  Serial.println("writetrial [register] [start] [end] [delay_ms] - Try writing range of values to register");
   Serial.println("raw [function] [register] [count] - Read raw register block");
   Serial.println("scan [start] [end] - Scan register range");
   Serial.println("menu - Return to main menu");
@@ -374,7 +376,345 @@ void handleDebugMenu(const String& input, XY_SKxxx* ps) {
       // Small delay to avoid overwhelming the device
       delay(50);
     }
-  } else {
+  } else if (input.startsWith("writetrial ")) {
+    // Format: writetrial [register] [start] [end] [delay_ms]
+    String args = input.substring(11);
+    args.trim();
+    
+    int argCount = 0;
+    uint16_t reg = 0;
+    uint16_t startVal = 0;
+    uint16_t endVal = 0;
+    uint16_t delayMs = 500; // Default delay
+
+    // Parse arguments
+    while (args.length() > 0) {
+      int spacePos = args.indexOf(' ');
+      String token;
+      
+      if (spacePos > 0) {
+        token = args.substring(0, spacePos);
+        args = args.substring(spacePos + 1);
+      } else {
+        token = args;
+        args = "";
+      }
+      
+      token.trim();
+      if (token.length() == 0) continue;
+      
+      switch (argCount) {
+        case 0: // Register address (hex)
+          if (!parseHex(token, reg)) {
+            Serial.println("Invalid hex register address: " + token);
+            return;
+          }
+          break;
+        case 1: // Start value (hex)
+          if (!parseHex(token, startVal)) {
+            Serial.println("Invalid hex start value: " + token);
+            return;
+          }
+          break;
+        case 2: // End value (hex)
+          if (!parseHex(token, endVal)) {
+            Serial.println("Invalid hex end value: " + token);
+            return;
+          }
+          break;
+        case 3: // Delay in ms (decimal)
+          uint16_t tempDelay;
+          if (!parseUInt16(token, tempDelay)) {
+            Serial.println("Invalid delay value: " + token);
+            return;
+          }
+          delayMs = tempDelay;
+          break;
+      }
+      
+      argCount++;
+    }
+    
+    // Validate arguments
+    if (argCount < 3) {
+      Serial.println("Not enough arguments. Format: writetrial [register] [start] [end] [delay_ms]");
+      return;
+    }
+    
+    if (startVal > endVal) {
+      Serial.println("Start value must be less than or equal to end value");
+      return;
+    }
+    
+    // Safety check - confirm with user for large ranges or system registers
+    if ((endVal - startVal) > 10 || reg < 0x0050) {
+      Serial.print("Warning: You are about to write ");
+      Serial.print(endVal - startVal + 1);
+      Serial.print(" values to register 0x");
+      Serial.println(reg, HEX);
+      
+      if (reg == 0x001E) {
+        Serial.println("This is REG_SYS_STATUS which may affect system operation.");
+      }
+      
+      Serial.println("This operation cannot be undone and might affect device operation.");
+      Serial.println("Type 'y' and press Enter to proceed, or press any other key to abort.");
+      Serial.println("Waiting for your input...");
+      
+      // Clear any existing input
+      while (Serial.available()) {
+        Serial.read();
+      }
+      
+      // Wait for input
+      bool timeout = true;
+      unsigned long startTime = millis();
+      
+      while (millis() - startTime < 30000) { // 30 second timeout
+        if (Serial.available()) {
+          // Read a single character
+          char c = Serial.read();
+          timeout = false;
+          
+          // Check if it's a 'y' or 'Y'
+          if (c == 'y' || c == 'Y') {
+            // Consume the rest of the line
+            while (Serial.available()) {
+              Serial.read();
+            }
+            Serial.println("\nConfirmed. Proceeding with operation...");
+            break;
+          } else {
+            Serial.println("\nOperation aborted by user");
+            return;
+          }
+        }
+        delay(100); // Less aggressive polling
+      }
+      
+      // Handle timeout
+      if (timeout) {
+        Serial.println("\nTimeout waiting for confirmation. Operation aborted.");
+        return;
+      }
+    }
+    
+    // Read current value first for reference
+    uint16_t currentValue;
+    if (ps->readRegister(reg, currentValue)) {
+      Serial.print("Current value of register 0x");
+      Serial.print(reg, HEX);
+      Serial.print(": 0x");
+      Serial.print(currentValue, HEX);
+      Serial.print(" (");
+      Serial.print(currentValue);
+      Serial.println(")");
+    }
+    
+    // Proceed with writing values
+    Serial.print("Writing values 0x");
+    Serial.print(startVal, HEX);
+    Serial.print(" to 0x");
+    Serial.print(endVal, HEX);
+    Serial.print(" to register 0x");
+    Serial.println(reg, HEX);
+    
+    Serial.println("Press any key to abort...");
+    Serial.println("\nValue\tResult\tObservations");
+    Serial.println("-----\t------\t-----------");
+    
+    for (uint16_t val = startVal; val <= endVal; val++) {
+      // Check for abort
+      if (Serial.available()) {
+        Serial.read(); // Clear the character
+        Serial.println("\nOperation aborted by user");
+        break;
+      }
+      
+      // Write value
+      Serial.print("0x");
+      Serial.print(val, HEX);
+      Serial.print("\t");
+      
+      bool success = ps->writeRegister(reg, val);
+      
+      if (success) {
+        Serial.print("OK");
+      } else {
+        Serial.print("FAIL");
+      }
+      
+      Serial.print("\t");
+      Serial.println(); // Leave space for manual observations
+      
+      // Wait for specified delay
+      delay(delayMs);
+    }
+    
+    Serial.println("\nTrial completed. Record any observed effects on the device.");
+    Serial.println("To read current register value, use 'readhex 0x" + String(reg, HEX) + "'");
+  }
+  
+  else if (input.startsWith("writerange ")) {
+    // Format: writerange [start] [end] [value] [delay_ms]
+    String params = input.substring(11);
+    params.trim();
+    
+    // Parse parameters
+    int firstSpace = params.indexOf(' ');
+    int secondSpace = -1;
+    int thirdSpace = -1;
+    
+    if (firstSpace > 0) {
+      secondSpace = params.indexOf(' ', firstSpace + 1);
+      if (secondSpace > 0) {
+        thirdSpace = params.indexOf(' ', secondSpace + 1);
+      }
+    }
+    
+    if (firstSpace <= 0 || secondSpace <= 0) {
+      Serial.println("Invalid format. Use: writerange [start] [end] [value] [delay_ms]");
+      return;
+    }
+    
+    String startStr = params.substring(0, firstSpace);
+    String endStr = params.substring(firstSpace + 1, secondSpace);
+    String valueStr = thirdSpace > 0 ? 
+                    params.substring(secondSpace + 1, thirdSpace) : 
+                    params.substring(secondSpace + 1);
+    
+    // Parse delay if provided, otherwise use default
+    uint16_t delayMs = 50; // Default delay of 50ms
+    if (thirdSpace > 0) {
+      String delayStr = params.substring(thirdSpace + 1);
+      if (!parseUInt16(delayStr, delayMs)) {
+        Serial.println("Invalid delay value. Using default 50ms.");
+        delayMs = 50;
+      }
+    }
+    
+    // Parse hexadecimal addresses and value
+    uint16_t startAddr, endAddr, value;
+    if (!parseHex(startStr, startAddr) || !parseHex(endStr, endAddr) || !parseHex(valueStr, value)) {
+      Serial.println("Invalid format. Use hexadecimal values (e.g. 0x001E)");
+      return;
+    }
+    
+    // Validate range
+    if (endAddr < startAddr) {
+      Serial.println("End address must be greater than or equal to start address");
+      return;
+    }
+    
+    // Limit range to prevent excessive writes
+    if (endAddr - startAddr > 50) {
+      Serial.println("Warning: Range too large. Limiting to 50 registers.");
+      endAddr = startAddr + 50;
+    }
+    
+    // Safety check for system registers
+    if (startAddr < 0x0050) {
+      Serial.print("Warning: You are about to write 0x");
+      Serial.print(value, HEX);
+      Serial.print(" to ");
+      Serial.print(endAddr - startAddr + 1);
+      Serial.println(" system registers.");
+      Serial.println("This operation cannot be undone and might affect device operation.");
+      Serial.println("Type 'y' and press Enter to proceed, or press any other key to abort.");
+      Serial.println("Waiting for your input...");
+      
+      // Clear any existing input
+      while (Serial.available()) {
+        Serial.read();
+      }
+      
+      // Wait for confirmation
+      bool confirmed = false;
+      unsigned long startTime = millis();
+      
+      while (millis() - startTime < 30000) { // 30 second timeout
+        if (Serial.available()) {
+          char c = Serial.read();
+          
+          if (c == 'y' || c == 'Y') {
+            // Consume the rest of the line
+            while (Serial.available()) {
+              Serial.read();
+            }
+            confirmed = true;
+            Serial.println("\nConfirmed. Proceeding with operation...");
+            break;
+          } else {
+            Serial.println("\nOperation aborted by user");
+            return;
+          }
+        }
+        delay(100);
+      }
+      
+      if (!confirmed) {
+        Serial.println("\nTimeout waiting for confirmation. Operation aborted.");
+        return;
+      }
+    }
+    
+    // Perform the writes
+    Serial.print("Writing value 0x");
+    Serial.print(value, HEX);
+    Serial.print(" to registers 0x");
+    Serial.print(startAddr, HEX);
+    Serial.print(" - 0x");
+    Serial.print(endAddr, HEX);
+    Serial.print(" with ");
+    Serial.print(delayMs);
+    Serial.println("ms delay between writes");
+    
+    Serial.println("Register\tResult");
+    Serial.println("--------\t------");
+    
+    int successCount = 0;
+    int failureCount = 0;
+    
+    for (uint16_t addr = startAddr; addr <= endAddr; addr++) {
+      // Write value to current register
+      bool success = ps->writeRegister(addr, value);
+      
+      // Display result
+      Serial.print("0x");
+      if (addr < 0x1000) Serial.print("0");
+      if (addr < 0x0100) Serial.print("0");
+      if (addr < 0x0010) Serial.print("0");
+      Serial.print(addr, HEX);
+      Serial.print("\t");
+      
+      if (success) {
+        Serial.println("OK");
+        successCount++;
+      } else {
+        Serial.println("FAIL");
+        failureCount++;
+      }
+      
+      // Use the user-provided delay between writes
+      delay(delayMs);
+      
+      // Check for abort
+      if (Serial.available()) {
+        Serial.read(); // Clear the character
+        Serial.println("\nOperation aborted by user");
+        break;
+      }
+    }
+    
+    Serial.println();
+    Serial.print("Summary: ");
+    Serial.print(successCount);
+    Serial.print(" successful, ");
+    Serial.print(failureCount);
+    Serial.println(" failed");
+  }
+  
+  else {
     Serial.println("Unknown command. Type 'help' for options.");
   }
 }
