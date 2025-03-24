@@ -6,6 +6,7 @@ void displaySettingsMenu() {
   Serial.println("\n==== Settings Menu ====");
   Serial.println("baudrate [code] - Set device baud rate (0-6)");
   Serial.println("address [id] - Set device Modbus address (1-247)");
+  Serial.println("brightness [level] - Set display brightness (1-5, 5 = brightest)");
   Serial.println("save - Save current settings to device");
   Serial.println("default - Restore device to factory defaults");
   Serial.println("update [pin] [value] - Update local configuration");
@@ -136,6 +137,20 @@ void handleSettingsMenu(const String& input, XY_SKxxx* ps, XYModbusConfig& confi
       }
     } else {
       Serial.println("Invalid option. Use 'on' or 'off'");
+    }
+  } else if (input.startsWith("brightness ")) {
+    uint8_t level;
+    if (parseUInt8(input.substring(11), level)) {
+      if (level >= 1 && level <= 5) {
+        if (ps->setBacklightBrightness(level)) {
+          Serial.print("Display brightness set to: ");
+          Serial.println(level);
+        } else {
+          Serial.println("Failed to set brightness");
+        }
+      } else {
+        Serial.println("Invalid brightness level. Use 1-5 (5 is brightest)");
+      }
     }
   } else {
     Serial.println("Unknown command. Type 'help' for options.");

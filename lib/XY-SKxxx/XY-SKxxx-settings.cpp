@@ -143,11 +143,13 @@ long XY_SKxxx::getActualBaudRate() {
 /**
  * Set the backlight brightness
  * 
- * @param level Brightness level (0-5), 5 is the brightest
+ * @param level Brightness level (1-5), 5 is the brightest
  * @return true if successful
  */
 bool XY_SKxxx::setBacklightBrightness(uint8_t level) {
-  if (level > 5) {
+  if (level < 1) {
+    level = 1; // Clamp to minimum
+  } else if (level > 5) {
     level = 5; // Clamp to maximum
   }
   
