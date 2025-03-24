@@ -50,8 +50,6 @@
 #define REG_T_IN_CAL 0x001A     // Internal temperature calibration, 2 bytes, 1 decimal place, unit: °F / °C, Read and Write
 #define REG_T_EXT_CAL 0x001B    // External temperature calibration, 2 bytes, 1 decimal place, unit: °F / °C, Read and Write
 
-#define REG_BEEPER 0x001C       // Beeper enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
-
 #define REG_EXTRACT_M 0x001D    // Data group selection, 2 bytes, 0 decimal places, unit: 0-9, Read and Write
 
 #define REG_SYS_STATUS 0x001E   // WIP: System status???, 2 bytes, 0 decimal places, unit: ???, Read and Write
@@ -95,8 +93,13 @@ However, writing to 0x005E does not seem to have any effect on the device, so it
 #define REG_S_ETP          0x005E    // WIP: Not implemented.
 
 // beeper settings (beeper enable)
+#define REG_BEEPER 0x001C       // Beeper enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
+
 // FET setting (quick adjustment of voltage, current or power)
 // PPT Setting (MPPT Solar Charging Settings)
+#define REG_MPPT_ENABLE 0x001F  // MPPT enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
+#define REG_MPPT_THRESHOLD 0x0020 // MPPT threshold percentage, 2 bytes, 2 decimal places, unit: ratio (0.00-1.00), Read and Write
+
 // CLU setting (Calibrate output voltage)
 // CLA setting (Calibrate output current)
 // Zero setting (Current zero calibration)
@@ -234,6 +237,12 @@ public:
   bool getTemperatureUnit(bool &celsius);
   bool setDataGroup(uint8_t group);
   uint8_t getSelectedDataGroup();
+  
+  // MPPT (Maximum Power Point Tracking) settings
+  bool setMPPTEnable(bool enabled);
+  bool getMPPTEnable(bool &enabled);
+  bool setMPPTThreshold(float threshold);
+  bool getMPPTThreshold(float &threshold);
   
   // Temperature calibration
   bool setInternalTempCalibration(float offset);
@@ -434,6 +443,8 @@ private:
   float _externalTempCalibration;
   bool _beeperEnabled;
   uint8_t _selectedDataGroup;
+  bool _mpptEnabled;         // Add MPPT enable state cache
+  float _mpptThreshold;      // Add MPPT threshold cache
   unsigned long _lastCalibrationUpdate;
   
   // Update methods for new cached values

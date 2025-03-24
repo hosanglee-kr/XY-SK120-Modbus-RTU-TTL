@@ -281,16 +281,30 @@ bool XY_SKxxx::updateCalibrationSettings(bool force) {
   // Read selected data group
   delay(_silentIntervalTime * 2);
   result = modbus.readHoldingRegisters(REG_EXTRACT_M, 1);
-  if (result == modbus.ku8MBSuccess) {
-    _selectedDataGroup = modbus.getResponseBuffer(0);
-    
-    _lastCalibrationUpdate = now;
+  if (result != modbus.ku8MBSuccess) {
     _lastCommsTime = millis();
-    return true;
+    return false;
   }
   
+  _selectedDataGroup = modbus.getResponseBuffer(0);
+  
+  // Read MPPT enable state
+  delay(_silentIntervalTime * 2);
+  result = modbus.readHoldingRegisters(REG_MPPT_ENABLE, 1);
+  if (result == modbus.ku8MBSuccess) {
+    _mpptEnabled = (modbus.getResponseBuffer(0) != 0);
+  }
+  
+  // Read MPPT threshold
+  delay(_silentIntervalTime * 2);
+  result = modbus.readHoldingRegisters(REG_MPPT_THRESHOLD, 1);
+  if (result == modbus.ku8MBSuccess) {
+    _mpptThreshold = modbus.getResponseBuffer(0) / 100.0f;
+  }
+  
+  _lastCalibrationUpdate = now;
   _lastCommsTime = millis();
-  return false;
+  return true;
 }
 
 // Device state access methods

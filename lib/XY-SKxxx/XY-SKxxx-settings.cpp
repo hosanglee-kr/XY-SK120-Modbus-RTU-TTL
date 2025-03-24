@@ -301,3 +301,94 @@ uint8_t XY_SKxxx::getSelectedDataGroup() {
   
   return 255; // Error value
 }
+
+/**
+ * Enable or disable MPPT (Maximum Power Point Tracking)
+ * 
+ * @param enabled true to enable, false to disable
+ * @return true if successful
+ */
+bool XY_SKxxx::setMPPTEnable(bool enabled) {
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.writeSingleRegister(REG_MPPT_ENABLE, enabled ? 1 : 0);
+  _lastCommsTime = millis();
+  
+  return (result == modbus.ku8MBSuccess);
+}
+
+/**
+ * Get current MPPT (Maximum Power Point Tracking) state
+ * 
+ * @param enabled Reference to store the state (true if enabled)
+ * @return true if successful
+ */
+bool XY_SKxxx::getMPPTEnable(bool &enabled) {
+  // Try from cache first, refresh if requested
+  if (updateCalibrationSettings(false)) {
+    enabled = _mpptEnabled;
+    return true;
+  }
+  
+  // If cache failed, read directly
+  waitForSilentInterval();
+  uint8_t result = modbus.readHoldingRegisters(REG_MPPT_ENABLE, 1);
+  _lastCommsTime = millis();
+  
+  if (result == modbus.ku8MBSuccess) {
+    enabled = (modbus.getResponseBuffer(0) != 0);
+    _mpptEnabled = enabled;  // Update cache
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Set MPPT threshold percentage
+ * 
+ * @param threshold Threshold value (0.00-1.00)
+ * @return true if successful
+ */
+bool XY_SKxxx::setMPPTThreshold(float threshold) {
+  // Validate threshold range
+  if (threshold < 0.0f || threshold > 1.0f) {
+    return false; // Invalid threshold
+  }
+  
+  // Convert to integer representation (2 decimal places)
+  uint16_t thresholdValue = (uint16_t)(threshold * 100);
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.writeSingleRegister(REG_MPPT_THRESHOLD, thresholdValue);
+  _lastCommsTime = millis();
+  
+  return (result == modbus.ku8MBSuccess);
+}
+
+/**
+ * Get current MPPT threshold percentage
+ * 
+ * @param threshold Reference to store the threshold value (0.00-1.00)
+ * @return true if successful
+ */
+bool XY_SKxxx::getMPPTThreshold(float &threshold) {
+  // Try from cache first
+  if (updateCalibrationSettings(false)) {
+    threshold = _mpptThreshold;
+    return true;
+  }
+  
+  // If cache failed, read directly
+  waitForSilentInterval();
+  uint8_t result = modbus.readHoldingRegisters(REG_MPPT_THRESHOLD, 1);
+  _lastCommsTime = millis();
+  
+  if (result == modbus.ku8MBSuccess) {
+    threshold = modbus.getResponseBuffer(0) / 100.0f;
+    _mpptThreshold = threshold;  // Update cache
+    return true;
+  }
+  
+  return false;
+}

@@ -179,6 +179,22 @@ void displayDeviceStatus(XY_SKxxx* ps) {
   Serial.print(inputVoltage, 2);
   Serial.println(" V");
   
+  // Read MPPT status and threshold
+  bool mpptEnabled;
+  if (ps->getMPPTEnable(mpptEnabled)) {
+    Serial.print("MPPT Status: ");
+    Serial.println(mpptEnabled ? "ENABLED" : "DISABLED");
+    
+    if (mpptEnabled) {
+      float mpptThreshold;
+      if (ps->getMPPTThreshold(mpptThreshold)) {
+        Serial.print("MPPT Threshold: ");
+        Serial.print(mpptThreshold * 100, 0); // Convert to percentage
+        Serial.println("%");
+      }
+    }
+  }
+  
   // Read temperature
   float internalTemp = ps->getInternalTemperature(true);
   bool isCelsius;
