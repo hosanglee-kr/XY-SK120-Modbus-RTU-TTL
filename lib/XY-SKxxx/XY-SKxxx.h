@@ -95,6 +95,9 @@ However, writing to 0x005E does not seem to have any effect on the device, so it
 // beeper settings (beeper enable)
 #define REG_BEEPER 0x001C       // Beeper enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
 
+// Factory reset register (discovered through testing)
+#define REG_FACTORY_RESET 0x0025 // Factory reset, write 0x1 to trigger reset to defaults
+
 // FET setting (quick adjustment of voltage, current or power)
 // PPT Setting (MPPT Solar Charging Settings)
 #define REG_MPPT_ENABLE 0x001F  // MPPT enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
@@ -407,6 +410,9 @@ public:
    * @return true if successful
    */
   bool updateMemoryGroupCache(xy_sk::MemoryGroup group, bool force = false);
+
+  // Factory reset method
+  bool restoreFactoryDefaults();
 
 private:
   uint8_t _rxPin;

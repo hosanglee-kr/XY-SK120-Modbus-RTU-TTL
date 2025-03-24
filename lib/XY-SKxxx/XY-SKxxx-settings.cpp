@@ -392,3 +392,18 @@ bool XY_SKxxx::getMPPTThreshold(float &threshold) {
   
   return false;
 }
+
+/**
+ * Restore factory default settings
+ * 
+ * @return true if command was sent successfully
+ * @note The device will reset and may temporarily disconnect
+ */
+bool XY_SKxxx::restoreFactoryDefaults() {
+  waitForSilentInterval();
+  
+  uint8_t result = modbus.writeSingleRegister(REG_FACTORY_RESET, 0x0001);
+  _lastCommsTime = millis();
+  
+  return (result == modbus.ku8MBSuccess);
+}
