@@ -12,7 +12,7 @@ sys.path.append(os.path.join(env.subst("$PROJECT_DIR"), "scripts"))
 def before_build(source, target, env):
     csv_file = env.subst("$PROJECT_DIR/partitions.csv")
     bin_file = env.subst("$PROJECT_DIR/partitions.bin")
-    script_file = os.path.join(env.subst("$PROJECT_DIR"), "scripts", "gen_partition.py")
+    script_file = os.path.join(env.subst("$PROJECT_DIR"), "scripts", "gen_partitions.py")
     
     # Check if the CSV file exists
     if not os.path.exists(csv_file):
@@ -52,8 +52,6 @@ def before_build(source, target, env):
 
 # Register the callback
 env.AddPreAction("buildprog", before_build)
-
-Import("env")
 
 # Remove the BuildSources call to prevent duplicate compilation
 # env.BuildSources("$BUILD_DIR/liba74", "$PROJECT_DIR/lib/XY-SKxxx")

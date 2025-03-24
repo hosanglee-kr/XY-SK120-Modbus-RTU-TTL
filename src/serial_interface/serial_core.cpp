@@ -60,6 +60,55 @@ void processSerialCommand(const String& input, XY_SKxxx* ps, XYModbusConfig& con
   } else if (input.equalsIgnoreCase("prot")) {
     displayDeviceProtectionStatus(ps);
     return;
+  } else if (input.equalsIgnoreCase("reset")) {
+    // Add factory reset command
+    Serial.println("\n==== FACTORY RESET ====");
+    Serial.println("WARNING: This will reset ALL device settings to factory defaults!");
+    Serial.println("All custom configurations, calibrations, and saved presets will be lost.");
+    Serial.println("Type 'y' and press Enter to confirm, or any other key to cancel.");
+    Serial.print("Proceed with factory reset? ");
+    
+    // Clear any pending input
+    while (Serial.available()) {
+      Serial.read();
+    }
+    
+    // Wait for user confirmation
+    bool timeout = true;
+    unsigned long startTime = millis();
+    
+    while (millis() - startTime < 30000) { // 30 second timeout
+      if (Serial.available()) {
+        char c = Serial.read();
+        Serial.print(c); // Echo character
+        timeout = false;
+        
+        if (c == 'y' || c == 'Y') {
+          // Consume the rest of the line
+          while (Serial.available()) {
+            Serial.read();
+          }
+          
+          Serial.println("\n\nExecuting factory reset...");
+          if (ps->restoreFactoryDefaults()) {
+            Serial.println("Factory reset command sent successfully.");
+            Serial.println("Device will restart with default settings.");
+            Serial.println("You may need to reconnect using the default baud rate (115200).");
+          } else {
+            Serial.println("Failed to execute factory reset command.");
+          }
+        } else {
+          Serial.println("\nFactory reset cancelled.");
+        }
+        break;
+      }
+      delay(100);
+    }
+    
+    if (timeout) {
+      Serial.println("\nTimeout waiting for confirmation. Factory reset cancelled.");
+    }
+    return;
   }
   
   // Process commands based on current menu
@@ -178,6 +227,22 @@ void displayDeviceStatus(XY_SKxxx* ps) {
   Serial.print("Input Voltage: ");
   Serial.print(inputVoltage, 2);
   Serial.println(" V");
+  
+  // Read MPPT status and threshold
+  bool mpptEnabled;
+  if (ps->getMPPTEnable(mpptEnabled)) {
+    Serial.print("MPPT Status: ");
+    Serial.println(mpptEnabled ? "ENABLED" : "DISABLED");
+    
+    if (mpptEnabled) {
+      float mpptThreshold;
+      if (ps->getMPPTThreshold(mpptThreshold)) {
+        Serial.print("MPPT Threshold: ");
+        Serial.print(mpptThreshold * 100, 0); // Convert to percentage
+        Serial.println("%");
+      }
+    }
+  }
   
   // Read temperature
   float internalTemp = ps->getInternalTemperature(true);

@@ -76,6 +76,257 @@ This project uses PlatformIO. To build and upload:
 pio run -t upload
 ```
 
+## Developer Guide: Adding Features to the Library
+
+This guide outlines the complete process of discovering, implementing, and exposing new features in the XY-SKxxx library.
+
+### 1. Feature Discovery Process
+
+#### Using Debug Mode to Scan Registers
+
+The first step in adding a new feature is discovering which Modbus registers control it:
+
+1. **Access the Debug Menu via Serial Monitor**:
+   ```
+   menu
+   5
+   ```
+
+2. **Scan Register Ranges**:
+   ```
+   scan 0x0000 0x0030
+   ```
+   This examines registers in blocks. For example, configuration registers are typically found in 0x0000-0x0030, while protection settings often appear in 0x0050-0x0080.
+
+3. **Record Initial Values**:
+   Take note of all current register values before making any changes.
+
+#### Verify Register Function via OSD Testing
+
+1. **Change Settings via Device Screen**:
+   - Modify the setting you're investigating through the device's physical interface
+   - Make small, known changes (e.g., change MPPT from OFF to ON)
+
+2. **Rescan Registers to Detect Changes**:
+   ```
+   scan 0x0000 0x0030
+   ```
+   Compare with your initial values to identify which register changed.
+
+3. **Validate with Direct Register Read/Write**:
+   ```
+   read 0x001F   # Example: reading MPPT enable register
+   ```
+
+4. **Test Writing to Register**:
+   ```
+   write 0x001F 1   # Example: enabling MPPT
+   ```
+   Verify the change takes effect on the device display.
+
+### 2. Implementing the Feature in the Library
+
+#### Step 1: Add Register Definitions
+
+Update `XY-SKxxx.h` with the new register definitions:
+
+```cpp
+// Add to register definitions section
+#define REG_MPPT_ENABLE 0x001F  // MPPT enable/disable, 2 bytes, 0 decimal places, unit: 0/1
+#define REG_MPPT_THRESHOLD 0x0020 // MPPT threshold percentage, 2 bytes, 2 decimal places, unit: ratio (0.00-1.00)
+```
+
+#### Step 2: Add Class Member Variables
+
+Add private member variables to store cached values:
+
+```cpp
+// Add to private section of XY_SKxxx class
+bool _mpptEnabled;         // MPPT enable state cache
+float _mpptThreshold;      // MPPT threshold cache
+```
+
+#### Step 3: Declare Interface Methods
+
+Add method declarations to the public interface:
+
+```cpp
+// Add to public section of XY_SKxxx class
+bool setMPPTEnable(bool enabled);
+bool getMPPTEnable(bool &enabled);
+bool setMPPTThreshold(float threshold);
+bool getMPPTThreshold(float &threshold);
+```
+
+#### Step 4: Implement Methods
+
+Create implementation in an appropriate file (e.g., `XY-SKxxx-settings.cpp`):
+
+```cpp
+/**
+ * Enable or disable MPPT (Maximum Power Point Tracking)
+ * 
+ * @param enabled true to enable, false to disable
+ * @return true if successful
+ */
+bool XY_SKxxx::setMPPTEnable(bool enabled) {
+    waitForSilentInterval();
+    uint8_t result = modbus.writeSingleRegister(REG_MPPT_ENABLE, enabled ? 1 : 0);
+    _lastCommsTime = millis();
+    if (result == modbus.ku8MBSuccess) {
+        _mpptEnabled = enabled;  // Update cache
+        return true;
+    }
+    return false;
+}
+
+// Implement remaining methods...
+```
+
+### 3. Cache Management
+
+#### Step 1: Update Cache Methods
+
+Modify the cache update methods (e.g., in `XY-SKxxx-cache.cpp`):
+
+```cpp
+bool XY_SKxxx::updateCalibrationSettings(bool force) {
+    // ...existing code...
+    
+    // Read MPPT enable state
+    delay(_silentIntervalTime * 2);
+    result = modbus.readHoldingRegisters(REG_MPPT_ENABLE, 1);
+    if (result == modbus.ku8MBSuccess) {
+        _mpptEnabled = (modbus.getResponseBuffer(0) != 0);
+    }
+    
+    // Read MPPT threshold
+    delay(_silentIntervalTime * 2);
+    result = modbus.readHoldingRegisters(REG_MPPT_THRESHOLD, 1);
+    if (result == modbus.ku8MBSuccess) {
+        _mpptThreshold = modbus.getResponseBuffer(0) / 100.0f;
+    }
+    
+    // ...existing code...
+}
+```
+
+#### Step 2: Use Cache in Getter Methods
+
+Make getters use the cache:
+
+```cpp
+bool XY_SKxxx::getMPPTEnable(bool &enabled) {
+    // Try from cache first
+    if (updateCalibrationSettings(false)) {
+        enabled = _mpptEnabled;
+        return true;
+    }
+    
+    // If cache failed, read directly
+    // ...direct reading code...
+}
+```
+
+### 4. User Interface Integration
+
+#### Step 1: Add to Menu Display
+
+Update the relevant menu display function (e.g., `menu_settings.cpp`):
+
+```cpp
+void displaySettingsMenu() {
+    // ...existing code...
+    Serial.println("mppt [on/off] - Enable/disable MPPT (Maximum Power Point Tracking)");
+    Serial.println("mpptthr [value] - Set MPPT threshold (0-100%, default 80%)");
+    // ...existing code...
+}
+```
+
+#### Step 2: Add Command Handlers
+
+Implement the command handlers:
+
+```cpp
+void handleSettingsMenu(const String& input, XY_SKxxx* ps, XYModbusConfig& config) {
+    // ...existing code...
+    
+    else if (input.startsWith("mppt ")) {
+        String subCmd = input.substring(5);
+        subCmd.trim();
+        
+        if (subCmd == "on") {
+            if (ps->setMPPTEnable(true)) {
+                Serial.println("MPPT enabled");
+            } else {
+                Serial.println("Failed to enable MPPT");
+            }
+        } else if (subCmd == "off") {
+            if (ps->setMPPTEnable(false)) {
+                Serial.println("MPPT disabled");
+            } else {
+                Serial.println("Failed to disable MPPT");
+            }
+        } else {
+            Serial.println("Invalid option. Use 'on' or 'off'");
+        }
+    }
+    
+    // ...handle other commands...
+}
+```
+
+#### Step 3: Add to Status Display
+
+Update status display to show the new feature:
+
+```cpp
+void displayDeviceStatus(XY_SKxxx* ps) {
+    // ...existing code...
+    
+    // Read MPPT status and threshold
+    bool mpptEnabled;
+    if (ps->getMPPTEnable(mpptEnabled)) {
+        Serial.print("MPPT Status: ");
+        Serial.println(mpptEnabled ? "ENABLED" : "DISABLED");
+        
+        if (mpptEnabled) {
+            float mpptThreshold;
+            if (ps->getMPPTThreshold(mpptThreshold)) {
+                Serial.print("MPPT Threshold: ");
+                Serial.print(mpptThreshold * 100, 0);
+                Serial.println("%");
+            }
+        }
+    }
+    
+    // ...existing code...
+}
+```
+
+### 5. Testing the New Feature
+
+1. **Compile and Flash**:
+   ```
+   pio run --target upload
+   ```
+
+2. **Test via Serial Monitor**:
+   ```
+   status       # Verify the feature appears in status output
+   menu 4       # Go to settings menu
+   mppt on      # Enable MPPT
+   mpptthr 85   # Set threshold to 85%
+   status       # Confirm changes are reflected
+   ```
+
+3. **Verify on Device**:
+   Confirm the settings changed on the device's physical display.
+
+---
+
+**Note:** The serial monitor interface is just one example of how to expose the library features. The same library methods can be used in other interfaces such as web APIs, MQTT clients, or custom applications. The core XY-SKxxx library is designed to be interface-agnostic.
+
 ## License
 
 [MIT License](LICENSE)
