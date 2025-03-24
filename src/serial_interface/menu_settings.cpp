@@ -7,6 +7,7 @@ void displaySettingsMenu() {
   Serial.println("baudrate [code] - Set device baud rate (0-6)");
   Serial.println("address [id] - Set device Modbus address (1-247)");
   Serial.println("brightness [level] - Set display brightness (1-5, 5 = brightest)");
+  Serial.println("tempunit [c/f] - Set temperature unit (Celsius/Fahrenheit)");
   Serial.println("save - Save current settings to device");
   Serial.println("default - Restore device to factory defaults");
   Serial.println("update [pin] [value] - Update local configuration");
@@ -151,6 +152,26 @@ void handleSettingsMenu(const String& input, XY_SKxxx* ps, XYModbusConfig& confi
       } else {
         Serial.println("Invalid brightness level. Use 1-5 (5 is brightest)");
       }
+    }
+  } else if (input.startsWith("tempunit ")) {
+    String unit = input.substring(9);
+    unit.trim();
+    unit.toLowerCase();
+    
+    if (unit == "c" || unit == "celsius") {
+      if (ps->setTemperatureUnit(false)) { // Changed from true to false
+        Serial.println("Temperature unit set to Celsius");
+      } else {
+        Serial.println("Failed to set temperature unit");
+      }
+    } else if (unit == "f" || unit == "fahrenheit") {
+      if (ps->setTemperatureUnit(true)) { // Changed from false to true
+        Serial.println("Temperature unit set to Fahrenheit");
+      } else {
+        Serial.println("Failed to set temperature unit");
+      }
+    } else {
+      Serial.println("Invalid unit. Use 'c' for Celsius or 'f' for Fahrenheit");
     }
   } else {
     Serial.println("Unknown command. Type 'help' for options.");
