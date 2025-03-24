@@ -86,29 +86,41 @@
 /* Below are undocumented registers, available in the XY-SK120 manual and OSD (On-Screen Display) 
 but not in the Modbus register map documentation
 */
-/*
-REG_S_ETP: both 0x005E and 0x005F stores the ETP (External Temperature Protection) value, but 0x005E is read-write and 0x005F is read-only and both values seems to be mirrored. 
-However, writing to 0x005E does not seem to have any effect on the device, so it's likely not implemented or used.
-*/
-#define REG_S_ETP          0x005E    // WIP: Not implemented.
+
+#define REG_S_ETP           0x005E    // WIP: Not implemented.
+// REG_S_ETP: both 0x005E and 0x005F stores the ETP (External Temperature Protection) value, but 0x005E is read-write and 0x005F is read-only and both values seems to be mirrored. 
+// However, writing to 0x005E does not seem to have any effect on the device, so it's likely not implemented or used.
 
 // beeper settings (beeper enable)
-#define REG_BEEPER 0x001C       // Beeper enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
+#define REG_BEEPER          0x001C       // Beeper enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
 
-// Factory reset register (discovered through testing)
-#define REG_FACTORY_RESET 0x0025 // Factory reset, write 0x1 to trigger reset to defaults
+// RET setting (Restore factory settings) (discovered through testing)
+#define REG_FACTORY_RESET   0x0025 // Factory reset, write 0x1 to trigger reset to defaults
 
-// FET setting (quick adjustment of voltage, current or power)
+// FET setting (quick adjustment of voltage, current or power with the rotary encoder knob)
+// Cannot probe the register for FET setting despite the best effort, so it's not implemented
+
 // PPT Setting (MPPT Solar Charging Settings)
-#define REG_MPPT_ENABLE 0x001F  // MPPT enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
-#define REG_MPPT_THRESHOLD 0x0020 // MPPT threshold percentage, 2 bytes, 2 decimal places, unit: ratio (0.00-1.00), Read and Write
+#define REG_MPPT_ENABLE     0x001F  // MPPT enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
+#define REG_MPPT_THRESHOLD  0x0020 // MPPT threshold percentage, 2 bytes, 2 decimal places, unit: ratio (0.00-1.00), Read and Write
+
+// BTF setting (Battery Full)
+#define REG_BTF             0x0021 // Battery charge cut off current, 2 bytes, 3 decimal places, unit: A, Read and Write, set 0 to turn off
+
+// BCH setting (Battery Charging)
+
 
 // CLU setting (Calibrate output voltage)
+
 // CLA setting (Calibrate output current)
+
 // Zero setting (Current zero calibration)
+
 // CLOF setting (Force power output off when switching data sets)
-// RET setting (Restore factory settings)
-// POFF (Shutdown function)
+// Cannot probe the register for CLOF setting despite the best effort, so it's not implemented
+
+// POFF (Shutdown function) (On: Enable the shutdown function by pressing the OSD power button for 5 seconds, Off: Disable the shutdown function, cannot locate register)
+// Cannot probe the register for POFF setting despite the best effort, so it's not implemented
 
 // Device status cache structure
 struct DeviceStatus {
@@ -169,6 +181,9 @@ struct ProtectionSettings {
   
   // Initialization setting
   bool outputOnAtStartup;        // Power-on initialization setting
+  
+  // Battery settings
+  float batteryCutoffCurrent;    // Battery charge cutoff current (A)
 };
 
 class XY_SKxxx {
@@ -414,6 +429,12 @@ public:
   // Factory reset method
   bool restoreFactoryDefaults();
 
+  // Battery cutoff current methods
+  bool setBatteryCutoffCurrent(float current);
+  bool getBatteryCutoffCurrent(float &current);
+  float getCachedBatteryCutoffCurrent(bool refresh = false);
+  bool updateBatteryCutoffCurrent(bool force = false);
+
 private:
   uint8_t _rxPin;
   uint8_t _txPin;
@@ -453,6 +474,9 @@ private:
   float _mpptThreshold;      // Add MPPT threshold cache
   unsigned long _lastCalibrationUpdate;
   
+  // Additional cache timestamps
+  unsigned long _lastBatteryCutoffUpdate;
+
   // Update methods for new cached values
   bool updateCalibrationSettings(bool force = false);
 

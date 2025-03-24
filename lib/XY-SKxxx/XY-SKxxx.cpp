@@ -9,7 +9,7 @@ XY_SKxxx::XY_SKxxx(uint8_t rxPin, uint8_t txPin, uint8_t slaveID)
     _lastOutputUpdate(0), _lastSettingsUpdate(0), _lastEnergyUpdate(0), _lastTempUpdate(0), 
     _lastStateUpdate(0), _lastConstantVCUpdate(0), _lastVoltageCurrentProtectionUpdate(0),
     _lastPowerProtectionUpdate(0), _lastEnergyProtectionUpdate(0), _lastTempProtectionUpdate(0),
-    _lastStartupSettingUpdate(0), _cacheTimeout(5000), _cacheValid(false) {
+    _lastStartupSettingUpdate(0), _lastBatteryCutoffUpdate(0), _cacheTimeout(5000), _cacheValid(false) {
   // Store instance pointer for static callback use
   _instance = this;
   
@@ -257,4 +257,35 @@ bool XY_SKxxx::updateMemoryGroupCache(xy_sk::MemoryGroup group, bool force) {
     }
     
     return true;
+}
+
+// Battery cutoff methods
+bool XY_SKxxx::setBatteryCutoffCurrent(float current) {
+  // Battery cutoff current is stored with 3 decimal places
+  uint16_t value = current * 1000;
+  
+  waitForSilentInterval();
+  
+  bool success = writeRegister(REG_BTF, value);
+  if (success) {
+    _protection.batteryCutoffCurrent = current;
+    _lastBatteryCutoffUpdate = millis();
+  }
+  
+  return success;
+}
+
+bool XY_SKxxx::getBatteryCutoffCurrent(float &current) {
+  uint16_t value;
+  
+  waitForSilentInterval();
+  
+  if (readRegister(REG_BTF, value)) {
+    current = value / 1000.0f;
+    _protection.batteryCutoffCurrent = current;
+    _lastBatteryCutoffUpdate = millis();
+    return true;
+  }
+  
+  return false;
 }

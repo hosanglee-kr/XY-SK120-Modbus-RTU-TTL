@@ -307,6 +307,35 @@ bool XY_SKxxx::updateCalibrationSettings(bool force) {
   return true;
 }
 
+// Battery cutoff current methods
+bool XY_SKxxx::updateBatteryCutoffCurrent(bool force) {
+  unsigned long now = millis();
+  if (!force && (now - _lastBatteryCutoffUpdate < _cacheTimeout)) {
+    return true;
+  }
+
+  waitForSilentInterval();
+  
+  // Read battery cutoff current
+  uint8_t result = modbus.readHoldingRegisters(REG_BTF, 1);
+  if (result == modbus.ku8MBSuccess) {
+    _protection.batteryCutoffCurrent = modbus.getResponseBuffer(0) / 1000.0f; // 3 decimal places
+    _lastBatteryCutoffUpdate = now;
+    _lastCommsTime = millis();
+    return true;
+  }
+  
+  _lastCommsTime = millis();
+  return false;
+}
+
+float XY_SKxxx::getCachedBatteryCutoffCurrent(bool refresh) {
+  if (refresh) {
+    updateBatteryCutoffCurrent(true);
+  }
+  return _protection.batteryCutoffCurrent;
+}
+
 // Device state access methods
 bool XY_SKxxx::isOutputEnabled(bool refresh) {
   if (refresh) {
