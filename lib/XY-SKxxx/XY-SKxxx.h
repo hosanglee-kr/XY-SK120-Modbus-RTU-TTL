@@ -253,8 +253,6 @@ public:
   bool getBeeper(bool &enabled);
   bool setTemperatureUnit(bool celsius);
   bool getTemperatureUnit(bool &celsius);
-  bool setDataGroup(uint8_t group);
-  uint8_t getSelectedDataGroup();
   
   // MPPT (Maximum Power Point Tracking) settings
   bool setMPPTEnable(bool enabled);
@@ -476,9 +474,15 @@ private:
   
   // Additional cache timestamps
   unsigned long _lastBatteryCutoffUpdate;
+  
+  // Communication settings cache
+  uint8_t _cachedSlaveAddress;
+  uint8_t _cachedBaudRateCode;
+  unsigned long _lastCommunicationSettingsUpdate;
 
   // Update methods for new cached values
   bool updateCalibrationSettings(bool force = false);
+  bool updateCommunicationSettings(bool force = false);
 
   // Memory group cache to avoid repeated reads
   xy_sk::MemoryGroupData groupCache[10]; // 10 groups: M0-M9

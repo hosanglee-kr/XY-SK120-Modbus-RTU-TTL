@@ -336,6 +336,35 @@ float XY_SKxxx::getCachedBatteryCutoffCurrent(bool refresh) {
   return _protection.batteryCutoffCurrent;
 }
 
+// Communication settings (slave address and baudrate)
+bool XY_SKxxx::updateCommunicationSettings(bool force) {
+  unsigned long now = millis();
+  if (!force && (now - _lastCommunicationSettingsUpdate < _cacheTimeout)) {
+    return true;
+  }
+  
+  waitForSilentInterval();
+  
+  // Read slave address
+  uint8_t result = modbus.readHoldingRegisters(REG_SLAVE_ADDR, 1);
+  if (result == modbus.ku8MBSuccess) {
+    _cachedSlaveAddress = modbus.getResponseBuffer(0);
+    
+    // Read baudrate code
+    delay(_silentIntervalTime * 2);
+    result = modbus.readHoldingRegisters(REG_BAUDRATE_L, 1);
+    if (result == modbus.ku8MBSuccess) {
+      _cachedBaudRateCode = modbus.getResponseBuffer(0);
+      _lastCommunicationSettingsUpdate = now;
+      _lastCommsTime = millis();
+      return true;
+    }
+  }
+  
+  _lastCommsTime = millis();
+  return false;
+}
+
 // Device state access methods
 bool XY_SKxxx::isOutputEnabled(bool refresh) {
   if (refresh) {

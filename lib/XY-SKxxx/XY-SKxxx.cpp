@@ -9,7 +9,8 @@ XY_SKxxx::XY_SKxxx(uint8_t rxPin, uint8_t txPin, uint8_t slaveID)
     _lastOutputUpdate(0), _lastSettingsUpdate(0), _lastEnergyUpdate(0), _lastTempUpdate(0), 
     _lastStateUpdate(0), _lastConstantVCUpdate(0), _lastVoltageCurrentProtectionUpdate(0),
     _lastPowerProtectionUpdate(0), _lastEnergyProtectionUpdate(0), _lastTempProtectionUpdate(0),
-    _lastStartupSettingUpdate(0), _lastBatteryCutoffUpdate(0), _cacheTimeout(5000), _cacheValid(false) {
+    _lastStartupSettingUpdate(0), _lastBatteryCutoffUpdate(0), _lastCommunicationSettingsUpdate(0),
+    _cacheTimeout(5000), _cacheValid(false) {
   // Store instance pointer for static callback use
   _instance = this;
   
@@ -22,6 +23,10 @@ XY_SKxxx::XY_SKxxx(uint8_t rxPin, uint8_t txPin, uint8_t slaveID)
     groupCache[i].valid = false;
     groupCache[i].lastUpdate = 0;
   }
+  
+  // Initialize communication settings cache
+  _cachedSlaveAddress = slaveID;
+  _cachedBaudRateCode = 6; // Default is 115200 (code 6)
 }
 
 void XY_SKxxx::begin(long baudRate) {

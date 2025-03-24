@@ -3,9 +3,7 @@
 #include "serial_interface.h"
 
 void displaySettingsMenu() {
-  Serial.println("\n==== Settings Menu ====");
-  Serial.println("baudrate [code] - Set device baud rate (0-6)");
-  Serial.println("address [id] - Set device Modbus address (1-247)");
+  Serial.println("\n==== Device Settings ====");
   Serial.println("brightness [level] - Set display brightness (1-5, 5 = brightest)");
   Serial.println("tempunit [c/f] - Set temperature unit (Celsius/Fahrenheit)");
   Serial.println("mppt [on/off] - Enable/disable MPPT (Maximum Power Point Tracking)");
@@ -15,6 +13,13 @@ void displaySettingsMenu() {
   Serial.println("update [pin] [value] - Update local configuration");
   Serial.println("saveconfig - Save local configuration to flash");
   Serial.println("beeper [on/off] - Enable/disable beeper");
+  Serial.println("led [0-5] - Set backlight brightness (0:off, 5:max)");
+  Serial.println("sleep [0-30] - Set sleep timeout (minutes, 0:off)");
+  Serial.println("slave [1-247] - Set Modbus slave address");
+  Serial.println("baud [0-8] - Set baudrate (0:9600, 1:14400, 2:19200, 3:38400,");
+  Serial.println("              4:56000, 5:57600, 6:115200, 7:2400, 8:4800)");
+  Serial.println("status - Show basic current settings");
+  Serial.println("showsettings - Display all device settings");
   Serial.println("menu - Return to main menu");
   Serial.println("help - Show this menu");
 }
@@ -25,7 +30,11 @@ void handleSettingsMenu(const String& input, XY_SKxxx* ps, XYModbusConfig& confi
     return;
   }
   
-  if (input.startsWith("baudrate ")) {
+  if (input == "status") {
+    displayDeviceSettings(ps);
+  } else if (input == "showsettings") {
+    displayAllDeviceSettings(ps);
+  } else if (input.startsWith("baudrate ")) {
     uint8_t baudCode;
     if (parseUInt8(input.substring(9), baudCode)) {
       if (ps->setBaudRate(baudCode)) {
@@ -214,7 +223,214 @@ void handleSettingsMenu(const String& input, XY_SKxxx* ps, XYModbusConfig& confi
         Serial.println("Failed to set MPPT threshold");
       }
     }
+  } else if (input.startsWith("slave ")) {
+    uint8_t address;
+    if (parseUInt8(input.substring(6), address)) {
+      if (address >= 1 && address <= 247) {
+        Serial.println("\n⚠️ WARNING: Changing the slave address will affect communication!");
+        Serial.println("Are you sure you want to proceed? (y/n)");
+        
+        // Wait for confirmation
+        while (!Serial.available()) { delay(10); }
+        char confirm = Serial.read();
+        
+        // Flush remaining input
+        while (Serial.available()) { Serial.read(); }
+        
+        if (confirm == 'y' || confirm == 'Y') {
+          if (ps->setSlaveAddress(address)) {
+            Serial.print("Slave address set to: ");
+            Serial.println(address);
+            Serial.println("Please update your configuration accordingly.");
+            
+            // Update the config
+            config.slaveId = address;
+          } else {
+            Serial.println("Failed to set slave address");
+          }
+        } else {
+          Serial.println("Operation cancelled");
+        }
+      } else {
+        Serial.println("Invalid slave address. Must be between 1 and 247.");
+      }
+    }
+  } else if (input.startsWith("baud ")) {
+    uint8_t baudCode;
+    if (parseUInt8(input.substring(5), baudCode)) {
+      if (baudCode <= 8) {
+        Serial.println("\n⚠️ WARNING: Changing the baudrate will affect communication!");
+        Serial.println("Are you sure you want to proceed? (y/n)");
+        
+        // Wait for confirmation
+        while (!Serial.available()) { delay(10); }
+        char confirm = Serial.read();
+        
+        // Flush remaining input
+        while (Serial.available()) { Serial.read(); }
+        
+        if (confirm == 'y' || confirm == 'Y') {
+          if (ps->setBaudRate(baudCode)) {
+            long newBaud = 0;
+            switch (baudCode) {
+              case 0: newBaud = 9600; break;
+              case 1: newBaud = 14400; break;
+              case 2: newBaud = 19200; break;
+              case 3: newBaud = 38400; break;
+              case 4: newBaud = 56000; break;
+              case 5: newBaud = 57600; break;
+              case 6: newBaud = 115200; break;
+              case 7: newBaud = 2400; break;
+              case 8: newBaud = 4800; break;
+            }
+            
+            Serial.print("Baudrate code set to: ");
+            Serial.print(baudCode);
+            Serial.print(" (");
+            Serial.print(newBaud);
+            Serial.println(" bps)");
+            Serial.println("Please update your configuration and restart the device.");
+            
+            // Update the config
+            config.baudRate = newBaud;
+          } else {
+            Serial.println("Failed to set baudrate");
+          }
+        } else {
+          Serial.println("Operation cancelled");
+        }
+      } else {
+        Serial.println("Invalid baudrate code. Must be between 0 and 8.");
+      }
+    }
   } else {
     Serial.println("Unknown command. Type 'help' for options.");
   }
+}
+
+// Keep the existing displayDeviceSettings function for backward compatibility
+void displayDeviceSettings(XY_SKxxx* ps) {
+  Serial.println("\n==== Current Device Settings ====");
+  
+  // Display current slave address
+  uint8_t slaveAddr;
+  if (ps->getSlaveAddress(slaveAddr)) {
+    Serial.print("Modbus Slave Address: ");
+    Serial.println(slaveAddr);
+  } else {
+    Serial.println("Failed to read slave address");
+  }
+  
+  // Display current baudrate
+  uint8_t baudCode = ps->getBaudRateCode();
+  long actualBaud = ps->getActualBaudRate();
+  Serial.print("Baudrate: ");
+  Serial.print(baudCode);
+  if (actualBaud > 0) {
+    Serial.print(" (");
+    Serial.print(actualBaud);
+    Serial.println(" bps)");
+  } else {
+    Serial.println(" (Unknown)");
+  }
+}
+
+// New comprehensive settings display function
+void displayAllDeviceSettings(XY_SKxxx* ps) {
+  Serial.println("\n==== All Device Settings ====");
+  
+  // Communication settings
+  uint8_t slaveAddr;
+  if (ps->getSlaveAddress(slaveAddr)) {
+    Serial.print("Modbus Slave Address: ");
+    Serial.println(slaveAddr);
+  } else {
+    Serial.println("Failed to read slave address");
+  }
+  
+  uint8_t baudCode = ps->getBaudRateCode();
+  long actualBaud = ps->getActualBaudRate();
+  Serial.print("Baudrate: ");
+  Serial.print(baudCode);
+  if (actualBaud > 0) {
+    Serial.print(" (");
+    Serial.print(actualBaud);
+    Serial.println(" bps)");
+  } else {
+    Serial.println(" (Unknown)");
+  }
+  
+  // Display settings
+  uint8_t brightness = ps->getBacklightBrightness();
+  if (brightness <= 5) {
+    Serial.print("Display Brightness: ");
+    Serial.println(brightness);
+  }
+  
+  uint8_t sleepTimeout = ps->getSleepTimeout();
+  if (sleepTimeout != 255) {
+    Serial.print("Sleep Timeout: ");
+    if (sleepTimeout == 0) {
+      Serial.println("Never");
+    } else {
+      Serial.print(sleepTimeout);
+      Serial.println(" minutes");
+    }
+  }
+  
+  // Temperature settings
+  bool isCelsius;
+  if (ps->getTemperatureUnit(isCelsius)) {
+    Serial.print("Temperature Unit: ");
+    Serial.println(isCelsius ? "Fahrenheit" : "Celsius");
+  }
+  
+  // Key lock status
+  bool keyLocked = ps->isKeyLocked(true);
+  Serial.print("Front Panel Keys: ");
+  Serial.println(keyLocked ? "LOCKED" : "UNLOCKED");
+  
+  // Beeper settings
+  bool beeperEnabled;
+  if (ps->getBeeper(beeperEnabled)) {
+    Serial.print("Beeper: ");
+    Serial.println(beeperEnabled ? "ENABLED" : "DISABLED");
+  }
+  
+  // MPPT settings
+  bool mpptEnabled;
+  if (ps->getMPPTEnable(mpptEnabled)) {
+    Serial.print("MPPT Mode: ");
+    Serial.println(mpptEnabled ? "ENABLED" : "DISABLED");
+    
+    if (mpptEnabled) {
+      float mpptThreshold;
+      if (ps->getMPPTThreshold(mpptThreshold)) {
+        Serial.print("MPPT Threshold: ");
+        Serial.print(mpptThreshold * 100, 0);
+        Serial.println("%");
+      }
+    }
+  }
+  
+  // Battery settings
+  float btfCurrent;
+  if (ps->getBatteryCutoffCurrent(btfCurrent)) {
+    Serial.print("Battery Cutoff Current: ");
+    if (btfCurrent > 0) {
+      Serial.print(btfCurrent, 3);
+      Serial.println(" A");
+    } else {
+      Serial.println("OFF");
+    }
+  }
+  
+  // Power-on initialization setting
+  bool outputOnAtStartup;
+  if (ps->getPowerOnInitialization(outputOnAtStartup)) {
+    Serial.print("Output On At Startup: ");
+    Serial.println(outputOnAtStartup ? "YES" : "NO");
+  }
+  
+  Serial.println();
 }

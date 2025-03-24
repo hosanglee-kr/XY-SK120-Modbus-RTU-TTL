@@ -16,6 +16,9 @@ void displayBasicControlMenu() {
   Serial.println("cc [value] - Set constant current mode");
   Serial.println("menu - Return to main menu");
   Serial.println("help - Show this menu");
+  
+  // Add memory group commands
+  Serial.println("group [0-9] - Activate memory group (0-9)");
 }
 
 void handleBasicControl(const String& input, XY_SKxxx* ps) {
@@ -165,6 +168,33 @@ void handleBasicControl(const String& input, XY_SKxxx* ps) {
       Serial.println(cvccMode == 0 ? "Constant Voltage (CV)" : "Constant Current (CC)");
     } else {
       Serial.println("Failed to retrieve output status");
+    }
+  } else if (input.startsWith("group ")) {
+    uint8_t groupNum;
+    if (parseUInt8(input.substring(6), groupNum)) {
+      if (groupNum <= 9) {
+        xy_sk::MemoryGroup group = static_cast<xy_sk::MemoryGroup>(groupNum);
+        if (ps->callMemoryGroup(group)) {
+          Serial.print("Memory group M");
+          Serial.print(groupNum);
+          Serial.println(" activated");
+          
+          // Show the settings from the newly activated group
+          delay(100); // Give device time to switch
+          float voltage = ps->getSetVoltage(true);
+          float current = ps->getSetCurrent(true);
+          Serial.print("Voltage: ");
+          Serial.print(voltage, 2);
+          Serial.println(" V");
+          Serial.print("Current: ");
+          Serial.print(current, 3);
+          Serial.println(" A");
+        } else {
+          Serial.println("Failed to switch to memory group");
+        }
+      } else {
+        Serial.println("Invalid group number. Must be between 0 and 9.");
+      }
     }
   } else {
     Serial.println("Unknown command. Type 'help' for options.");

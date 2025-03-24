@@ -260,49 +260,6 @@ bool XY_SKxxx::getTemperatureUnit(bool &celsius) {
 }
 
 /**
- * Set the active data group
- * 
- * @param group Data group to select (0-9)
- * @return true if successful
- */
-bool XY_SKxxx::setDataGroup(uint8_t group) {
-  if (group > 9) {
-    return false; // Invalid group
-  }
-  
-  waitForSilentInterval();
-  
-  uint8_t result = modbus.writeSingleRegister(REG_EXTRACT_M, group);
-  _lastCommsTime = millis();
-  
-  if (result == modbus.ku8MBSuccess) {
-    _selectedDataGroup = group;
-    return true;
-  }
-  
-  return false;
-}
-
-/**
- * Get the currently selected data group
- * 
- * @return Data group (0-9) or 255 on error
- */
-uint8_t XY_SKxxx::getSelectedDataGroup() {
-  waitForSilentInterval();
-  
-  uint8_t result = modbus.readHoldingRegisters(REG_EXTRACT_M, 1);
-  _lastCommsTime = millis();
-  
-  if (result == modbus.ku8MBSuccess) {
-    _selectedDataGroup = modbus.getResponseBuffer(0);
-    return _selectedDataGroup;
-  }
-  
-  return 255; // Error value
-}
-
-/**
  * Enable or disable MPPT (Maximum Power Point Tracking)
  * 
  * @param enabled true to enable, false to disable
