@@ -285,26 +285,17 @@ bool XY_SKxxx::getCachedPowerOnInitialization(bool refresh) {
 
 // Protection settings cache update methods
 bool XY_SKxxx::updateAllProtectionSettings(bool force) {
-  bool success = true;
+  bool result = true;
   
-  success &= updateConstantVoltageCurrentSettings(force);
-  delay(_silentIntervalTime * 2);
+  result &= updateConstantVoltageCurrentSettings(force);
+  result &= updateVoltageCurrentProtection(force);
+  result &= updatePowerProtection(force);
+  result &= updateEnergyProtection(force);
+  result &= updateTemperatureProtection(force);
+  result &= updateStartupSetting(force);
+  result &= updateBatteryCutoffCurrent(force);  // Add this line
   
-  success &= updateVoltageCurrentProtection(force);
-  delay(_silentIntervalTime * 2);
-  
-  success &= updatePowerProtection(force);
-  delay(_silentIntervalTime * 2);
-  
-  success &= updateEnergyProtection(force);
-  delay(_silentIntervalTime * 2);
-  
-  success &= updateTemperatureProtection(force);
-  delay(_silentIntervalTime * 2);
-  
-  success &= updateStartupSetting(force);
-  
-  return success;
+  return result;
 }
 
 bool XY_SKxxx::updateConstantVoltageCurrentSettings(bool force) {

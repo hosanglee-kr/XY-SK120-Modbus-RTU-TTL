@@ -86,29 +86,45 @@
 /* Below are undocumented registers, available in the XY-SK120 manual and OSD (On-Screen Display) 
 but not in the Modbus register map documentation
 */
-/*
-REG_S_ETP: both 0x005E and 0x005F stores the ETP (External Temperature Protection) value, but 0x005E is read-write and 0x005F is read-only and both values seems to be mirrored. 
-However, writing to 0x005E does not seem to have any effect on the device, so it's likely not implemented or used.
-*/
-#define REG_S_ETP          0x005E    // WIP: Not implemented.
+
+#define REG_S_ETP           0x005E    // WIP: Not implemented.
+// REG_S_ETP: both 0x005E and 0x005F stores the ETP (External Temperature Protection) value, but 0x005E is read-write and 0x005F is read-only and both values seems to be mirrored. 
+// However, writing to 0x005E does not seem to have any effect on the device, so it's likely not implemented or used.
 
 // beeper settings (beeper enable)
-#define REG_BEEPER 0x001C       // Beeper enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
+#define REG_BEEPER          0x001C       // Beeper enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
 
-// Factory reset register (discovered through testing)
-#define REG_FACTORY_RESET 0x0025 // Factory reset, write 0x1 to trigger reset to defaults
+// RET setting (Restore factory settings) (discovered through testing)
+#define REG_FACTORY_RESET   0x0025 // Factory reset, write 0x1 to trigger reset to defaults
 
-// FET setting (quick adjustment of voltage, current or power)
+// FET setting (quick adjustment of voltage, current or power with the rotary encoder knob)
+// Cannot probe the register for FET setting despite the best effort, so it's not implemented
+
 // PPT Setting (MPPT Solar Charging Settings)
-#define REG_MPPT_ENABLE 0x001F  // MPPT enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
-#define REG_MPPT_THRESHOLD 0x0020 // MPPT threshold percentage, 2 bytes, 2 decimal places, unit: ratio (0.00-1.00), Read and Write
+#define REG_MPPT_ENABLE     0x001F  // MPPT enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
+#define REG_MPPT_THRESHOLD  0x0020 // MPPT threshold percentage, 2 bytes, 2 decimal places, unit: ratio (0.00-1.00), Read and Write
+
+// BTF setting (Battery Full)
+#define REG_BTF             0x0021 // Battery charge cut off current, 2 bytes, 3 decimal places, unit: A, Read and Write, set 0 to turn off
+
+// CP Setting (Constant Power Mode)
+#define REG_CP_ENABLE     0x0022  // Constant Power mode enable/disable, 2 bytes, 0 decimal places, unit: 0/1, Read and Write
+#define REG_CP_SET        0x0023  // Constant Power setting, 2 bytes, 1 decimal place, unit: W, Read and Write
+
+// BCH setting (Battery Charging)
+
 
 // CLU setting (Calibrate output voltage)
+
 // CLA setting (Calibrate output current)
+
 // Zero setting (Current zero calibration)
+
 // CLOF setting (Force power output off when switching data sets)
-// RET setting (Restore factory settings)
-// POFF (Shutdown function)
+// Cannot probe the register for CLOF setting despite the best effort, so it's not implemented
+
+// POFF (Shutdown function) (On: Enable the shutdown function by pressing the OSD power button for 5 seconds, Off: Disable the shutdown function, cannot locate register)
+// Cannot probe the register for POFF setting despite the best effort, so it's not implemented
 
 // Device status cache structure
 struct DeviceStatus {
@@ -140,6 +156,10 @@ struct DeviceStatus {
   float setCurrent;        // Set current (A)
   uint8_t backlightLevel;  // Backlight level
   uint8_t sleepTimeout;    // Sleep timeout in minutes
+
+  // Add Constant Power mode related fields
+  bool cpModeEnabled;       // Constant Power mode enabled state
+  float constantPower;      // Constant Power setting (W)
 };
 
 // Protection settings cache structure
@@ -169,6 +189,9 @@ struct ProtectionSettings {
   
   // Initialization setting
   bool outputOnAtStartup;        // Power-on initialization setting
+  
+  // Battery settings
+  float batteryCutoffCurrent;    // Battery charge cutoff current (A)
 };
 
 class XY_SKxxx {
@@ -238,8 +261,6 @@ public:
   bool getBeeper(bool &enabled);
   bool setTemperatureUnit(bool celsius);
   bool getTemperatureUnit(bool &celsius);
-  bool setDataGroup(uint8_t group);
-  uint8_t getSelectedDataGroup();
   
   // MPPT (Maximum Power Point Tracking) settings
   bool setMPPTEnable(bool enabled);
@@ -306,6 +327,15 @@ public:
   bool getConstantVoltage(float &voltage);
   bool setConstantCurrent(float current);
   bool getConstantCurrent(float &current);
+  
+  // Constant Power (CP) mode methods
+  bool setConstantPowerMode(bool enabled);
+  bool getConstantPowerMode(bool &enabled);
+  bool isConstantPowerModeEnabled(bool refresh = false);
+  
+  bool setConstantPower(float power);
+  bool getConstantPower(float &power);
+  float getCachedConstantPower(bool refresh = false);
   
   // Protection cache methods
   bool updateAllProtectionSettings(bool force = false);
@@ -414,6 +444,12 @@ public:
   // Factory reset method
   bool restoreFactoryDefaults();
 
+  // Battery cutoff current methods
+  bool setBatteryCutoffCurrent(float current);
+  bool getBatteryCutoffCurrent(float &current);
+  float getCachedBatteryCutoffCurrent(bool refresh = false);
+  bool updateBatteryCutoffCurrent(bool force = false);
+
 private:
   uint8_t _rxPin;
   uint8_t _txPin;
@@ -453,11 +489,24 @@ private:
   float _mpptThreshold;      // Add MPPT threshold cache
   unsigned long _lastCalibrationUpdate;
   
+  // Additional cache timestamps
+  unsigned long _lastBatteryCutoffUpdate;
+  
+  // Communication settings cache
+  uint8_t _cachedSlaveAddress;
+  uint8_t _cachedBaudRateCode;
+  unsigned long _lastCommunicationSettingsUpdate;
+
   // Update methods for new cached values
   bool updateCalibrationSettings(bool force = false);
+  bool updateCommunicationSettings(bool force = false);
 
   // Memory group cache to avoid repeated reads
   xy_sk::MemoryGroupData groupCache[10]; // 10 groups: M0-M9
+
+  // Add CP mode cache management
+  bool updateConstantPowerSettings(bool force = false);
+  unsigned long _lastConstantPowerUpdate;
 };
 
 #endif // XY_SKXXX_H

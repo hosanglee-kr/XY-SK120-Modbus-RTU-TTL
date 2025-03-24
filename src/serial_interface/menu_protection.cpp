@@ -13,6 +13,8 @@ void displayProtectionMenu() {
   Serial.println("status - Read protection settings and status");
   Serial.println("prot - Show protection settings and status");
   Serial.println("clear - Clear protection triggers");
+  Serial.println("btf [value] - Set Battery cutoff current (A, 0=off)");
+  Serial.println("btf? - Get Battery cutoff current");
   Serial.println("menu - Return to main menu");
   Serial.println("help - Show this menu");
 }
@@ -141,7 +143,103 @@ void handleProtectionMenu(const String& input, XY_SKxxx* ps) {
     } else {
       Serial.println("Failed to clear protection triggers");
     }
+  } else if (input.startsWith("btf ")) {
+    float current;
+    if (parseFloat(input.substring(4), current)) {
+      if (ps->setBatteryCutoffCurrent(current)) {
+        Serial.print("Battery cutoff current set to: ");
+        if (current > 0) {
+          Serial.print(current, 3);
+          Serial.println(" A");
+        } else {
+          Serial.println("OFF");
+        }
+      } else {
+        Serial.println("Failed to set battery cutoff current");
+      }
+    }
+  } else if (input == "btf?") {
+    float current;
+    if (ps->getBatteryCutoffCurrent(current)) {
+      Serial.print("Battery cutoff current: ");
+      if (current > 0) {
+        Serial.print(current, 3);
+        Serial.println(" A");
+      } else {
+        Serial.println("OFF");
+      }
+    } else {
+      Serial.println("Failed to read battery cutoff current");
+    }
   } else {
     Serial.println("Unknown command. Type 'help' for options.");
   }
+}
+
+void displayDeviceProtectionStatus(XY_SKxxx* ps) {
+  // Display all protection settings
+  float ovp, ocp, opp, otp;
+  
+  Serial.println("\n==== Protection Settings ====");
+  
+  if (ps->getOverVoltageProtection(ovp)) {
+    Serial.print("Over Voltage Protection: ");
+    Serial.print(ovp, 2);
+    Serial.println(" V");
+  } else {
+    Serial.println("Failed to read OVP value");
+  }
+  
+  if (ps->getOverCurrentProtection(ocp)) {
+    Serial.print("Over Current Protection: ");
+    Serial.print(ocp, 3);
+    Serial.println(" A");
+  } else {
+    Serial.println("Failed to read OCP value");
+  }
+  
+  if (ps->getOverPowerProtection(opp)) {
+    Serial.print("Over Power Protection: ");
+    Serial.print(opp, 2);
+    Serial.println(" W");
+  } else {
+    Serial.println("Failed to read OPP value");
+  }
+  
+  if (ps->getOverTemperatureProtection(otp)) {
+    Serial.print("Over Temperature Protection: ");
+    Serial.print(otp, 1);
+    Serial.println(" °C");
+  } else {
+    Serial.println("Failed to read OTP value");
+  }
+  
+  // Add battery cutoff current display
+  float btf;
+  if (ps->getBatteryCutoffCurrent(btf)) {
+    Serial.print("Battery cutoff current: ");
+    if (btf > 0) {
+      Serial.print(btf, 3);
+      Serial.println(" A");
+    } else {
+      Serial.println("OFF");
+    }
+  } else {
+    Serial.println("Battery cutoff current: FAILED TO READ");
+  }
+  
+  // Check for triggered protections
+  uint8_t protStatus = ps->getProtectionStatus();
+  Serial.println("\n==== Protection Status ====");
+  Serial.print("OVP triggered: ");
+  Serial.println((protStatus & 0x01) ? "YES" : "NO");
+  
+  Serial.print("OCP triggered: ");
+  Serial.println((protStatus & 0x02) ? "YES" : "NO");
+  
+  Serial.print("OPP triggered: ");
+  Serial.println((protStatus & 0x04) ? "YES" : "NO");
+  
+  Serial.print("OTP triggered: ");
+  Serial.println((protStatus & 0x08) ? "YES" : "NO");
 }

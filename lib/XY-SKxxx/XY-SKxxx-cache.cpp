@@ -25,6 +25,9 @@ bool XY_SKxxx::updateAllStatus(bool force) {
   delay(_silentIntervalTime * 2);
   
   success &= updateDeviceState(force);
+  delay(_silentIntervalTime * 2);
+  
+  success &= updateConstantPowerSettings(force);
   
   _cacheValid = success;
   
@@ -307,6 +310,64 @@ bool XY_SKxxx::updateCalibrationSettings(bool force) {
   return true;
 }
 
+// Battery cutoff current methods
+bool XY_SKxxx::updateBatteryCutoffCurrent(bool force) {
+  unsigned long now = millis();
+  if (!force && (now - _lastBatteryCutoffUpdate < _cacheTimeout)) {
+    return true;
+  }
+
+  waitForSilentInterval();
+  
+  // Read battery cutoff current
+  uint8_t result = modbus.readHoldingRegisters(REG_BTF, 1);
+  if (result == modbus.ku8MBSuccess) {
+    _protection.batteryCutoffCurrent = modbus.getResponseBuffer(0) / 1000.0f; // 3 decimal places
+    _lastBatteryCutoffUpdate = now;
+    _lastCommsTime = millis();
+    return true;
+  }
+  
+  _lastCommsTime = millis();
+  return false;
+}
+
+float XY_SKxxx::getCachedBatteryCutoffCurrent(bool refresh) {
+  if (refresh) {
+    updateBatteryCutoffCurrent(true);
+  }
+  return _protection.batteryCutoffCurrent;
+}
+
+// Communication settings (slave address and baudrate)
+bool XY_SKxxx::updateCommunicationSettings(bool force) {
+  unsigned long now = millis();
+  if (!force && (now - _lastCommunicationSettingsUpdate < _cacheTimeout)) {
+    return true;
+  }
+  
+  waitForSilentInterval();
+  
+  // Read slave address
+  uint8_t result = modbus.readHoldingRegisters(REG_SLAVE_ADDR, 1);
+  if (result == modbus.ku8MBSuccess) {
+    _cachedSlaveAddress = modbus.getResponseBuffer(0);
+    
+    // Read baudrate code
+    delay(_silentIntervalTime * 2);
+    result = modbus.readHoldingRegisters(REG_BAUDRATE_L, 1);
+    if (result == modbus.ku8MBSuccess) {
+      _cachedBaudRateCode = modbus.getResponseBuffer(0);
+      _lastCommunicationSettingsUpdate = now;
+      _lastCommsTime = millis();
+      return true;
+    }
+  }
+  
+  _lastCommsTime = millis();
+  return false;
+}
+
 // Device state access methods
 bool XY_SKxxx::isOutputEnabled(bool refresh) {
   if (refresh) {
@@ -357,6 +418,38 @@ float XY_SKxxx::getExternalTempCalibration(bool refresh) {
     updateCalibrationSettings(true);
   }
   return _externalTempCalibration;
+}
+
+// Constant Power settings update method
+bool XY_SKxxx::updateConstantPowerSettings(bool force) {
+  unsigned long now = millis();
+  if (!force && (now - _lastConstantPowerUpdate < _cacheTimeout)) {
+    return true;
+  }
+  
+  waitForSilentInterval();
+  
+  // Read CP mode enable state
+  uint8_t result = modbus.readHoldingRegisters(REG_CP_ENABLE, 1);
+  if (result != modbus.ku8MBSuccess) {
+    _lastCommsTime = millis();
+    return false;
+  }
+  
+  _status.cpModeEnabled = (modbus.getResponseBuffer(0) != 0);
+  
+  // Read CP value
+  delay(_silentIntervalTime * 2);
+  result = modbus.readHoldingRegisters(REG_CP_SET, 1);
+  if (result != modbus.ku8MBSuccess) {
+    _lastCommsTime = millis();
+    return false;
+  }
+  
+  _status.constantPower = modbus.getResponseBuffer(0) / 10.0f;
+  _lastConstantPowerUpdate = now;
+  _lastCommsTime = millis();
+  return true;
 }
 
 #endif // XY_SKXXX_CACHE_IMPL
