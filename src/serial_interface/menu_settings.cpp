@@ -4,20 +4,25 @@
 
 void displaySettingsMenu() {
   Serial.println("\n==== Device Settings ====");
+  Serial.println("beeper [on/off] - Enable/disable beeper");
   Serial.println("brightness [level] - Set display brightness (1-5, 5 = brightest)");
   Serial.println("tempunit [c/f] - Set temperature unit (Celsius/Fahrenheit)");
-  Serial.println("mppt [on/off] - Enable/disable MPPT (Maximum Power Point Tracking)");
-  Serial.println("mpptthr [value] - Set MPPT threshold (0-100%, default 80%)");
-  Serial.println("save - Save current settings to device");
-  Serial.println("default - Restore device to factory defaults");
-  Serial.println("update [pin] [value] - Update local configuration");
-  Serial.println("saveconfig - Save local configuration to flash");
-  Serial.println("beeper [on/off] - Enable/disable beeper");
-  // Removed "led [0-5]" command as it's redundant with "brightness"
   Serial.println("sleep [0-30] - Set sleep timeout (minutes, 0:off)");
+  Serial.println("--------------------------");
   Serial.println("slave [1-247] - Set Modbus slave address");
   Serial.println("baud [0-8] - Set baudrate (0:9600, 1:14400, 2:19200, 3:38400,");
   Serial.println("              4:56000, 5:57600, 6:115200, 7:2400, 8:4800)");
+  Serial.println("rxpin [pin] - Set Modbus RX pin number");
+  Serial.println("txpin [pin] - Set Modbus TX pin number");
+  Serial.println("--------------------------");
+  Serial.println("mppt [on/off] - Enable/disable MPPT (Maximum Power Point Tracking)");
+  Serial.println("mpptthr [value] - Set MPPT threshold (0-100%, default 80%)");
+  Serial.println("--------------------------");
+  Serial.println("default - Restore device to factory defaults");
+  Serial.println("--------------------------");
+  Serial.println("save - Save current settings to device");
+  Serial.println("saveconfig - Save local configuration to flash");
+  Serial.println("--------------------------");
   Serial.println("showsettings - Display all device settings");
   Serial.println("menu - Return to main menu");
   Serial.println("help - Show this menu");
@@ -72,54 +77,19 @@ void handleSettingsMenu(const String& input, XY_SKxxx* ps, XYModbusConfig& confi
     } else {
       Serial.println("Failed to restore factory defaults");
     }
-  } else if (input.startsWith("update ")) {
-    // Format: update [setting] [value]
-    int spacePos = input.indexOf(' ', 7);
-    if (spacePos > 0) {
-      String setting = input.substring(7, spacePos);
-      String value = input.substring(spacePos + 1);
-      
-      if (setting.equalsIgnoreCase("rxpin")) {
-        uint8_t pin;
-        if (parseUInt8(value, pin)) {
-          config.rxPin = pin;
-          Serial.print("Updated RX Pin to: ");
-          Serial.println(pin);
-        }
-      } else if (setting.equalsIgnoreCase("txpin")) {
-        uint8_t pin;
-        if (parseUInt8(value, pin)) {
-          config.txPin = pin;
-          Serial.print("Updated TX Pin to: ");
-          Serial.println(pin);
-        }
-      } else if (setting.equalsIgnoreCase("slaveid") || setting.equalsIgnoreCase("address")) {
-        uint8_t id;
-        if (parseUInt8(value, id) && id >= 1 && id <= 247) {
-          config.slaveId = id;
-          Serial.print("Updated Slave ID to: ");
-          Serial.println(id);
-        } else {
-          Serial.println("Invalid Slave ID. Must be between 1 and 247.");
-        }
-      } else if (setting.equalsIgnoreCase("baud") || setting.equalsIgnoreCase("baudrate")) {
-        uint32_t baud;
-        if (parseUInt16(value, (uint16_t&)baud)) {
-          // Check for standard baud rates
-          if (baud == 1200 || baud == 2400 || baud == 4800 || baud == 9600 || 
-              baud == 19200 || baud == 38400 || baud == 57600 || baud == 115200) {
-            config.baudRate = baud;
-            Serial.print("Updated Baud Rate to: ");
-            Serial.println(baud);
-          } else {
-            Serial.println("Invalid baud rate. Use a standard value.");
-          }
-        }
-      } else {
-        Serial.println("Unknown setting. Available: rxpin, txpin, slaveid, baudrate");
-      }
-    } else {
-      Serial.println("Invalid format. Use: update [setting] [value]");
+  } else if (input.startsWith("rxpin ")) {
+    uint8_t pin;
+    if (parseUInt8(input.substring(6), pin)) {
+      config.rxPin = pin;
+      Serial.print("RX Pin set to: ");
+      Serial.println(pin);
+    }
+  } else if (input.startsWith("txpin ")) {
+    uint8_t pin;
+    if (parseUInt8(input.substring(6), pin)) {
+      config.txPin = pin;
+      Serial.print("TX Pin set to: ");
+      Serial.println(pin);
     }
   } else if (input == "saveconfig") {
     if (XYConfigManager::saveConfig(config)) {
