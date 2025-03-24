@@ -9,7 +9,7 @@ void displayBasicControlMenu() {
   Serial.println("vi [voltage] [current] - Set both voltage and current");
   Serial.println("on - Turn output on");
   Serial.println("off - Turn output off");
-  Serial.println("read - Read current output values");
+  Serial.println("read - Read live output values");
   Serial.println("lock - Lock front panel keys");
   Serial.println("unlock - Unlock front panel keys");
   Serial.println("cv [value] - Set constant voltage mode");
