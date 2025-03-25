@@ -345,4 +345,478 @@ button.danger {
     width: 20px;
     height: 20px;
   }
+
+  .container {
+    max-width: 100%;
+    padding: 10px;
+    overflow: hidden; /* Prevent horizontal scrolling */
+  }
+  
+  .cards-container {
+    display: flex;
+    transition: transform 0.3s ease;
+    width: 100%;
+    overflow: visible; /* Allow cards to be visible outside container for swipe */
+    will-change: transform; /* Optimize for animations */
+    min-height: 200px; /* Ensure minimum height */
+    -webkit-overflow-scrolling: touch; /* Improve scroll on iOS */
+  }
+  
+  /* Fix for cards growing in width */
+  .card {
+    flex: 0 0 auto; /* Prevent flex growth */
+    width: calc(100% - 30px) !important; /* Force width */
+    margin-right: 15px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    max-height: 75vh;
+    min-height: 50vh;
+    padding: 15px;
+    /* Improve GPU rendering */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+  
+  .card:last-child {
+    margin-right: 0;
+  }
+  
+  .dots-indicator {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+    padding: 5px 0;
+  }
+  
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--border-color);
+    margin: 0 5px;
+    transition: background-color 0.3s ease;
+    cursor: pointer; /* Make it clear dots are clickable */
+  }
+  
+  .dot.active {
+    background-color: var(--secondary-color);
+    transform: scale(1.2); /* Slightly enlarge active dot */
+  }
+  
+  /* Ensure swiping doesn't cause unwanted scrolling */
+  body.swiping {
+    overflow: hidden;
+  }
+
+  /* Add width/height adaptation for different device orientations */
+  @media (orientation: landscape) {
+    .card {
+      max-height: 85vh; /* Slightly taller in landscape */
+      padding: 10px; /* Even less padding in landscape to maximize content area */
+    }
+    
+    /* Adjust font sizes for landscape */
+    h2 {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+    
+    .reading-value {
+      font-size: 1.6rem; /* Slightly smaller readings in landscape */
+    }
+  }
+  
+  /* Make cards flexible based on content */
+  .cards-container {
+    height: auto;
+    min-height: 60vh;
+  }
+  
+  /* Optimize buttons for touch */
+  button {
+    min-height: 44px; /* Better for touch targets */
+    padding: 8px 12px;
+  }
+  
+  /* Responsive form elements */
+  .form-group {
+    margin-bottom: 10px; /* Tighter spacing */
+  }
+  
+  input, select {
+    height: 40px; /* Larger touch targets */
+    font-size: 16px; /* Prevent iOS zoom on focus */
+  }
+  
+  /* Ensure content scrolls properly when keyboard appears */
+  @supports (-webkit-touch-callout: none) {
+    /* iOS specific - fix for keyboard pushing content */
+    .card {
+      max-height: -webkit-fill-available;
+    }
+  }
+  
+  /* More responsive sizing for different device sizes */
+  @media (max-height: 700px) {
+    .card {
+      max-height: 75vh; /* Shorter for small devices */
+    }
+    
+    .reading-value {
+      font-size: 1.5rem; /* Smaller text for small devices */
+    }
+  }
+  
+  @media (min-height: 800px) {
+    .card {
+      max-height: 85vh; /* Taller for larger devices */
+    }
+  }
+
+  /* Fix for readings breaking the layout */
+  .readings {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    margin: 10px -5px;
+    width: 100%; /* Ensure readings take full width */
+    box-sizing: border-box; /* Include padding in width calculation */
+    padding: 0 5px; /* Slight padding for spacing */
+    overflow: hidden; /* Prevent overflow */
+    max-width: 100%; /* Cap width to prevent overflow */
+  }
+  
+  .reading-item {
+    flex: 1 1 33%; /* Equal width distribution with fixed ratio */
+    min-width: 0; /* Allow items to shrink below min-width */
+    margin: 5px;
+    width: 33%; /* Fixed width for each reading */
+    box-sizing: border-box; /* Include padding in width calculation */
+    max-width: 33%; /* Cap maximum width */
+  }
+  
+  /* Ensure card content stays within bounds */
+  .card {
+    box-sizing: border-box;
+    width: 100% !important; /* Force card width */
+    overflow-x: hidden; /* Hide horizontal overflow */
+    padding: 15px; /* Slightly reduced padding for mobile */
+    overflow-wrap: break-word; /* Handle long text properly */
+  }
+  
+  /* Fix for swiping cards */
+  .cards-container {
+    width: auto !important; /* Initial value */
+    transform: none !important; /* Initial value */
+  }
+  
+  /* Setting consistent sizing for cards in swipe container */
+  .cards-container .card {
+    width: calc(100vw - 50px) !important; /* Account for container padding */
+    margin: 0 15px 0 0;
+    flex: 0 0 auto;
+  }
+  
+  /* Disable transitions during initial load */
+  body.loading .cards-container {
+    transition: none !important;
+  }
+  
+  /* Fix flickering/jumping during load */
+  body.loading * {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  /* Ensure power supply readings stay in line */
+  .power-supply-control .control-settings {
+    overflow: hidden;
+  }
+  
+  /* Improved Mobile swipe card styles */
+  /* Improve container styling */
+  .container {
+    max-width: 100%;
+    padding: 10px;
+    overflow: hidden; /* Prevent horizontal scrolling */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Fix cards container for swiping */
+  .cards-container {
+    width: 100%; /* Initial value before JS takes over */
+    display: block; /* Initial value before JS takes over */
+    transform: none; /* Initial value before JS takes over */
+    touch-action: pan-y; /* Allow vertical scrolling but handle horizontal ourselves */
+    will-change: transform; /* Hint for browser to optimize */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Better card styling for swiping */
+  .card {
+    box-sizing: border-box;
+    width: 100%; /* Initial value before JS takes over */
+    padding: 15px;
+    margin-bottom: 0; /* Remove default margin when in swipe mode */
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0); /* Hardware acceleration */
+    backface-visibility: hidden;
+  }
+  
+  /* Improved dots indicators */
+  .dots-indicator {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+    padding: 8px 0;
+    z-index: 10;
+  }
+  
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--border-color);
+    margin: 0 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .dot.active {
+    background-color: var(--secondary-color);
+    transform: scale(1.2);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  
+  /* Prevent jumping during orientation changes */
+  body.orientation-changing * {
+    transition: none !important;
+    animation: none !important;
+  }
+  
+  /* Improve readings display in cards */
+  .readings {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    width: 100%;
+    overflow-x: hidden;
+    margin: 10px 0;
+  }
+  
+  .reading-item {
+    flex: 1;
+    width: 33%;
+    min-width: 0;
+    max-width: 33%;
+    box-sizing: border-box;
+    padding: 0 5px;
+    margin: 5px;
+  }
+  
+  .reading-value {
+    font-size: 1.8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .reading-label, .reading-unit {
+    font-size: 0.8rem;
+  }
+  
+  /* Ensure card content stays properly contained */
+  .card > * {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Improve form elements for touch */
+  input, select, button {
+    font-size: 16px; /* Prevents iOS zoom */
+    height: 44px; /* Better touch target */
+  }
+  
+  /* Fix layout in both orientations */
+  @media (orientation: portrait) {
+    .card {
+      max-height: 75vh;
+      min-height: 50vh;
+    }
+    
+    .readings {
+      margin: 10px -5px;
+    }
+  }
+  
+  @media (orientation: landscape) {
+    .card {
+      max-height: 85vh;
+      min-height: 40vh;
+    }
+    
+    /* Slightly smaller text in landscape */
+    h2 {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+    
+    .reading-value {
+      font-size: 1.6rem;
+    }
+    
+    .reading-label, .reading-unit {
+      font-size: 0.75rem;
+    }
+  }
+  
+  /* Custom overrides that apply to either orientation */
+  @media (max-width: 600px) {
+    /* Make sure these rules are applied regardless of what's in other sections */
+    .cards-container {
+      width: 100% !important;
+      transition: transform 0.3s ease !important;
+    }
+    
+    .card {
+      box-sizing: border-box !important;
+      overflow-x: hidden !important;
+    }
+    
+    .readings {
+      width: 100% !important;
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+    }
+    
+    .reading-item {
+      flex: 1 !important;
+      min-width: 0 !important;
+    }
+  }
+}
+
+/* Simplified Mobile Card Styles */
+@media (max-width: 600px) {
+  /* Basic card styling */
+  .card {
+    margin-bottom: 10px;
+    padding: 15px;
+    overflow-y: auto;
+    max-height: 80vh;
+  }
+  
+  /* Nice dot indicators for card navigation */
+  .dots-indicator {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+    padding: 5px 0;
+  }
+  
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--border-color);
+    margin: 0 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .dot.active {
+    background-color: var(--secondary-color);
+    transform: scale(1.2);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  
+  /* Keep readings in a row even on mobile */
+  .readings {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    width: 100%;
+    margin: 10px 0;
+  }
+  
+  .reading-item {
+    flex: 1;
+    min-width: 0;
+    margin: 5px;
+    text-align: center;
+  }
+  
+  .reading-value {
+    font-size: 1.8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .reading-label, .reading-unit {
+    font-size: 0.8rem;
+  }
+  
+  /* Responsive buttons and form elements */
+  .button-group {
+    flex-direction: column;
+  }
+  
+  button {
+    margin-bottom: 10px;
+    min-height: 44px;
+  }
+  
+  input, select {
+    height: 44px;
+    font-size: 16px;
+  }
+  
+  /* Responsive layout adjustments */
+  .container {
+    padding: 10px;
+  }
+  
+  .theme-toggle {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .theme-toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Additional responsive adjustments */
+@media (max-width: 400px) {
+  /* Extremely small screens (older phones) */
+  .container {
+    padding: 5px;
+  }
+  
+  h1 {
+    font-size: 1.4rem;
+  }
+  
+  .reading-value {
+    font-size: 1.4rem;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 800px) {
+  /* Tablets and larger phones */
+  .card {
+    padding: 15px;
+  }
+  
+  .container {
+    max-width: 95%;
+  }
 }

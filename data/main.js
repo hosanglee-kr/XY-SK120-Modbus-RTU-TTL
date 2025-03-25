@@ -31,9 +31,19 @@ const elements = {
   themeColorMeta: document.getElementById('theme-color')
 };
 
+// Add swipe elements to DOM elements
+const swipeElements = {
+  cardsContainer: document.getElementById('cards-container'),
+  dots: document.querySelectorAll('.dot'),
+  cards: document.querySelectorAll('.card')
+};
+
 // Initialize application
 function init() {
   console.log("Initializing application");
+  
+  // Add loading class to body to disable transitions during initial load
+  document.body.classList.add('loading');
   
   // Check that all required DOM elements exist
   console.log("Elements found:", elements);
@@ -71,6 +81,14 @@ function init() {
   
   // Initialize theme based on saved preference
   initTheme();
+  
+  // Initialize swipeable cards for mobile
+  initSwipeCards();
+  
+  // Remove the loading class after layout calculations are complete
+  setTimeout(() => {
+    document.body.classList.remove('loading');
+  }, 500);
 }
 
 // Handle WebSocket communication
@@ -479,5 +497,73 @@ function setTheme(theme) {
   }
 }
 
+// Remove the complex swipeable cards implementation and replace with a simpler version
+function initSwipeCards() {
+  // Check if we're on mobile
+  if (window.innerWidth <= 600) {
+    // Show dots indicator for navigation
+    const dotsIndicator = document.getElementById('dots-indicator');
+    if (dotsIndicator) {
+      dotsIndicator.style.display = 'flex';
+    }
+    
+    // Add click event to dots for direct navigation
+    const dots = document.querySelectorAll('.dot');
+    const cards = document.querySelectorAll('.card');
+    
+    if (dots.length > 0 && cards.length > 0) {
+      dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+          // Hide all cards
+          cards.forEach(card => {
+            card.style.display = 'none';
+          });
+          
+          // Show the selected card
+          if (cards[index]) {
+            cards[index].style.display = 'block';
+          }
+          
+          // Update active dot
+          dots.forEach(d => {
+            d.classList.remove('active');
+          });
+          dot.classList.add('active');
+        });
+      });
+      
+      // Initialize - show first card, hide others
+      cards.forEach((card, i) => {
+        card.style.display = i === 0 ? 'block' : 'none';
+      });
+    }
+  } else {
+    // On desktop, hide dots indicator and show all cards
+    const dotsIndicator = document.getElementById('dots-indicator');
+    if (dotsIndicator) {
+      dotsIndicator.style.display = 'none';
+    }
+    
+    // Show all cards
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+      card.style.display = 'block';
+    });
+  }
+}
+
 // Initialize when DOM is fully loaded
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', function() {
+  init();
+  
+  // Call initSwipeCards once at startup
+  setTimeout(initSwipeCards, 500);
+  
+  // Recalculate on resize
+  window.addEventListener('resize', initSwipeCards);
+  
+  // Recalculate on orientation change
+  window.addEventListener('orientationchange', function() {
+    setTimeout(initSwipeCards, 300);
+  });
+});

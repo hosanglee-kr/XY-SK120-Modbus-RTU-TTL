@@ -32,7 +32,7 @@
             <p class="ip-display">Device IP: <span id="device-ip">--</span></p>
         </header>
         
-        <!-- Power Supply Control Card moved to top -->
+        <!-- Power Supply Control Card -->
         <div class="card">
             <h2>Power Supply Control</h2>
             <div class="power-supply-control">
@@ -88,6 +88,7 @@
             </div>
         </div>
         
+        <!-- Configuration Card -->
         <div class="card">
             <h2>Configuration</h2>
             <form id="configForm">
@@ -150,9 +151,7 @@
             </form>
         </div>
         
-        <!-- Removed Sensor Readings card -->
-        
-        <!-- WiFi Status card moved to the bottom -->
+        <!-- WiFi Status card -->
         <div class="card">
             <h2>WiFi Status</h2>
             <div class="wifi-status">
@@ -177,6 +176,13 @@
                     <button type="button" id="wifiRefreshBtn" class="secondary">Refresh Status</button>
                 </div>
             </div>
+        </div>
+        
+        <!-- Keep the dots indicator for mobile -->
+        <div class="dots-indicator" id="dots-indicator">
+            <div class="dot active" title="Power Supply"></div>
+            <div class="dot" title="Configuration"></div>
+            <div class="dot" title="WiFi Status"></div>
         </div>
     </div>
     
@@ -222,6 +228,48 @@
               .catch(error => console.error('Backup fetch error:', error));
           }
         }, 2000);
+      });
+
+      // Add extra initialization for swipe functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        // Add swipe debug helper
+        function updateSwipeDebug(message) {
+            const debug = document.getElementById('swipe-debug');
+            if (debug) {
+                debug.textContent = message;
+            }
+        }
+        
+        // Force refresh of swipe cards when orientation changes
+        window.addEventListener('orientationchange', function() {
+            setTimeout(function() {
+                const container = document.getElementById('cards-container');
+                if (container) {
+                    // Force layout recalculation
+                    container.style.display = 'none';
+                    setTimeout(() => {
+                        container.style.display = 'flex';
+                        // Call initSwipeCards if it exists
+                        if (typeof initSwipeCards === 'function') {
+                            initSwipeCards();
+                        }
+                    }, 50);
+                }
+            }, 300);
+        });
+        
+        // Enable debug mode with URL parameter ?debug=1
+        if (window.location.search.includes('debug=1')) {
+            document.getElementById('swipe-debug').style.display = 'block';
+            
+            // Listen for swipe events
+            const container = document.getElementById('cards-container');
+            if (container) {
+                container.addEventListener('touchstart', () => updateSwipeDebug('Swipe started'));
+                container.addEventListener('touchmove', (e) => updateSwipeDebug(`Swiping: ${e.touches[0].clientX}px`));
+                container.addEventListener('touchend', () => updateSwipeDebug('Swipe ended'));
+            }
+        }
       });
     </script>
 </body>
