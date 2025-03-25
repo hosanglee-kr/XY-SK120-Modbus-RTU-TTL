@@ -24,7 +24,11 @@ const elements = {
   applyVoltage: document.getElementById('apply-voltage'),
   setCurrent: document.getElementById('set-current'),
   applyCurrent: document.getElementById('apply-current'),
-  refreshPsu: document.getElementById('refresh-psu')
+  refreshPsu: document.getElementById('refresh-psu'),
+  themeToggle: document.getElementById('theme-toggle'),
+  sunIcon: document.querySelector('.sun-icon'),
+  moonIcon: document.querySelector('.moon-icon'),
+  themeColorMeta: document.getElementById('theme-color')
 };
 
 // Initialize application
@@ -64,6 +68,9 @@ function init() {
   setTimeout(() => {
     requestPsuStatus();
   }, 1000);
+  
+  // Initialize theme based on saved preference
+  initTheme();
 }
 
 // Handle WebSocket communication
@@ -410,6 +417,11 @@ function setupEventListeners() {
   if (elements.refreshPsu) {
     elements.refreshPsu.addEventListener('click', requestPsuStatus);
   }
+  
+  // Theme toggle
+  if (elements.themeToggle) {
+    elements.themeToggle.addEventListener('click', toggleTheme);
+  }
 }
 
 // Save configuration to server
@@ -433,6 +445,38 @@ function saveConfiguration(config) {
       console.error('Error saving configuration:', error);
       alert('Error saving configuration. Check console for details.');
     });
+}
+
+// Initialize theme based on saved preference
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  setTheme(savedTheme);
+}
+
+// Toggle between light and dark theme
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  setTheme(newTheme);
+  localStorage.setItem('theme', newTheme);
+}
+
+// Set the theme
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  
+  // Update icons
+  if (elements.sunIcon && elements.moonIcon) {
+    if (theme === 'dark') {
+      elements.sunIcon.style.display = 'block';
+      elements.moonIcon.style.display = 'none';
+      elements.themeColorMeta.setAttribute('content', '#121212');
+    } else {
+      elements.sunIcon.style.display = 'none';
+      elements.moonIcon.style.display = 'block';
+      elements.themeColorMeta.setAttribute('content', '#2c3e50');
+    }
+  }
 }
 
 // Initialize when DOM is fully loaded

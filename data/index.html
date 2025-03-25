@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XY-SK120 Modbus Controller</title>
+    <title>XY-SK120 120W DPS</title>
     <link rel="stylesheet" href="style.css">
     <!-- Add favicon and apple touch icon links -->
     <link rel="icon" href="favicon.ico" type="image/x-icon">
@@ -13,11 +13,22 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="XY-SK120">
+    <meta name="theme-color" content="#2c3e50" id="theme-color">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>XY-SK120 Modbus Interface</h1>
+            <h1>XY-SK120 120W DPS</h1>
+            <div class="theme-toggle" id="theme-toggle" title="Toggle dark mode">
+                <!-- Moon icon for light theme (shows when in light mode) -->
+                <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>
+                </svg>
+                <!-- Sun icon for dark theme (shows when in dark mode) -->
+                <svg class="sun-icon" style="display: none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0-5a1 1 0 0 0 1-1V1a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1zm0 19a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1zm10-10h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2zM4 12a1 1 0 0 0-1-1H2a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1zm16.95-7.05a1 1 0 0 0-1.41 0l-1 1a1 1 0 0 0 1.41 1.41l1-1a1 1 0 0 0 0-1.41zm-16.9 14.1a1 1 0 0 0-1.41 0l-1 1a1 1 0 0 0 1.41 1.41l1-1a1 1 0 0 0 0-1.41zm14.1 0a1 1 0 0 0 0 1.41l1 1a1 1 0 0 0 1.41-1.41l-1-1a1 1 0 0 0-1.41 0zm-16.1-14.1a1 1 0 0 0 0-1.41l-1-1a1 1 0 0 0-1.41 1.41l1 1a1 1 0 0 0 1.41 0z"/>
+                </svg>
+            </div>
             <p class="ip-display">Device IP: <span id="device-ip">--</span></p>
         </header>
         
