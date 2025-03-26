@@ -93,7 +93,7 @@ function initVoltagePresetMenu() {
   // Store scroll position
   let scrollPosition = 0;
   
-  // Show popup function - position to match active card
+  // Show popup function - modified for consistent stacking
   function showPopup() {
     // Store the current scroll position before locking
     scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
@@ -101,77 +101,63 @@ function initVoltagePresetMenu() {
     // Add popup-open class first to prevent flickering
     document.body.classList.add('popup-open');
     
-    // Set body position to fixed to prevent scrolling
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    document.body.style.height = '100%';
-    document.body.style.top = `-${scrollPosition}px`;
+    // Move popup and overlay to be direct children of body if needed
+    if (popup.parentElement !== document.body) {
+      document.body.appendChild(popup);
+    }
+    if (overlay.parentElement !== document.body) {
+      document.body.appendChild(overlay);
+    }
     
-    // Detect if we're in PWA mode
+    // Position popup with clean styles for clarity - fixed positioning works with z-index
+    popup.style.position = 'fixed';
+    popup.style.zIndex = '100000';
+    
+    // Add other positioning - check if we're in mobile or PWA mode
     const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+    const isMobile = window.innerWidth <= 600;
     
-    // Get the active card to match dimensions
-    const activeCard = document.querySelector('.card[style*="display: block"]');
-    if (activeCard) {
-      const cardRect = activeCard.getBoundingClientRect();
-      
-      // Fix: Set popup width based on card but slightly smaller
-      const popupWidth = Math.min(300, cardRect.width * 0.9);
-      
-      // Fix: Center popup within card
-      popup.style.position = 'fixed';
-      popup.style.width = `${popupWidth}px`;
-      popup.style.maxHeight = `${window.innerHeight * 0.7}px`; // 70% of viewport height
-      popup.style.top = '50%';
-      popup.style.left = '50%';
-      popup.style.transform = 'translate(-50%, -50%)';
-      
-      // Make sure all content fits within popup
-      const titleHeight = popup.querySelector('.voltage-popup-title')?.offsetHeight || 45;
-      const contentArea = popup.querySelector('.voltage-popup-content');
-      if (contentArea) {
-        contentArea.style.maxHeight = `${window.innerHeight * 0.7 - titleHeight}px`;
+    if (isMobile || isPWA) {
+      // Mobile/PWA positioning logic
+      const readingsContainer = document.querySelector('.readings-container');
+      if (readingsContainer) {
+        const readingsRect = readingsContainer.getBoundingClientRect();
+        popup.style.top = `${readingsRect.bottom + 10}px`;
+        popup.style.left = '50%';
+        popup.style.transform = 'translateX(-50%)';
+        
+        // Calculate available height
+        const availableHeight = window.innerHeight - readingsRect.bottom - 20;
+        popup.style.maxHeight = `${Math.min(availableHeight, window.innerHeight * 0.6)}px`;
+      } else {
+        // Fallback to center positioning
+        popup.style.top = '50%';
+        popup.style.left = '50%';
+        popup.style.transform = 'translate(-50%, -50%)';
       }
     } else {
-      // Fallback if no active card is found - center in viewport
-      popup.style.width = '85%';
-      popup.style.maxWidth = '300px';
-      popup.style.maxHeight = '70vh';
+      // Desktop centered positioning
       popup.style.top = '50%';
       popup.style.left = '50%';
       popup.style.transform = 'translate(-50%, -50%)';
     }
     
-    // Activate overlay first for smooth appearance
-    overlay.classList.add('active');
+    // Ensure overlay covers everything
+    overlay.style.position = 'fixed';
+    overlay.style.zIndex = '99999';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.right = '0';
+    overlay.style.bottom = '0';
     
-    // Then activate popup
+    // Add active classes to show elements
+    overlay.classList.add('active');
     popup.classList.add('active');
     
     // Reset popup scroll to top
     popup.scrollTop = 0;
     
-    // Force proper stacking with extremely high z-index
-    popup.style.zIndex = '100000';
-    overlay.style.zIndex = '99999';
-    
-    // Force all potential blocking elements to lower z-index
-    const elementsToLower = document.querySelectorAll(
-      '.readings-container, .dots-indicator, .header-container, .cards-container, .card'
-    );
-    elementsToLower.forEach(el => {
-      if (el) el.style.zIndex = '1';
-    });
-    
-    // Additional fixes for PWA mode
-    if (isPWA) {
-      setTimeout(() => {
-        // Give iOS time to render the popup
-        popup.scrollTop = 0;
-      }, 50);
-    }
-    
-    // Add touchmove prevention for iOS Safari (but only outside popup)
+    // Add touchmove prevention for iOS Safari
     document.addEventListener('touchmove', preventScroll, { passive: false });
   }
   

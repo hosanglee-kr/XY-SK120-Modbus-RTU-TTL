@@ -1032,7 +1032,7 @@ button.danger {
   background-color: var(--card-color);
   border-radius: 12px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-  z-index: 100000 !important;
+  /* z-index: 100000 !important; */
   overflow: hidden;
   flex-direction: column;
   -webkit-overflow-scrolling: touch !important;
@@ -1432,10 +1432,150 @@ body.popup-open {
 .readings-container {
   z-index: 1 !important; /* Much lower than popup z-index */
   position: relative;
+  /* Add isolation to create a new stacking context */
+  isolation: isolate;
+  /* Keep higher z-index than regular content but below popup */
+  z-index: 20 !important;
+  /* Prevent backdrop-filter from affecting */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Prevent blurring from affecting readings-container when popup is open */
+body.popup-open .readings-container {
+  pointer-events: none !important;
+  /* Explicitly disable backdrop-filter from affecting this element */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 /* Header and card containers - also low z-index */
 .header-container,
 .cards-container {
   z-index: 1 !important;
+}
+
+/* Voltage popup menu - improved size and positioning */
+.voltage-popup {
+  display: none;
+  position: fixed;
+  /* Updated position will be set by JS dynamically */
+  background-color: var(--card-color);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  z-index: 100000 !important;
+  overflow: hidden;
+  flex-direction: column;
+  -webkit-overflow-scrolling: touch !important;
+  overflow-y: auto !important;
+  /* Smaller size */
+  max-width: 280px;
+  width: 85%;
+  max-height: 60vh;
+}
+
+/* Add overlay for popup background */
+.popup-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 99999 !important; /* Just below the popup but above everything else */
+  backdrop-filter: blur(3px); /* Add blur effect */
+  -webkit-backdrop-filter: blur(3px); /* For Safari */
+  touch-action: none; /* Prevent touch events on overlay */
+}
+
+/* Fix for readings container - prevent blurring and interference */
+.readings-container {
+  /* Add isolation to create a new stacking context */
+  isolation: isolate;
+  /* Keep higher z-index than regular content but below popup */
+  z-index: 20 !important;
+  /* Prevent backdrop-filter from affecting */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Prevent blurring from affecting readings-container when popup is open */
+body.popup-open .readings-container {
+  pointer-events: none !important;
+  /* Explicitly disable backdrop-filter from affecting this element */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Mobile optimizations for popup */
+@media (max-width: 600px) {
+  /* ...existing code... */
+  
+  .voltage-popup {
+    /* Adjust for mobile: smaller and positioned from bottom of readings */
+    position: fixed !important;
+    width: 80% !important; 
+    max-width: 280px !important;
+    max-height: 60vh !important;
+    /* Reset positioning - will be set by JS */
+    top: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin-top: 10px !important;
+    z-index: 100000 !important;
+    border-radius: 12px !important;
+  }
+  
+  /* ...existing code... */
+}
+
+/* PWA mode specific enhancements */
+@media all and (display-mode: standalone) {
+  .voltage-popup {
+    /* Adjust for PWA: position from bottom of readings */
+    width: 80% !important;
+    max-width: 280px !important;
+    max-height: 65vh !important;
+    border-radius: 12px !important;
+    /* Reset top position - will be set by JS */
+    top: auto !important;
+    /* Add bottom safe area padding */
+    padding-bottom: env(safe-area-inset-bottom, 0) !important;
+  }
+}
+
+/* Voltage popup - ensure consistent positioning and stacking */
+.voltage-popup {
+  position: fixed !important;
+  z-index: 100000 !important;
+  /* Make sure it's a direct child of the body to avoid stacking context issues */
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  /* Other styling properties */
+  display: none;
+  background-color: var(--card-color);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  flex-direction: column;
+  width: 85%;
+  max-width: 280px;
+  max-height: 60vh;
+}
+
+/* Overlay - also ensure proper positioning in DOM hierarchy */
+.popup-overlay {
+  position: fixed !important;
+  z-index: 99999 !important;
+  /* Full viewport coverage */
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
 }
