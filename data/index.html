@@ -4,11 +4,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XY-SK120 120W DPS</title>
+    
+    <!-- Black background before anything loads -->
+    <style>
+        html, body {
+            background-color: #000000;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        /* Splash screen styles (must be included inline to prevent flash) */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #2c3e50;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+            opacity: 0; /* Start invisible for fade-in effect */
+        }
+        .splash-screen.fade-in {
+            opacity: 1;
+        }
+        .splash-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .splash-logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .splash-logo svg {
+            width: 100%;
+            height: 100%;
+            fill: #3498db;
+            stroke: #b73dff;
+            stroke-width: 1.5;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            border-top-color: #3498db;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .splash-text {
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+            text-align: center;
+        }
+        @media (prefers-color-scheme: dark) {
+            .splash-screen { background-color: #121212; }
+        }
+        /* Hide main content initially */
+        body > .container { opacity: 0; transition: opacity 0.5s ease-in; }
+    </style>
+    
+    <!-- Regular stylesheets -->
     <link rel="stylesheet" href="css/main.css">
+    
     <!-- Add favicon and apple touch icon links -->
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-precomposed.png">
+    
     <!-- Add meta tags for better mobile experience -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -16,6 +91,18 @@
     <meta name="theme-color" content="#2c3e50" id="theme-color">
 </head>
 <body>
+    <!-- Splash screen -->
+    <div class="splash-screen" id="splash-screen">
+        <div class="splash-logo">
+            <svg viewBox="554 470 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M568.615,471.595C568.916,471.763,569.064,472.114,568.974,472.447L566.982,479.750L574.250,479.750C574.549,479.750,574.819,479.927,574.938,480.201C575.057,480.475,575.002,480.794,574.798,481.012L564.298,492.262C564.063,492.515,563.685,492.574,563.384,492.406C563.082,492.237,562.934,491.885,563.026,491.552L565.018,484.250L557.750,484.250C557.451,484.250,557.181,484.073,557.062,483.799C556.943,483.525,556.998,483.206,557.202,482.988L567.702,471.738C567.937,471.486,568.314,471.427,568.615,471.595Z" 
+                fill="currentColor" stroke="#b73dff" stroke-width="1.5"/>
+            </svg>
+        </div>
+        <div class="spinner"></div>
+        <div class="splash-text">Loading XY-SK120 Interface...</div>
+    </div>
+    
     <div class="container">
         <header>
             <div class="theme-toggle" id="theme-toggle" title="Toggle dark mode">
@@ -30,9 +117,10 @@
             </div>
             <div class="header-container">
                 <div class="header-logo">
-                    <svg width="64" height="64" viewBox="554 470 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Update SVG viewBox for better positioning and add class -->
+                    <svg class="logo-svg" viewBox="554 470 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M568.615,471.595C568.916,471.763,569.064,472.114,568.974,472.447L566.982,479.750L574.250,479.750C574.549,479.750,574.819,479.927,574.938,480.201C575.057,480.475,575.002,480.794,574.798,481.012L564.298,492.262C564.063,492.515,563.685,492.574,563.384,492.406C563.082,492.237,562.934,491.885,563.026,491.552L565.018,484.250L557.750,484.250C557.451,484.250,557.181,484.073,557.062,483.799C556.943,483.525,556.998,483.206,557.202,482.988L567.702,471.738C567.937,471.486,568.314,471.427,568.615,471.595Z" 
-                            fill="currentColor" stroke="#b73dff" stroke-width="1.2"/>
+                            fill="currentColor" stroke="#b73dff" stroke-width="1.5"/>
                     </svg>
                 </div>
                 <h1>XY-SK120 120W DPS</h1>
@@ -197,6 +285,64 @@
     </div>
     
     <script src="main.js"></script>
+    
+    <!-- Splash screen handling script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const splashScreen = document.getElementById('splash-screen');
+            const container = document.querySelector('.container');
+            
+            // Track start time for minimum display duration
+            const startTime = Date.now();
+            const minDisplayTime = 1500; // 1.5 seconds minimum
+            
+            // Fade in splash screen immediately
+            setTimeout(function() {
+                splashScreen.classList.add('fade-in');
+            }, 10);
+            
+            // Function to check if all resources are loaded
+            const checkResourcesLoaded = function() {
+                // Calculate how long the splash has been displayed
+                const elapsedTime = Date.now() - startTime;
+                const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
+                
+                if (document.readyState === 'complete') {
+                    // Wait for minimum display time before fading out
+                    setTimeout(function() {
+                        // Show main content with fade-in
+                        container.style.opacity = '1';
+                        
+                        // Hide splash screen
+                        splashScreen.classList.remove('fade-in');
+                        splashScreen.classList.add('fade-out');
+                        
+                        // Remove splash after animation completes
+                        setTimeout(function() {
+                            splashScreen.style.display = 'none';
+                        }, 500);
+                    }, remainingTime);
+                    
+                    // Remove listener
+                    window.removeEventListener('load', checkResourcesLoaded);
+                }
+            };
+            
+            // Listen for window load event
+            window.addEventListener('load', checkResourcesLoaded);
+            
+            // Fallback to hide splash screen after 8 seconds (longer than before)
+            setTimeout(function() {
+                container.style.opacity = '1';
+                splashScreen.classList.remove('fade-in');
+                splashScreen.classList.add('fade-out');
+                setTimeout(function() {
+                    splashScreen.style.display = 'none';
+                }, 500);
+            }, 8000);
+        });
+    </script>
+    
     <script>
       // Backup script to ensure page loads even if main.js fails
       document.addEventListener('DOMContentLoaded', function() {

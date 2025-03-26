@@ -29,9 +29,9 @@
 /* Header responsive adjustments */
 @media (max-width: 480px) {
   .header-logo {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 8px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 12px;
   }
   
   .header-container h1 {
@@ -60,9 +60,36 @@
   }
   
   .header-logo {
-    width: 24px;
-    height: 24px;
-    margin-right: 8px;
+    width: 64px !important;
+    height: 64px !important;
+    margin-bottom: 12px !important;
+  }
+}
+
+/* Larger logo for tablets and PWA */
+@media (min-width: 481px) and (max-width: 768px) {
+  .header-logo {
+    width: 80px !important;
+    height: 80px !important;
+    margin-bottom: 14px !important;
+  }
+}
+
+/* Add specific styles for PWA mode */
+@media all and (display-mode: standalone) {
+  .header-logo {
+    width: 96px !important;
+    height: 96px !important;
+    margin-bottom: 16px !important;
+  }
+  
+  /* Adjust logo size for smaller PWA screens */
+  @media (max-width: 480px) {
+    .header-logo {
+      width: 72px !important;
+      height: 72px !important;
+      margin-bottom: 12px !important;
+    }
   }
 }
 

@@ -1,5 +1,8 @@
 /* Main CSS file that imports all other modular CSS files */
 
+/* Import splash screen styles */
+@import url('splash.css');
+
 /* Import theme variables */
 @import url('theme.css');
 
