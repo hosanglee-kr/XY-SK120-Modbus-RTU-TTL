@@ -5,92 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XY-SK120 120W DPS</title>
     
-    <!-- Black background before anything loads -->
-    <style>
-        html, body {
-            background-color: #000000;
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-        }
-        
-        /* Splash screen styles (must be included inline to prevent flash) */
-        .splash-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #2c3e50;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease-out;
-            opacity: 0; /* Start invisible for fade-in effect */
-        }
-        .splash-screen.fade-in {
-            opacity: 1;
-        }
-        .splash-screen.fade-out {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .splash-logo {
-            width: 120px;
-            height: 120px;
-            margin-bottom: 30px;
-            position: relative;
-        }
-        .splash-logo svg {
-            width: 100%;
-            height: 100%;
-            fill: #3498db;
-            stroke: #b73dff;
-            stroke-width: 1.5;
-        }
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            border-top-color: #3498db;
-            animation: spin 1s ease-in-out infinite;
-            margin-bottom: 20px;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .splash-text {
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 18px;
-            text-align: center;
-        }
-        @media (prefers-color-scheme: dark) {
-            .splash-screen { background-color: #121212; }
-        }
-        /* Hide main content initially */
-        body > .container { opacity: 0; transition: opacity 0.5s ease-in; }
-    </style>
-    
-    <!-- Regular stylesheets -->
+    <!-- Move splash screen styles to external file -->
+    <link rel="stylesheet" href="css/splash.css">
     <link rel="stylesheet" href="css/main.css">
     
-    <!-- Add favicon and apple touch icon links -->
+    <!-- Favicon and mobile-specific meta tags -->
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-precomposed.png">
-    
-    <!-- Add meta tags for better mobile experience -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="XY-SK120">
     <meta name="theme-color" content="#2c3e50" id="theme-color">
 
-    <!-- Add this to the head section -->
     <script type="module" src="main.js"></script>
 </head>
 <body>
@@ -210,7 +136,7 @@
         <div class="card">
             <h2>Configuration</h2>
             
-            <!-- Updated theme toggle section to be more like a setting -->
+            <!-- Theme toggle control -->
             <div class="config-header">
                 <label class="theme-switch" for="theme-checkbox">
                     <span class="theme-label">Dark Mode</span>
@@ -318,7 +244,7 @@
             </div>
         </div>
         
-        <!-- Keep the dots indicator for mobile -->
+        <!-- Dots indicator for mobile -->
         <div class="dots-indicator" id="dots-indicator">
             <div class="dot active" title="Power Supply"></div>
             <div class="dot" title="Configuration"></div>
@@ -326,208 +252,8 @@
         </div>
     </div>
     
-    <!-- Remove the old script tag for main.js if it exists -->
-    
-    <!-- Splash screen handling script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const splashScreen = document.getElementById('splash-screen');
-            const container = document.querySelector('.container');
-            
-            // Track start time for minimum display duration
-            const startTime = Date.now();
-            const minDisplayTime = 1500; // 1.5 seconds minimum
-            
-            // Fade in splash screen immediately
-            setTimeout(function() {
-                splashScreen.classList.add('fade-in');
-            }, 10);
-            
-            // Function to check if all resources are loaded
-            const checkResourcesLoaded = function() {
-                // Calculate how long the splash has been displayed
-                const elapsedTime = Date.now() - startTime;
-                const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
-                
-                if (document.readyState === 'complete') {
-                    // Wait for minimum display time before fading out
-                    setTimeout(function() {
-                        // Show main content with fade-in
-                        container.style.opacity = '1';
-                        
-                        // Hide splash screen
-                        splashScreen.classList.remove('fade-in');
-                        splashScreen.classList.add('fade-out');
-                        
-                        // Remove splash after animation completes
-                        setTimeout(function() {
-                            splashScreen.style.display = 'none';
-                        }, 500);
-                    }, remainingTime);
-                    
-                    // Remove listener
-                    window.removeEventListener('load', checkResourcesLoaded);
-                }
-            };
-            
-            // Listen for window load event
-            window.addEventListener('load', checkResourcesLoaded);
-            
-            // Fallback to hide splash screen after 8 seconds (longer than before)
-            setTimeout(function() {
-                container.style.opacity = '1';
-                splashScreen.classList.remove('fade-in');
-                splashScreen.classList.add('fade-out');
-                setTimeout(function() {
-                    splashScreen.style.display = 'none';
-                }, 500);
-            }, 8000);
-        });
-    </script>
-    
-    <script>
-      // Backup script to ensure page loads even if main.js fails
-      document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded - checking if main script initialized');
-        
-        // Check if main.js loaded correctly after 2 seconds
-        setTimeout(function() {
-          const psuVoltage = document.getElementById('psu-voltage');
-          if (psuVoltage && psuVoltage.textContent === '--') {
-            console.log('Main script may not have loaded properly, manually fetching data');
-            fetch('/api/data')
-              .then(response => response.json())
-              .then(data => {
-                console.log('Backup fetch received data:', data);
-                
-                // Update power supply values
-                const psuVoltage = document.getElementById('psu-voltage');
-                const psuCurrent = document.getElementById('psu-current');
-                const psuPower = document.getElementById('psu-power');
-                const outputStatus = document.getElementById('output-status');
-                
-                if (psuVoltage && data.voltage !== undefined) {
-                  psuVoltage.textContent = parseFloat(data.voltage).toFixed(2);
-                }
-                
-                if (psuCurrent && data.current !== undefined) {
-                  psuCurrent.textContent = parseFloat(data.current).toFixed(3);
-                }
-                
-                if (psuPower && data.power !== undefined) {
-                  psuPower.textContent = parseFloat(data.power).toFixed(1);
-                }
-                
-                if (outputStatus && data.outputEnabled !== undefined) {
-                  outputStatus.textContent = data.outputEnabled ? "ON" : "OFF";
-                  outputStatus.className = data.outputEnabled ? "status-value on" : "status-value off";
-                }
-              })
-              .catch(error => console.error('Backup fetch error:', error));
-          }
-        }, 2000);
-      });
-
-      // Add extra initialization for swipe functionality
-      document.addEventListener('DOMContentLoaded', function() {
-        // Add swipe debug helper
-        function updateSwipeDebug(message) {
-            const debug = document.getElementById('swipe-debug');
-            if (debug) {
-                debug.textContent = message;
-            }
-        }
-        
-        // Force refresh of swipe cards when orientation changes
-        window.addEventListener('orientationchange', function() {
-            setTimeout(function() {
-                const container = document.getElementById('cards-container');
-                if (container) {
-                    // Force layout recalculation
-                    container.style.display = 'none';
-                    setTimeout(() => {
-                        container.style.display = 'flex';
-                        // Call initSwipeCards if it exists
-                        if (typeof initSwipeCards === 'function') {
-                            initSwipeCards();
-                        }
-                    }, 50);
-                }
-            }, 300);
-        });
-        
-        // Enable debug mode with URL parameter ?debug=1
-        if (window.location.search.includes('debug=1')) {
-            document.getElementById('swipe-debug').style.display = 'block';
-            
-            // Listen for swipe events
-            const container = document.getElementById('cards-container');
-            if (container) {
-                container.addEventListener('touchstart', () => updateSwipeDebug('Swipe started'));
-                container.addEventListener('touchmove', (e) => updateSwipeDebug(`Swiping: ${e.touches[0].clientX}px`));
-                container.addEventListener('touchend', () => updateSwipeDebug('Swipe ended'));
-            }
-        }
-      });
-    </script>
-
-    <!-- Additional scripts at the end of the body element for swipe optimization -->
-    <script>
-    // Add touch optimization for iOS devices
-    document.addEventListener('DOMContentLoaded', function() {
-      // iOS smooth scrolling fixes
-      const touchSmoothScrollFix = () => {
-        document.addEventListener('touchmove', function(e) {
-          // Only prevent default if body has swiping class
-          if (document.body.classList.contains('swiping') && e.cancelable) {
-            e.preventDefault();
-          }
-        }, { passive: false });
-        
-        // iOS rubber-band effect fix for modal views
-        document.addEventListener('touchstart', function(e) {
-          // Allow normal scrolling inside cards
-          if (e.target.closest('.card') && !document.body.classList.contains('swiping')) {
-            return;
-          }
-        }, { passive: true });
-      };
-      
-      // Add momentum scrolling for safari
-      const addMomentumScrollingForCards = () => {
-        const cards = document.querySelectorAll('.card');
-        cards.forEach(card => {
-          card.style.WebkitOverflowScrolling = 'touch';
-        });
-      };
-      
-      // Detect iOS devices
-      const iOSDevice = (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) || 
-                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      
-      if (iOSDevice) {
-        touchSmoothScrollFix();
-        addMomentumScrollingForCards();
-      }
-      
-      // Add "active" state for buttons to improve touch feedback
-      const buttons = document.querySelectorAll('button');
-      buttons.forEach(button => {
-        button.addEventListener('touchstart', function() {
-          this.classList.add('touch-active');
-        });
-        
-        button.addEventListener('touchend', function() {
-          this.classList.remove('touch-active');
-        });
-        
-        button.addEventListener('touchcancel', function() {
-          this.classList.remove('touch-active');
-        });
-      });
-    });
-    </script>
-    <!-- Add debug script at the end of body -->
+    <!-- Consolidated scripts -->
+    <script src="js/splash.js"></script>
     <script src="debug.js"></script>
     <script src="mobileFix.js"></script>
 </body>
