@@ -30,17 +30,18 @@ h2 {
   color: white;
 }
 
-/* Form elements */
+/* Form elements - standardized heights */
 input, select {
   width: 100%;
-  padding: 6px 8px;
+  padding: 8px 12px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 1rem;
   background-color: var(--card-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-  height: 36px;
+  height: 40px; /* Standardized height */
+  line-height: 1.2;
 }
 
 [data-theme="dark"] input, [data-theme="dark"] select {
@@ -55,7 +56,17 @@ input:focus, select:focus {
 
 label {
   display: block;
-  margin-bottom: 3px;
+  margin-bottom: 5px;
   font-weight: bold;
   font-size: 0.9rem;
+}
+
+/* Standard button height to match inputs */
+button {
+  height: 40px; /* Same as inputs */
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
 }

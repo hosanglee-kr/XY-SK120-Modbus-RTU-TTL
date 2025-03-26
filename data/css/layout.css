@@ -53,10 +53,40 @@ header h1 {
   padding: 15px;
   margin-bottom: 15px;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  height: auto; /* Allow natural height */
+}
+
+/* Ensure proper spacing for cards in desktop view */
+@media (min-width: 601px) {
+  .card {
+    margin-bottom: 20px;
+    height: auto !important; /* Force auto height in desktop view */
+    min-height: initial !important; /* Reset any min-height in desktop view */
+    display: block !important; /* Always show in desktop */
+  }
+}
+
+/* Specific mobile view logic */
+@media (max-width: 600px) {
+  .card {
+    display: none !important; /* Hide all cards in mobile by default */
+  }
+  .card:first-of-type {
+    display: block !important; /* Show only first card in mobile */
+  }
 }
 
 [data-theme="dark"] .card {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Ensure proper spacing for cards in desktop view */
+@media (min-width: 601px) {
+  .card {
+    margin-bottom: 20px;
+    height: auto !important; /* Force auto height in desktop view */
+    min-height: initial !important; /* Reset any min-height in desktop view */
+  }
 }
 
 /* New readings container outside of cards */
@@ -64,9 +94,10 @@ header h1 {
   background-color: var(--card-color);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 10px;
-  margin-bottom: 15px;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  padding: 15px;
+  margin-bottom: 20px;
+  display: block !important; /* Force display */
+  visibility: visible !important; /* Ensure visibility */
 }
 
 [data-theme="dark"] .readings-container {
@@ -74,16 +105,28 @@ header h1 {
 }
 
 .readings {
-  display: flex;
+  display: flex !important;
   justify-content: space-around;
   flex-wrap: wrap;
-  margin-bottom: 0;
+  margin-bottom: 10px;
+  visibility: visible !important;
 }
 
 .reading-item {
   text-align: center;
-  min-width: 120px;
+  min-width: 100px;
   margin: 5px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  visibility: visible !important;
+}
+
+.reading-display {
+  display: flex !important;
+  justify-content: center;
+  align-items: baseline;
+  visibility: visible !important;
 }
 
 .button-group {
@@ -107,10 +150,19 @@ header h1 {
 
 /* Status layout */
 .status-row {
-  display: flex;
+  display: flex !important;
   align-items: center;
-  padding-top: 10px;
   justify-content: center;
+  margin-top: 5px;
   padding: 8px 0;
   margin-bottom: 3px;
+}
+
+#output-status {
+  position: static !important; /* Prevent being hidden */
+  height: auto !important;
+  width: auto !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  clip: auto !important;
 }

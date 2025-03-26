@@ -284,6 +284,110 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
       serializeJson(responseDoc, response);
       client->text(response);
     }
+    // Key lock control
+    else if (action == "setKeyLock") {
+      if (powerSupply && powerSupply->testConnection()) {
+        bool lock = doc["lock"];
+        Serial.print("Key lock command received. Setting keys to: ");
+        Serial.println(lock ? "LOCKED" : "UNLOCKED");
+        
+        bool success = powerSupply->setKeyLock(lock);
+        
+        // Get current status after change
+        bool keyLocked = powerSupply->isKeyLocked(true);
+        
+        // Send response
+        DynamicJsonDocument responseDoc(256);
+        responseDoc["action"] = "keyLockResponse";
+        responseDoc["success"] = success;
+        responseDoc["locked"] = keyLocked;
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+      } else {
+        client->text("{\"action\":\"keyLockResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+      }
+    }
+    // Constant Voltage mode
+    else if (action == "setConstantVoltage") {
+      if (powerSupply && powerSupply->testConnection()) {
+        float voltage = doc["voltage"];
+        bool success = powerSupply->setConstantVoltage(voltage);
+        
+        // Send response
+        DynamicJsonDocument responseDoc(256);
+        responseDoc["action"] = "constantVoltageResponse";
+        responseDoc["success"] = success;
+        responseDoc["voltage"] = voltage;
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+      } else {
+        client->text("{\"action\":\"constantVoltageResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+      }
+    }
+    // Constant Current mode
+    else if (action == "setConstantCurrent") {
+      if (powerSupply && powerSupply->testConnection()) {
+        float current = doc["current"];
+        bool success = powerSupply->setConstantCurrent(current);
+        
+        // Send response
+        DynamicJsonDocument responseDoc(256);
+        responseDoc["action"] = "constantCurrentResponse";
+        responseDoc["success"] = success;
+        responseDoc["current"] = current;
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+      } else {
+        client->text("{\"action\":\"constantCurrentResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+      }
+    }
+    // Constant Power mode
+    else if (action == "setConstantPower") {
+      if (powerSupply && powerSupply->testConnection()) {
+        float power = doc["power"];
+        bool success = powerSupply->setConstantPower(power);
+        
+        // Send response
+        DynamicJsonDocument responseDoc(256);
+        responseDoc["action"] = "constantPowerResponse";
+        responseDoc["success"] = success;
+        responseDoc["power"] = power;
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+      } else {
+        client->text("{\"action\":\"constantPowerResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+      }
+    }
+    // Constant Power mode toggle
+    else if (action == "setConstantPowerMode") {
+      if (powerSupply && powerSupply->testConnection()) {
+        bool enable = doc["enable"];
+        bool success = powerSupply->setConstantPowerMode(enable);
+        
+        // Get current state after change
+        bool isEnabled = powerSupply->isConstantPowerModeEnabled(true);
+        
+        // Send response
+        DynamicJsonDocument responseDoc(256);
+        responseDoc["action"] = "constantPowerModeResponse";
+        responseDoc["success"] = success;
+        responseDoc["enabled"] = isEnabled;
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+      } else {
+        client->text("{\"action\":\"constantPowerModeResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+      }
+    }
   }
 }
 

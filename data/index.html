@@ -20,6 +20,22 @@
     <meta name="apple-mobile-web-app-title" content="XY-SK120">
     <meta name="theme-color" content="#2c3e50" id="theme-color">
 
+    <!-- Emergency card layout in head -->
+    <style>
+      @media (max-width: 600px) {
+        .card { display: none !important; }
+        .card:first-of-type { display: block !important; }
+      }
+      @media (min-width: 601px) {
+        .card { display: block !important; }
+      }
+      
+      /* Removed the temporary hiding of readings container */
+    </style>
+    
+    <!-- Consolidated scripts - moved all script references to one place -->
+    <script src="js/splash.js"></script>
+    <script src="js/card-fixer.js"></script>
     <script type="module" src="main.js"></script>
 </head>
 <body>
@@ -75,13 +91,19 @@
                 </div>
                 <div class="header-right">
                     <div class="power-button-container">
-                        <div id="power-animation-container"></div>
+                        <!-- Replace div with a toggle switch -->
+                        <label class="power-switch" for="power-checkbox">
+                            <div class="switch-container">
+                                <input type="checkbox" id="power-checkbox" class="power-input">
+                                <span class="switch-slider power-slider"></span>
+                            </div>
+                        </label>
                     </div>
                 </div>
             </div>
         </header>
         
-        <!-- Readings display - moved outside cards to be always visible -->
+        <!-- Readings display - fixed visibility issues -->
         <div class="readings-container">
             <div class="readings">
                 <div class="reading-item voltage">
@@ -106,10 +128,14 @@
                     </div>
                 </div>
             </div>
+            <div class="status-row" style="margin-top: 5px;">
+                <span class="status-label">Output:</span>
+                <span class="status-value" id="output-status">--</span>
+            </div>
         </div>
         
-        <!-- Basic Control Card -->
-        <div class="card">
+        <!-- Basic Control Card - Enhanced inline style for immediate visibility -->
+        <div class="card" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
             <h2>Basic Control</h2>
             <div class="power-supply-control">
                 <div class="control-settings">
@@ -118,17 +144,52 @@
                     <div class="control-inputs">
                         <div class="form-group compact">
                             <label for="set-voltage">Set Voltage (V)</label>
-                            <div class="input-with-button">
+                            <div class="input-with-button small">
                                 <input type="number" id="set-voltage" min="0" max="30" step="0.1" inputmode="decimal" pattern="[0-9]*\.?[0-9]*">
                                 <button id="apply-voltage" class="secondary">Set</button>
+                            </div>
+                            
+                            <!-- Replace multiple preset buttons with a single hold-to-select button -->
+                            <div class="voltage-presets">
+                                <button id="voltage-preset-btn" class="preset-hold-btn">
+                                    Common Voltages
+                                    <span class="hint-text">Tap to select</span>
+                                </button>
+                                
+                                <!-- Popup menu for voltage selection (hidden by default) -->
+                                <div class="popup-overlay" id="voltage-overlay"></div>
+                                <div id="voltage-popup" class="voltage-popup">
+                                    <div class="voltage-popup-title">Select Voltage</div>
+                                    <div class="voltage-popup-content">
+                                        <div class="voltage-option" data-voltage="1.8">1.8V</div>
+                                        <div class="voltage-option" data-voltage="3.3">3.3V</div>
+                                        <div class="voltage-option" data-voltage="4.2">4.2V</div>
+                                        <div class="voltage-option" data-voltage="5">5V</div>
+                                        <div class="voltage-option" data-voltage="9">9V</div>
+                                        <div class="voltage-option" data-voltage="12">12V</div>
+                                        <div class="voltage-option" data-voltage="15">15V</div>
+                                        <div class="voltage-option" data-voltage="18">18V</div>
+                                        <div class="voltage-option" data-voltage="20">20V</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
                         <div class="form-group compact">
                             <label for="set-current">Set Current (A)</label>
-                            <div class="input-with-button">
+                            <div class="input-with-button small">
                                 <input type="number" id="set-current" min="0" max="5" step="0.01" inputmode="decimal" pattern="[0-9]*\.?[0-9]*">
                                 <button id="apply-current" class="secondary">Set</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Replace Key Lock Control with direct toggle slider - remove status text -->
+                        <div class="form-group compact">
+                            <div class="key-switch">
+                                <span class="key-label">Front Panel Keys</span>
+                                <div class="switch-container">
+                                    <div class="switch-slider" id="key-lock-slider"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -139,9 +200,61 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Configuration Card -->
+
+        <!-- NEW OPERATION MODE CARD -->
         <div class="card">
+            <h2>Operation Modes</h2>
+            <div class="mode-selector">
+                <div class="mode-tabs">
+                    <button class="mode-tab active" data-mode="normal">Normal</button>
+                    <button class="mode-tab" data-mode="cv">CV</button>
+                    <button class="mode-tab" data-mode="cc">CC</button>
+                    <button class="mode-tab" data-mode="cp">CP</button>
+                </div>
+                
+                <!-- Mode Settings (initially hidden) -->
+                <div class="mode-settings" id="cv-settings">
+                    <div class="form-group compact">
+                        <label for="set-cv-voltage">Constant Voltage (V)</label>
+                        <div class="input-with-button">
+                            <input type="number" id="set-cv-voltage" min="0" max="30" step="0.1" inputmode="decimal">
+                            <button id="apply-cv" class="secondary">Apply</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mode-settings" id="cc-settings">
+                    <div class="form-group compact">
+                        <label for="set-cc-current">Constant Current (A)</label>
+                        <div class="input-with-button">
+                            <input type="number" id="set-cc-current" min="0" max="5" step="0.01" inputmode="decimal">
+                            <button id="apply-cc" class="secondary">Apply</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mode-settings" id="cp-settings">
+                    <div class="form-group compact">
+                        <label for="set-cp-power">Constant Power (W)</label>
+                        <div class="input-with-button">
+                            <input type="number" id="set-cp-power" min="0" max="120" step="0.5" inputmode="decimal">
+                            <button id="apply-cp" class="secondary">Apply</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group compact">
+                        <label>CP Mode</label>
+                        <div class="button-group horizontal">
+                            <button id="cp-mode-on" class="success">Enable</button>
+                            <button id="cp-mode-off" class="danger">Disable</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Card -->
+        <div class="card" style="display: none !important;">
             <h2>Configuration</h2>
             
             <!-- Theme toggle control -->
@@ -226,7 +339,7 @@
         </div>
         
         <!-- WiFi Status card -->
-        <div class="card">
+        <div class="card" style="display: none !important;">
             <h2>WiFi Status</h2>
             <div class="wifi-status">
                 <div class="status-row">
@@ -254,15 +367,70 @@
         
         <!-- Dots indicator for mobile -->
         <div class="dots-indicator" id="dots-indicator">
-            <div class="dot active" title="Power Supply"></div>
+            <div class="dot active" title="Basic Control"></div>
+            <div class="dot" title="Operation Modes"></div>
             <div class="dot" title="Configuration"></div>
             <div class="dot" title="WiFi Status"></div>
         </div>
     </div>
     
-    <!-- Consolidated scripts -->
-    <script src="js/splash.js"></script>
-    <script src="debug.js"></script>
-    <script src="mobileFix.js"></script>
+    <!-- More aggressive card fix script - place after splash.js -->
+    <script>
+        // Run this immediately after page load
+        (function() {
+            console.log('Main card fix script running');
+            
+            // Run the fix multiple times to ensure it takes effect
+            fixCardsNow();
+            setTimeout(fixCardsNow, 100);
+            setTimeout(fixCardsNow, 500);
+            
+            // Start polling for card visibility
+            let visibilityCheckCount = 0;
+            const checkInterval = setInterval(function() {
+                visibilityCheckCount++;
+                const firstCard = document.querySelector('.card');
+                
+                if (firstCard && getComputedStyle(firstCard).display === 'none') {
+                    console.log('Card still not visible, forcing it visible');
+                    fixCardsNow();
+                } else {
+                    console.log('Cards appear to be visible now');
+                    if (visibilityCheckCount >= 5) {
+                        clearInterval(checkInterval);
+                    }
+                }
+            }, 300);
+            
+            function fixCardsNow() {
+                const isMobile = window.innerWidth <= 600;
+                const cards = document.querySelectorAll('.card');
+                
+                if (isMobile) {
+                    // Mobile view - show only first card
+                    cards.forEach((card, index) => {
+                        if (index === 0) {
+                            card.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important;';
+                        } else {
+                            card.style.cssText = 'display: none !important;';
+                        }
+                    });
+                    
+                    // Make dots visible
+                    const dots = document.getElementById('dots-indicator');
+                    if (dots) dots.style.display = 'flex';
+                } else {
+                    // Desktop view - show all cards
+                    cards.forEach(card => {
+                        card.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important;';
+                    });
+                    
+                    // Hide dots
+                    const dots = document.getElementById('dots-indicator');
+                    if (dots) dots.style.display = 'none';
+                }
+            }
+        })();
+    </script>
 </body>
 </html>
