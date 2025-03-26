@@ -18,6 +18,9 @@
         
         if (cards.length === 0) return;
         
+        // Update dot indicators if necessary
+        updateDots(cards.length);
+        
         if (isMobile) {
             // Mobile view: show only first card
             cards.forEach((card, index) => {
@@ -38,6 +41,27 @@
             // Hide dots
             const dots = document.getElementById('dots-indicator');
             if (dots) dots.style.display = 'none';
+        }
+    }
+    
+    // Helper function to ensure the correct number of dots
+    function updateDots(cardCount) {
+        const dotsContainer = document.getElementById('dots-indicator');
+        if (!dotsContainer) return;
+        
+        const existingDots = dotsContainer.querySelectorAll('.dot');
+        
+        // Only update if the number of dots doesn't match the cards
+        if (existingDots.length !== cardCount) {
+            // Clear existing dots
+            dotsContainer.innerHTML = '';
+            
+            // Create new dots based on card count
+            for (let i = 0; i < cardCount; i++) {
+                const dot = document.createElement('div');
+                dot.className = i === 0 ? 'dot active' : 'dot';
+                dotsContainer.appendChild(dot);
+            }
         }
     }
 })();

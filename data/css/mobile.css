@@ -5,14 +5,15 @@
   .container {
     max-width: 100%;
     padding: 10px;
+    /* Restore locked scrolling */
     overflow: hidden;
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding-bottom: 60px !important; /* Increased to account for the extra padding */
+    padding-bottom: 60px !important; /* Increased to account for the dots at bottom */
   }
   
-  /* Simplified card styles - remove display: none !important */
+  /* Simplified card styles */
   .card {
     background-color: var(--card-color);
     border-radius: 8px;
@@ -21,12 +22,12 @@
     margin-bottom: 15px;
     overflow-y: auto;
     min-height: 300px; /* Fixed minimum height for consistency */
+    /* Restore max-height constraint */
     max-height: calc(80vh - 120px);
     width: calc(100% - 20px) !important;
     margin-left: 10px;
     margin-right: 10px;
     box-sizing: border-box;
-    /* Remove display: none !important to prevent conflicts */
   }
   
   /* CRITICAL FIX: Show only first card by default with higher specificity */
@@ -130,7 +131,7 @@
     max-width: 300px;
   }
   
-  /* Lock scrolling for page, allow only card scrolling */
+  /* RESTORE: Lock scrolling for page, allow only card scrolling */
   html, body {
     height: 100%;
     overflow: hidden;
@@ -182,14 +183,14 @@
     text-align: center !important;
     background-color: var(--background-color) !important;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1) !important;
-    z-index: 100 !important;
+    z-index: 50 !important; /* Still high but not as high as popup */
   }
   
   .dot {
     position: relative !important;
-    width: 12px !important;
-    height: 12px !important;
-    margin: 0 12px !important; /* Increased margin for better spacing */
+    width: 9px !important; /* Even smaller for more dots */
+    height: 9px !important;
+    margin: 0 6px !important; /* Smaller margins for more dots */
   }
   
   /* Add larger touch targets */
@@ -222,6 +223,150 @@
     opacity: 0.3;
     transform: scale(1.5);
   }
+  
+  /* Adjust voltage popup for mobile with scroll */
+  .voltage-popup {
+    max-height: 70vh; /* Limit height for better positioning */
+    z-index: 100000 !important;
+  }
+  
+  .voltage-option {
+    padding: 14px 10px; /* Larger touch target on mobile */
+    font-size: 1rem;
+  }
+  
+  /* Make preset button more touch-friendly */
+  .preset-hold-btn {
+    height: 40px !important;
+    font-size: 0.95rem;
+  }
+  
+  /* Fix z-index stacking for mobile views */
+  .readings-container {
+    z-index: 5 !important; /* Much lower than popup z-index */
+  }
+  
+  .dots-indicator,
+  .header-container,
+  .cards-container {
+    z-index: 5 !important; /* Match readings-container z-index */
+  }
+  
+  /* Override any elements that might interfere with popup */
+  body.popup-open .readings-container,
+  body.popup-open .dots-indicator {
+    z-index: 10 !important;  /* Force lower z-index when popup is open */
+  }
+  
+  /* Force higher z-index for popup and overlay when active */
+  .popup-overlay.active {
+    z-index: 99999 !important;
+  }
+  
+  .voltage-popup.active {
+    z-index: 100000 !important;
+  }
+  
+  /* Fix z-index stacking for mobile browsers */
+  .readings-container, 
+  .dots-indicator,
+  .header-container,
+  .cards-container {
+    z-index: 10;
+  }
+  
+  /* Voltage popup - critical fixed positioning */
+  .voltage-popup {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    height: auto !important;
+    width: 85% !important;
+    max-width: 300px !important;
+    max-height: 70vh !important;
+    border-radius: 12px !important;
+    z-index: 100000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Fix popup title */
+  .voltage-popup-title {
+    padding: 14px !important;
+    text-align: center !important;
+    border-radius: 12px 12px 0 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Fix popup content */
+  .voltage-popup-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow-y: auto !important;
+    flex: 1 !important;
+  }
+
+  /* Voltage popup fixes for Safari and mobile browsers */
+  body.popup-open .container * {
+    pointer-events: none !important;
+  }
+  
+  body.popup-open .voltage-popup,
+  body.popup-open .popup-overlay,
+  body.popup-open .voltage-popup * {
+    pointer-events: auto !important;
+  }
+  
+  .voltage-popup.active {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 100000 !important;
+  }
+  
+  .popup-overlay.active {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 99999 !important;
+  }
+  
+  /* CRITICAL FIX: Special handling for popup-open body - keep it locked */
+  body.popup-open {
+    /* Already fixed position from html, body rule */
+    overflow: hidden !important;
+    touch-action: none !important;
+  }
+  
+  /* Ensure popup scrolls properly */
+  .voltage-popup {
+    overflow-y: auto !important;
+  }
+  
+  /* iOS Safari specific fixes */
+  @supports (-webkit-touch-callout: none) {
+    /* Target iOS Safari specifically */
+    
+    /* Increase size of popup options for better tap targets */
+    .voltage-option {
+      padding: 18px 10px;
+      font-size: 1.2rem;
+    }
+    
+    /* Position popup at bottom of viewport including safe area */
+    .voltage-popup {
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+  }
+  
+  /* Improve tap target size for voltage options */
+  .voltage-option {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 /* Fix for desktop view */
@@ -253,5 +398,17 @@
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
+  }
+}
+
+/* PWA mode specific enhancements */
+@media all and (display-mode: standalone) {
+  .voltage-popup {
+    border-radius: 12px 12px 0 0;
+    z-index: 999999;
+  }
+  
+  .popup-overlay {
+    z-index: 999998;
   }
 }

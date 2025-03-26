@@ -430,6 +430,7 @@ button.danger {
   padding: 5px 0;
   height: 30px;
   align-items: center;
+  z-index: 1 !important;
 }
 
 .dot {
@@ -904,4 +905,537 @@ button.danger {
 /* Consistent compact form groups */
 .form-group.compact {
   margin-bottom: 10px;
+}
+
+/* Operation Mode Card specific styles */
+.mode-selector {
+  width: 100%;
+}
+
+.mode-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 15px;
+}
+
+.mode-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: var(--text-color);
+  opacity: 0.7;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  height: 40px; /* Standardized height */
+}
+
+.mode-tab.active {
+  border-bottom: 2px solid var(--secondary-color);
+  opacity: 1;
+}
+
+.mode-settings {
+  display: none;
+  padding: 10px 0;
+}
+
+.mode-settings.active {
+  display: block;
+}
+
+/* Mode settings padding improvements */
+.mode-settings .form-group:last-child {
+  margin-bottom: 5px;
+}
+
+/* Voltage preset buttons */
+.voltage-presets {
+  margin-top: 10px;
+  position: relative;
+}
+
+.preset-hold-btn {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0 12px;
+  height: 36px !important;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  transition: background-color 0.2s;
+  position: relative;
+  z-index: 1;
+}
+
+.preset-hold-btn:active {
+  background-color: var(--primary-color);
+}
+
+.hint-text {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-left: 8px;
+}
+
+/* Voltage popup menu - Fix display issue */
+.voltage-popup {
+  display: none; /* Critical fix: default to hidden */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--card-color);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  z-index: 100000 !important; /* Extremely high z-index to ensure it's on top */
+  width: 85%;
+  max-width: 300px;
+  max-height: 80vh;
+  overflow: hidden;
+  flex-direction: column;
+  max-height: 70vh; /* Reduce from 80vh for better positioning */
+  -webkit-overflow-scrolling: touch !important; /* Ensure momentum scrolling works */
+  overflow-y: auto !important; /* Change from hidden to auto - critical fix */
+}
+
+/* Voltage popup menu - Match card dimensions */
+.voltage-popup {
+  display: none; /* Critical fix: default to hidden */
+  position: fixed;
+  /* Position will be set dynamically in JS */
+  background-color: var(--card-color);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  z-index: 100000 !important; /* Extremely high z-index to ensure it's on top */
+  /* Width and height will be set dynamically in JS */
+  overflow: hidden;
+  flex-direction: column;
+  -webkit-overflow-scrolling: touch !important; /* Ensure momentum scrolling works */
+  overflow-y: auto !important; /* Change from hidden to auto - critical fix */
+}
+
+/* Voltage popup menu - Improve positioning and display */
+.voltage-popup {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--card-color);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  z-index: 100000 !important;
+  overflow: hidden;
+  flex-direction: column;
+  -webkit-overflow-scrolling: touch !important;
+  overflow-y: auto !important;
+  max-width: 300px;
+  width: 85%;
+  max-height: 70vh;
+}
+
+/* Improved popup content with better overflow control */
+.voltage-popup-content {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  padding: 0;
+  margin: 0;
+}
+
+/* Scrollable content area */
+.voltage-popup-content {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: calc(80vh - 45px); /* Account for header height */
+  max-height: calc(70vh - 45px); /* Match popup max-height change */
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important; /* Explicitly enable vertical scrolling */
+  overflow-scrolling: touch !important; /* For older browsers */
+  max-height: none !important; /* Remove max-height constraint */
+  overflow-y: visible !important; /* Let parent handle scrolling */
+  /* Remove fixed height constraints */
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important; /* Explicitly enable vertical scrolling */
+  overflow-scrolling: touch !important; /* For older browsers */
+  overflow-y: visible !important; /* Let parent handle scrolling */
+  flex: 1; /* Take remaining space */
+}
+
+/* Add overlay for popup background */
+.popup-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 99999 !important; /* Just below the popup but above everything else */
+  backdrop-filter: blur(3px); /* Add blur effect */
+  -webkit-backdrop-filter: blur(3px); /* For Safari */
+  touch-action: none; /* Prevent touch events on overlay */
+}
+
+.popup-overlay.active {
+  display: block;
+}
+
+.voltage-popup.active {
+  display: flex !important; /* Change to flex to work with flex-direction: column */
+}
+
+.voltage-option {
+  padding: 16px 10px;
+  text-align: center;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s;
+  color: var(--text-color);
+  font-size: 1.1rem;
+  min-height: 48px; /* Increase minimum height */
+  padding: 16px 10px; /* Increased padding for better touch targets */
+  min-height: 56px; /* Taller for better touch targets */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px !important; /* Match standard button height */
+  height: 40px !important; /* Force consistent height */
+  padding: 0 15px !important; /* Match button padding */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1rem !important;
+}
+
+.voltage-option:last-child {
+  border-bottom: none;
+}
+
+.voltage-option.highlighted {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.voltage-popup-title {
+  text-align: center;
+  padding: 12px;
+  font-weight: bold;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 8px 8px 0 0;
+  /* Remove position: sticky */
+  /* Remove top: 0 */
+  padding: 14px;
+  z-index: 2;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .voltage-popup {
+  background-color: #2a2a2a;
+  border-color: #444;
+}
+
+[data-theme="dark"] .voltage-option {
+  border-color: #444;
+}
+
+/* Mobile optimizations for preset buttons */
+@media (max-width: 600px) {
+  .preset-buttons {
+    gap: 4px;
+  }
+  
+  .preset-btn {
+    padding: 0 6px;
+    height: 24px !important;
+    font-size: 0.75rem;
+    flex: 1;
+    min-width: calc(33% - 4px); /* 3 buttons per row minus gap */
+    max-width: calc(33% - 4px);
+  }
+  .voltage-popup {
+    max-width: 300px;
+    width: 90%;
+    max-height: 70vh;
+    z-index: 100000 !important;
+    transform: translate(-50%, -50%) !important;
+    -webkit-transform: translate(-50%, -50%) !important;
+    overflow-y: auto !important; /* Force scrolling behavior */
+    max-height: 75vh; /* Slightly higher to show more content */
+    position: fixed !important;
+  }
+  
+  .voltage-popup-content {
+    max-height: calc(70vh - 45px);
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+  
+  .popup-overlay {
+    z-index: 99999 !important; /* Just below popup */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: opacity;
+  }
+  
+  /* Safari-specific fixes (iOS browser) */
+  @supports (-webkit-touch-callout: none) {
+    .voltage-popup {
+      bottom: env(safe-area-inset-bottom, 0); /* Respect iOS safe areas */
+    }
+  }
+  
+  .readings-container, .dots-indicator {
+    z-index: 1 !important; /* Lower than popup */
+  }
+  
+  .voltage-option {
+    min-height: 60px !important;
+    padding: 18px 10px !important;
+    font-size: 1.2rem !important;
+    min-height: 40px !important;
+    height: 40px !important;
+    padding: 0 15px !important;
+  }
+}
+
+/* Mobile optimizations for preset buttons */
+@media (max-width: 600px) {
+  .preset-buttons {
+    gap: 4px;
+  }
+  
+  .preset-btn {
+    padding: 0 6px;
+    height: 24px !important;
+    font-size: 0.75rem;
+    flex: 1;
+    min-width: calc(33% - 4px); /* 3 buttons per row minus gap */
+    max-width: calc(33% - 4px);
+  }
+  .voltage-popup {
+    /* Remove fixed sizing - will be set by JS */
+    /* Position to match the current card - handled by JS */
+    z-index: 100000 !important;
+    overflow-y: auto !important; /* Force scrolling behavior */
+  }
+  
+  .voltage-popup-content {
+    max-height: calc(70vh - 45px);
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+  
+  .popup-overlay {
+    z-index: 99999 !important; /* Just below popup */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: opacity;
+  }
+  
+  /* Safari-specific fixes (iOS browser) */
+  @supports (-webkit-touch-callout: none) {
+    .voltage-popup {
+      bottom: env(safe-area-inset-bottom, 0); /* Respect iOS safe areas */
+    }
+  }
+  
+  .readings-container, .dots-indicator {
+    z-index: 1 !important; /* Lower than popup */
+  }
+  
+  .voltage-option {
+    min-height: 60px !important;
+    padding: 18px 10px !important;
+    font-size: 1.2rem !important;
+    min-height: 40px !important;
+    height: 40px !important;
+    padding: 0 15px !important;
+  }
+}
+
+/* Mobile optimizations for popup */
+@media (max-width: 600px) {
+  /* ...existing code... */
+  
+  .voltage-popup {
+    /* Use fixed position and centering transform */
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 85% !important; 
+    max-width: 300px !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5) !important;
+    z-index: 100000 !important;
+    border-radius: 12px !important;
+  }
+  
+  /* Ensure the menu items display properly */
+  .voltage-option {
+    padding: 0 15px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    font-size: 1rem !important;
+    border-bottom: 1px solid var(--border-color) !important;
+  }
+
+  /* ...existing code... */
+}
+
+/* Ensure the body doesn't scroll when popup is active */
+body.popup-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  touch-action: none !important; /* Disable all touch actions */
+  -webkit-overflow-scrolling: auto !important;
+}
+
+/* PWA mode specific enhancements */
+@media all and (display-mode: standalone) {
+  .voltage-popup {
+    max-height: 80vh !important; /* More space in PWA mode */
+    height: auto !important; /* Allow content to determine height */
+    overflow: auto !important; /* Ensure scrolling works */
+    position: fixed !important;
+    z-index: 100000 !important;
+    overflow-y: scroll !important; /* Force scroll */
+    -webkit-overflow-scrolling: touch !important;
+    /* Change position to show more options */
+    top: 45% !important; /* Move up a bit to show more options */
+    top: 40% !important; /* Slightly higher to account for nav at bottom */
+  }
+  
+  .voltage-popup-content {
+    max-height: calc(80vh - 45px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    display: block !important;
+    touch-action: pan-y !important;
+    max-height: none !important;
+  }
+  
+  /* Ensure proper positioning for overlay in PWA */
+  .popup-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 99999 !important;
+  }
+  
+  /* Make options more touch-friendly in PWA mode */
+  .voltage-option {
+    min-height: 54px !important;
+    padding: 18px 15px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 60px !important;
+    min-height: 40px !important;
+    height: 40px !important;
+  }
+  
+  /* Prevent body from interfering with popup scrolling */
+  body.popup-open {
+    touch-action: none !important;
+    pointer-events: none !important;
+  }
+  
+  /* But allow popup to receive events */
+  body.popup-open .voltage-popup,
+  body.popup-open .voltage-popup * {
+    pointer-events: auto !important;
+    touch-action: auto !important;
+  }
+}
+
+/* PWA mode specific enhancements */
+@media all and (display-mode: standalone) {
+  .voltage-popup {
+    /* Adjust top position for PWA mode */
+    /* Width/height will be set by JS */
+    z-index: 100000 !important;
+    overflow-y: scroll !important; /* Force scroll */
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  .voltage-popup-content {
+    max-height: calc(80vh - 45px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    display: block !important;
+    touch-action: pan-y !important;
+    max-height: none !important;
+  }
+  
+  /* Ensure proper positioning for overlay in PWA */
+  .popup-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 99999 !important;
+  }
+  
+  /* Make options more touch-friendly in PWA mode */
+  .voltage-option {
+    min-height: 54px !important;
+    padding: 18px 15px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 60px !important;
+    min-height: 40px !important;
+    height: 40px !important;
+  }
+  
+  /* Prevent body from interfering with popup scrolling */
+  body.popup-open {
+    touch-action: none !important;
+    pointer-events: none !important;
+  }
+  
+  /* But allow popup to receive events */
+  body.popup-open .voltage-popup,
+  body.popup-open .voltage-popup * {
+    pointer-events: auto !important;
+    touch-action: auto !important;
+  }
+}
+
+/* Readings container - Lower z-index to prevent popup blocking */
+.readings-container {
+  z-index: 1 !important; /* Much lower than popup z-index */
+  position: relative;
+}
+
+/* Header and card containers - also low z-index */
+.header-container,
+.cards-container {
+  z-index: 1 !important;
 }

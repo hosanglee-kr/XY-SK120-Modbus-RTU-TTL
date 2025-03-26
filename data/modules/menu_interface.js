@@ -75,13 +75,42 @@ function setupMobileView() {
   setupTouchHandlers();
 }
 
-// Update dot indicators
+// Update dot indicators to include Operation Mode card
 function updateDotIndicators(dots) {
   if (!dots) dots = document.querySelectorAll('.dot');
   
-  // First, remove existing event listeners from the dots container
+  // Make sure we have the right number of dots for all cards
+  const cards = document.querySelectorAll('.card');
   const dotsContainer = document.getElementById('dots-indicator');
+  
   if (dotsContainer) {
+    // Check if we need to update the number of dots
+    if (dots.length !== cards.length) {
+      console.log(`Updating dots count from ${dots.length} to ${cards.length}`);
+      
+      // Clear existing dots
+      dotsContainer.innerHTML = '';
+      
+      // Create the correct number of dots
+      for (let i = 0; i < cards.length; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        dot.title = `Card ${i+1}`;
+        
+        // Try to set a meaningful title based on card header if present
+        const cardHeader = cards[i].querySelector('h2');
+        if (cardHeader) {
+          dot.title = cardHeader.textContent;
+        }
+        
+        dotsContainer.appendChild(dot);
+      }
+      
+      // Get the new dots
+      dots = dotsContainer.querySelectorAll('.dot');
+    }
+    
+    // First, remove existing event listeners from the dots container
     const newContainer = dotsContainer.cloneNode(true);
     dotsContainer.parentNode.replaceChild(newContainer, dotsContainer);
     

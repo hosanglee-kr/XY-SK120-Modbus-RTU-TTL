@@ -29,6 +29,8 @@
       @media (min-width: 601px) {
         .card { display: block !important; }
       }
+      
+      /* Removed the temporary hiding of readings container */
     </style>
     
     <!-- Consolidated scripts - moved all script references to one place -->
@@ -146,6 +148,31 @@
                                 <input type="number" id="set-voltage" min="0" max="30" step="0.1" inputmode="decimal" pattern="[0-9]*\.?[0-9]*">
                                 <button id="apply-voltage" class="secondary">Set</button>
                             </div>
+                            
+                            <!-- Replace multiple preset buttons with a single hold-to-select button -->
+                            <div class="voltage-presets">
+                                <button id="voltage-preset-btn" class="preset-hold-btn">
+                                    Common Voltages
+                                    <span class="hint-text">Tap to select</span>
+                                </button>
+                                
+                                <!-- Popup menu for voltage selection (hidden by default) -->
+                                <div class="popup-overlay" id="voltage-overlay"></div>
+                                <div id="voltage-popup" class="voltage-popup">
+                                    <div class="voltage-popup-title">Select Voltage</div>
+                                    <div class="voltage-popup-content">
+                                        <div class="voltage-option" data-voltage="1.8">1.8V</div>
+                                        <div class="voltage-option" data-voltage="3.3">3.3V</div>
+                                        <div class="voltage-option" data-voltage="4.2">4.2V</div>
+                                        <div class="voltage-option" data-voltage="5">5V</div>
+                                        <div class="voltage-option" data-voltage="9">9V</div>
+                                        <div class="voltage-option" data-voltage="12">12V</div>
+                                        <div class="voltage-option" data-voltage="15">15V</div>
+                                        <div class="voltage-option" data-voltage="18">18V</div>
+                                        <div class="voltage-option" data-voltage="20">20V</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="form-group compact">
@@ -165,56 +192,6 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Operation Mode Tabs -->
-                        <div class="form-group mode-selector">
-                            <label>Operation Mode</label>
-                            <div class="mode-tabs">
-                                <button class="mode-tab active" data-mode="normal">Normal</button>
-                                <button class="mode-tab" data-mode="cv">CV</button>
-                                <button class="mode-tab" data-mode="cc">CC</button>
-                                <button class="mode-tab" data-mode="cp">CP</button>
-                            </div>
-                            
-                            <!-- Mode Settings (initially hidden) -->
-                            <div class="mode-settings" id="cv-settings">
-                                <div class="form-group compact">
-                                    <label for="set-cv-voltage">Constant Voltage (V)</label>
-                                    <div class="input-with-button">
-                                        <input type="number" id="set-cv-voltage" min="0" max="30" step="0.1" inputmode="decimal">
-                                        <button id="apply-cv" class="secondary">Apply</button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="mode-settings" id="cc-settings">
-                                <div class="form-group compact">
-                                    <label for="set-cc-current">Constant Current (A)</label>
-                                    <div class="input-with-button">
-                                        <input type="number" id="set-cc-current" min="0" max="5" step="0.01" inputmode="decimal">
-                                        <button id="apply-cc" class="secondary">Apply</button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="mode-settings" id="cp-settings">
-                                <div class="form-group compact">
-                                    <label for="set-cp-power">Constant Power (W)</label>
-                                    <div class="input-with-button">
-                                        <input type="number" id="set-cp-power" min="0" max="120" step="0.5" inputmode="decimal">
-                                        <button id="apply-cp" class="secondary">Apply</button>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-group compact">
-                                    <label>CP Mode</label>
-                                    <div class="button-group horizontal">
-                                        <button id="cp-mode-on" class="success">Enable</button>
-                                        <button id="cp-mode-off" class="danger">Disable</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                     
                     <div class="button-group">
@@ -223,7 +200,59 @@
                 </div>
             </div>
         </div>
-        
+
+        <!-- NEW OPERATION MODE CARD -->
+        <div class="card">
+            <h2>Operation Modes</h2>
+            <div class="mode-selector">
+                <div class="mode-tabs">
+                    <button class="mode-tab active" data-mode="normal">Normal</button>
+                    <button class="mode-tab" data-mode="cv">CV</button>
+                    <button class="mode-tab" data-mode="cc">CC</button>
+                    <button class="mode-tab" data-mode="cp">CP</button>
+                </div>
+                
+                <!-- Mode Settings (initially hidden) -->
+                <div class="mode-settings" id="cv-settings">
+                    <div class="form-group compact">
+                        <label for="set-cv-voltage">Constant Voltage (V)</label>
+                        <div class="input-with-button">
+                            <input type="number" id="set-cv-voltage" min="0" max="30" step="0.1" inputmode="decimal">
+                            <button id="apply-cv" class="secondary">Apply</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mode-settings" id="cc-settings">
+                    <div class="form-group compact">
+                        <label for="set-cc-current">Constant Current (A)</label>
+                        <div class="input-with-button">
+                            <input type="number" id="set-cc-current" min="0" max="5" step="0.01" inputmode="decimal">
+                            <button id="apply-cc" class="secondary">Apply</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mode-settings" id="cp-settings">
+                    <div class="form-group compact">
+                        <label for="set-cp-power">Constant Power (W)</label>
+                        <div class="input-with-button">
+                            <input type="number" id="set-cp-power" min="0" max="120" step="0.5" inputmode="decimal">
+                            <button id="apply-cp" class="secondary">Apply</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group compact">
+                        <label>CP Mode</label>
+                        <div class="button-group horizontal">
+                            <button id="cp-mode-on" class="success">Enable</button>
+                            <button id="cp-mode-off" class="danger">Disable</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Configuration Card -->
         <div class="card" style="display: none !important;">
             <h2>Configuration</h2>
@@ -338,7 +367,8 @@
         
         <!-- Dots indicator for mobile -->
         <div class="dots-indicator" id="dots-indicator">
-            <div class="dot active" title="Power Supply"></div>
+            <div class="dot active" title="Basic Control"></div>
+            <div class="dot" title="Operation Modes"></div>
             <div class="dot" title="Configuration"></div>
             <div class="dot" title="WiFi Status"></div>
         </div>

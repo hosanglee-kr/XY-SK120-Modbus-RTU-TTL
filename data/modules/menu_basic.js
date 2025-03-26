@@ -54,6 +54,241 @@ function setVoltageValue() {
   }
 }
 
+// Set voltage using preset value
+function setVoltagePreset(voltage) {
+  if (voltage < 0 || voltage > 30) {
+    alert("Invalid voltage preset value");
+    return;
+  }
+  
+  // Update the input field
+  const voltageInput = document.getElementById('set-voltage');
+  if (voltageInput) {
+    voltageInput.value = voltage;
+  }
+  
+  // Send the command
+  const success = sendCommand({ 
+    action: "setVoltage", 
+    voltage: parseFloat(voltage) 
+  });
+  
+  if (!success) {
+    alert("WebSocket not connected. Cannot set voltage.");
+  }
+}
+
+// Initialize voltage preset popup menu - position to match card
+function initVoltagePresetMenu() {
+  const presetBtn = document.getElementById('voltage-preset-btn');
+  const popup = document.getElementById('voltage-popup');
+  const overlay = document.getElementById('voltage-overlay');
+  
+  if (!presetBtn || !popup || !overlay) return;
+  
+  // Ensure popup is hidden initially
+  popup.style.display = 'none';
+  overlay.style.display = 'none';
+  
+  // Store scroll position
+  let scrollPosition = 0;
+  
+  // Show popup function - position to match active card
+  function showPopup() {
+    // Store the current scroll position before locking
+    scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+    
+    // Add popup-open class first to prevent flickering
+    document.body.classList.add('popup-open');
+    
+    // Set body position to fixed to prevent scrolling
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
+    document.body.style.top = `-${scrollPosition}px`;
+    
+    // Detect if we're in PWA mode
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Get the active card to match dimensions
+    const activeCard = document.querySelector('.card[style*="display: block"]');
+    if (activeCard) {
+      const cardRect = activeCard.getBoundingClientRect();
+      
+      // Fix: Set popup width based on card but slightly smaller
+      const popupWidth = Math.min(300, cardRect.width * 0.9);
+      
+      // Fix: Center popup within card
+      popup.style.position = 'fixed';
+      popup.style.width = `${popupWidth}px`;
+      popup.style.maxHeight = `${window.innerHeight * 0.7}px`; // 70% of viewport height
+      popup.style.top = '50%';
+      popup.style.left = '50%';
+      popup.style.transform = 'translate(-50%, -50%)';
+      
+      // Make sure all content fits within popup
+      const titleHeight = popup.querySelector('.voltage-popup-title')?.offsetHeight || 45;
+      const contentArea = popup.querySelector('.voltage-popup-content');
+      if (contentArea) {
+        contentArea.style.maxHeight = `${window.innerHeight * 0.7 - titleHeight}px`;
+      }
+    } else {
+      // Fallback if no active card is found - center in viewport
+      popup.style.width = '85%';
+      popup.style.maxWidth = '300px';
+      popup.style.maxHeight = '70vh';
+      popup.style.top = '50%';
+      popup.style.left = '50%';
+      popup.style.transform = 'translate(-50%, -50%)';
+    }
+    
+    // Activate overlay first for smooth appearance
+    overlay.classList.add('active');
+    
+    // Then activate popup
+    popup.classList.add('active');
+    
+    // Reset popup scroll to top
+    popup.scrollTop = 0;
+    
+    // Force proper stacking with extremely high z-index
+    popup.style.zIndex = '100000';
+    overlay.style.zIndex = '99999';
+    
+    // Force all potential blocking elements to lower z-index
+    const elementsToLower = document.querySelectorAll(
+      '.readings-container, .dots-indicator, .header-container, .cards-container, .card'
+    );
+    elementsToLower.forEach(el => {
+      if (el) el.style.zIndex = '1';
+    });
+    
+    // Additional fixes for PWA mode
+    if (isPWA) {
+      setTimeout(() => {
+        // Give iOS time to render the popup
+        popup.scrollTop = 0;
+      }, 50);
+    }
+    
+    // Add touchmove prevention for iOS Safari (but only outside popup)
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+  }
+  
+  // Hide popup function
+  function hidePopup() {
+    // First, remove the active classes
+    popup.classList.remove('active');
+    overlay.classList.remove('active');
+    
+    // Remove PWA flag if it exists
+    popup.removeAttribute('data-pwa-mode');
+    
+    // Remove touchmove prevention
+    document.removeEventListener('touchmove', preventScroll);
+    
+    // Small delay before restoring body scroll to ensure smooth transition
+    setTimeout(() => {
+      // Remove the popup-open class and restore scroll
+      document.body.classList.remove('popup-open');
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+      document.body.style.overflow = '';
+      
+      // Restore scroll position
+      window.scrollTo(0, scrollPosition);
+    }, 10);
+  }
+  
+  // Improved prevent scroll function - allow scrolling inside popup
+  function preventScroll(e) {
+    // Check if we clicked/touch within the popup content
+    if (!popup.contains(e.target)) {
+      e.preventDefault();
+    }
+  }
+  
+  // Handle button press
+  presetBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showPopup();
+  });
+  
+  // Handle overlay click to close - improved touch handling
+  overlay.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    hidePopup();
+  });
+  
+  // Touch-specific overlay close handler
+  overlay.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    hidePopup();
+  });
+  
+  // Add direct click handler for options
+  const voltageOptions = popup.querySelectorAll('.voltage-option');
+  voltageOptions.forEach(option => {
+    option.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent event from reaching overlay
+      const voltage = option.getAttribute('data-voltage');
+      if (voltage) {
+        setVoltagePreset(voltage);
+        hidePopup();
+      }
+    });
+    
+    // Add hover effect for desktop
+    option.addEventListener('mouseenter', () => {
+      voltageOptions.forEach(opt => opt.classList.remove('highlighted'));
+      option.classList.add('highlighted');
+    });
+    
+    option.addEventListener('mouseleave', () => {
+      option.classList.remove('highlighted');
+    });
+  });
+  
+  // Update touch movement handler for new content structure
+  const contentArea = popup.querySelector('.voltage-popup-content');
+  if (contentArea) {
+    contentArea.addEventListener('touchmove', (e) => {
+      const touch = e.touches[0];
+      const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+      
+      const voltageOptions = popup.querySelectorAll('.voltage-option');
+      voltageOptions.forEach(opt => opt.classList.remove('highlighted'));
+      
+      if (elementAtPoint && elementAtPoint.classList.contains('voltage-option')) {
+        elementAtPoint.classList.add('highlighted');
+      }
+    });
+  }
+  
+  // Add escape key handler to close popup
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && popup.classList.contains('active')) {
+      hidePopup();
+    }
+  });
+  
+  // Add specific touch handlers for the content area
+  contentArea.addEventListener('touchstart', (e) => {
+    // Allow the event to bubble - don't call preventDefault
+    // This ensures proper scrolling behavior in the content area
+  }, { passive: true });
+  
+  // Ensure content area scrolls properly in PWA mode
+  contentArea.addEventListener('scroll', (e) => {
+    e.stopPropagation(); // Prevent scroll event from bubbling
+  }, { passive: true });
+}
+
 // Set current
 function setCurrentValue() {
   const current = parseFloat(elements.setCurrent.value);
@@ -274,6 +509,9 @@ function initBasicControls() {
   // Mode tabs
   initModeTabs();
   
+  // Initialize new voltage preset popup
+  initVoltagePresetMenu();
+  
   // Key lock slider direct toggle
   const keyLockSlider = document.getElementById('key-lock-slider');
   if (keyLockSlider) {
@@ -345,7 +583,8 @@ function initBasicControls() {
 export { 
   togglePowerOutput, 
   setVoltageValue, 
-  setCurrentValue, 
+  setCurrentValue,
+  setVoltagePreset, // Export the new function
   initPowerButton,
   initBasicControls,
   turnOutputOn,
@@ -357,5 +596,6 @@ export {
   setConstantPower,
   enableCpMode,
   disableCpMode,
-  updatePowerState
+  updatePowerState,
+  initVoltagePresetMenu // Export the new function
 };
