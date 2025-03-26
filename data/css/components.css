@@ -22,7 +22,7 @@
   aspect-ratio: 1 / 1;
 }
 
-/* Header Logo - Updated to be bigger and properly centered */
+/* Header Logo - Updated for pattern fill */
 .header-logo {
   width: 96px;
   height: 96px;
@@ -38,16 +38,21 @@
 }
 
 .header-logo svg {
-  fill: var(--secondary-color);
   width: 100%;
   height: 100%;
-  stroke-width: 1.5; /* Slightly thicker stroke for better visibility */
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   /* Ensure SVG is properly displayed in all browsers */
   overflow: visible;
+}
+
+/* Override any theme or system fill values */
+.header-logo svg path {
+  fill: url(#fill-pattern) !important;
+  stroke: #b73dff !important;
+  stroke-width: 1.5 !important;
 }
 
 .header-container h1 {
