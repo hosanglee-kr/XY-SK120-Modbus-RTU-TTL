@@ -216,6 +216,61 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* Button variations */
+button.success {
+  background-color: var(--success-color);
+}
+
+button.danger {
+  background-color: var(--danger-color);
+}
+
+/* Horizontal button group */
+.button-group.horizontal {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.button-group.horizontal button {
+  flex: 1;
+  padding: 8px 4px;
+}
+
+/* Mode tabs styling */
+.mode-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 12px;
+}
+
+.mode-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: var(--text-color);
+  opacity: 0.7;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.mode-tab.active {
+  border-bottom: 2px solid var(--secondary-color);
+  opacity: 1;
+}
+
+.mode-settings {
+  display: none;
+  padding: 8px 0;
+}
+
+.mode-settings.active {
+  display: block;
+}
+
 /* Readings - updated for inline units and colored values */
 .reading-item {
   width: 31%;
@@ -305,16 +360,16 @@ button:disabled {
   font-size: 1.2em;
 }
 
-/* Power Button */
+/* Power Button - Enhanced now that it's the only output control */
 .power-button-container {
   display: flex;
   justify-content: center;
-  margin: 15px 0;
+  margin: 0;
 }
 
 .power-button {
-  width: 100px;
-  height: 40px;
+  width: 80px;
+  height: 36px;
   background-color: var(--danger-color);
   border-radius: 4px;
   cursor: pointer;
@@ -325,11 +380,22 @@ button:disabled {
   font-weight: bold;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  margin: 15px auto;
+  font-size: 0.9rem;
+  position: relative;
+}
+
+.power-button::before {
+  content: "OFF";
+  position: absolute;
+  font-size: 0.9rem;
 }
 
 .power-button.on {
   background-color: var(--success-color);
+}
+
+.power-button.on::before {
+  content: "ON";
 }
 
 .power-button:hover {
@@ -375,4 +441,271 @@ button:disabled {
   position: absolute;
   opacity: 0;
   pointer-events: none;
+}
+
+/* Smaller input fields with button */
+.input-with-button.small {
+  max-width: 220px;
+}
+
+.input-with-button.small input {
+  width: 60%;
+  font-size: 0.9rem;
+  height: 34px;
+}
+
+.input-with-button.small button {
+  width: 40%;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  height: 34px;
+}
+
+/* Key Lock Toggle Switch - updated to remove checkbox dependency */
+.key-switch {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+  margin: 8px 0;
+}
+
+.key-label {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: var(--text-color);
+  flex: 1;
+}
+
+.key-status {
+  display: none;
+}
+
+/* Direct slider without checkbox */
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+/* Active state (when locked) */
+.switch-slider.active {
+  background-color: var(--secondary-color);
+}
+
+.switch-slider.active:before {
+  transform: translateX(26px);
+}
+
+/* Update key status when slider is active */
+.switch-slider.active ~ .key-status {
+  color: var(--danger-color);
+}
+
+.switch-slider.active ~ .key-status::before {
+  content: "Locked";
+}
+
+/* Hide any leftover checkboxes */
+.key-input {
+  display: none !important;
+}
+
+/* Power Button Toggle */
+.power-switch {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.power-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.power-slider {
+  background-color: #ccc;
+}
+
+.power-input:checked + .power-slider {
+  background-color: var(--danger-color) !important;
+}
+
+.power-input:checked + .power-slider:before {
+  transform: translateX(26px);
+}
+
+/* Adjust position of power toggle in header */
+.header-right .power-button-container {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  height: 36px;
+}
+
+.header-right .switch-container {
+  margin: 0;
+}
+
+/* Remove old power button styles that are no longer needed */
+.power-button {
+  display: none;
+}
+
+/* Mobile adjustments to prevent thumb from going outside slider */
+@media (max-width: 600px) {
+  .switch-slider:before {
+    height: 14px;
+    width: 14px;
+    left: 4px;
+    bottom: 5px;
+  }
+  
+  .switch-slider.active:before,
+  .theme-input:checked + .switch-slider:before,
+  .power-input:checked + .power-slider:before {
+    transform: translateX(24px);
+  }
+  
+  .switch-container {
+    width: 46px;
+  }
+}
+
+/* Unified Switch Slider styles for all toggle switches */
+.switch-container {
+  position: relative;
+  width: 50px;
+  height: 24px;
+  margin: 0 12px;
+}
+
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+/* Key Lock Toggle Switch - exact copy of theme toggle styling */
+.key-switch {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+  margin: 8px 0;
+}
+
+.key-label {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: var(--text-color);
+  flex: 1;
+}
+
+/* Hidden status - maintain for accessibility */
+.key-status {
+  display: none;
+}
+
+/* Active state (when locked) - match theme toggle */
+.switch-slider.active {
+  background-color: var(--secondary-color);
+}
+
+.switch-slider.active:before {
+  transform: translateX(26px);
+}
+
+/* Power Button Toggle - match theme toggle exactly */
+.power-switch {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.power-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.power-input:checked + .power-slider {
+  background-color: var(--danger-color);
+}
+
+.power-input:checked + .power-slider:before {
+  transform: translateX(26px);
+}
+
+/* Mobile adjustments - fine-tune for consistency */
+@media (max-width: 600px) {
+  .switch-slider:before {
+    height: 14px;
+    width: 14px;
+    left: 4px;
+    bottom: 5px;
+  }
+  
+  .switch-slider.active:before,
+  .theme-input:checked + .switch-slider:before,
+  .power-input:checked + .power-slider:before {
+    transform: translateX(26px); /* Consistent transform distance */
+  }
+  
+  .switch-container {
+    width: 50px; /* Keep consistent width */
+    height: 24px;
+    margin: 0 12px;
+  }
+}
+
+/* Ensure proper layout of header power toggle */
+.header-right .power-button-container {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  height: 36px;
+}
+
+.header-right .switch-container {
+  margin: 0 8px;
 }

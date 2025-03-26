@@ -12,6 +12,7 @@
     padding-bottom: 60px !important; /* Increased to account for the extra padding */
   }
   
+  /* Simplified card styles - remove display: none !important */
   .card {
     background-color: var(--card-color);
     border-radius: 8px;
@@ -19,13 +20,18 @@
     padding: 12px 10px;
     margin-bottom: 15px;
     overflow-y: auto;
-    min-height: auto;
+    min-height: 300px; /* Fixed minimum height for consistency */
     max-height: calc(80vh - 120px);
     width: calc(100% - 20px) !important;
     margin-left: 10px;
     margin-right: 10px;
-    display: none;
     box-sizing: border-box;
+    /* Remove display: none !important to prevent conflicts */
+  }
+  
+  /* CRITICAL FIX: Show only first card by default with higher specificity */
+  .card:first-of-type {
+    display: block !important; /* Force show with !important */
   }
   
   /* Header styles */
@@ -72,6 +78,8 @@
     margin: 0 10px 15px 10px;
     overflow: hidden;
     width: calc(100% - 20px) !important;
+    display: block !important;
+    z-index: 10; /* Ensure it stays above other elements */
   }
   
   .readings {
@@ -80,8 +88,6 @@
     justify-content: space-between;
     width: 100% !important;
     display: flex !important;
-    margin: 0;
-    overflow: hidden;
   }
   
   .reading-item {
@@ -89,6 +95,9 @@
     min-width: 0 !important;
     margin: 5px;
     text-align: center;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
   }
   
   .reading-value {
@@ -96,10 +105,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: inline-block !important;
+    visibility: visible !important;
   }
   
   .reading-label, .reading-unit {
     font-size: 0.8rem;
+    display: inline-block !important;
+    visibility: visible !important;
   }
   
   /* Status row styles */
@@ -133,6 +146,7 @@
     flex: 1;
     max-height: none !important;
     height: auto !important;
+    display: none;
   }
   
   /* Prevent container from scrolling */
@@ -187,5 +201,37 @@
   .dot:active::after {
     opacity: 0.3;
     transform: scale(1.5);
+  }
+}
+
+/* Fix for desktop view */
+@media (min-width: 601px) {
+  /* CRITICAL FIX: Force show all cards in desktop */
+  .card {
+    display: block !important; /* Always show cards in desktop view */
+    height: auto !important;
+    min-height: initial !important;
+    margin-bottom: 20px;
+  }
+  
+  .dots-indicator {
+    display: none !important; /* Hide dots in desktop view */
+  }
+  
+  /* Ensure readings are visible in desktop too */
+  .readings-container {
+    display: block !important;
+    width: 100% !important;
+    margin-bottom: 20px;
+  }
+  
+  .readings {
+    display: flex !important;
+  }
+  
+  .reading-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
   }
 }

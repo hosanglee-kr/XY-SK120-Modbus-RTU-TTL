@@ -24,12 +24,27 @@ export const elements = {
   themeToggle: document.getElementById('theme-toggle'),
   sunIcon: document.querySelector('.sun-icon'),
   moonIcon: document.querySelector('.moon-icon'),
-  themeColorMeta: document.getElementById('theme-color')
+  themeColorMeta: document.getElementById('theme-color'),
+  // New elements for expanded basic control
+  outputOn: document.getElementById('output-on'),
+  outputOff: document.getElementById('output-off'),
+  keysLock: document.getElementById('keys-lock'),
+  keysUnlock: document.getElementById('keys-unlock'),
+  setCvVoltage: document.getElementById('set-cv-voltage'),
+  setCcCurrent: document.getElementById('set-cc-current'),
+  setCpPower: document.getElementById('set-cp-power'),
+  applyCv: document.getElementById('apply-cv'),
+  applyCc: document.getElementById('apply-cc'),
+  applyCp: document.getElementById('apply-cp'),
+  cpModeOn: document.getElementById('cp-mode-on'),
+  cpModeOff: document.getElementById('cp-mode-off'),
+  modeTabs: document.querySelectorAll('.mode-tab')
 };
 
 // Swipe elements
 export const swipeElements = {
   cardsContainer: document.getElementById('cards-container'),
   dots: document.querySelectorAll('.dot'),
-  cards: document.querySelectorAll('.card')
+  cards: document.querySelectorAll('.card'),
+  dotsIndicator: document.getElementById('dots-indicator')
 };
