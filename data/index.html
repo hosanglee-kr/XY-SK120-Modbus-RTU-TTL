@@ -89,6 +89,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="XY-SK120">
     <meta name="theme-color" content="#2c3e50" id="theme-color">
+
+    <!-- Add this to the head section -->
+    <script type="module" src="main.js"></script>
 </head>
 <body>
     <!-- Splash screen -->
@@ -284,7 +287,7 @@
         </div>
     </div>
     
-    <script src="main.js"></script>
+    <!-- Remove the old script tag for main.js if it exists -->
     
     <!-- Splash screen handling script -->
     <script>
@@ -485,5 +488,8 @@
       });
     });
     </script>
+    <!-- Add debug script at the end of body -->
+    <script src="debug.js"></script>
+    <script src="mobileFix.js"></script>
 </body>
 </html>

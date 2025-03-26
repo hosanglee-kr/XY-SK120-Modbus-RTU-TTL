@@ -20,3 +20,13 @@
 
 /* Import mobile-specific styles */
 @import url('mobile.css');
+
+/* Add card transition styles */
+.card-transition {
+  transition: opacity 300ms ease-in-out;
+}
+
+/* Dot indicator transition */
+.dot {
+  transition: background-color 300ms ease;
+}
