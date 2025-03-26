@@ -417,6 +417,8 @@ button.danger {
   justify-content: center;
   margin: 15px 0;
   padding: 5px 0;
+  height: 30px;
+  align-items: center;
 }
 
 .dot {
@@ -428,6 +430,18 @@ button.danger {
   transition: all 0.3s ease;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+/* Add proper touch target for dots */
+.dot::before {
+  content: "";
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  right: -15px;
+  bottom: -15px;
+  z-index: 1;
 }
 
 .dot.active {

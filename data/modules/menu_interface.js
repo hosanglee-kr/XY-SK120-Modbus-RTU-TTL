@@ -79,20 +79,30 @@ function setupMobileView() {
 function updateDotIndicators(dots) {
   if (!dots) dots = document.querySelectorAll('.dot');
   
-  dots.forEach((dot, index) => {
-    // Clear existing listeners
-    const newDot = dot.cloneNode(true);
-    dot.parentNode.replaceChild(newDot, dot);
+  // First, remove existing event listeners from the dots container
+  const dotsContainer = document.getElementById('dots-indicator');
+  if (dotsContainer) {
+    const newContainer = dotsContainer.cloneNode(true);
+    dotsContainer.parentNode.replaceChild(newContainer, dotsContainer);
     
-    // Set active state
-    newDot.classList.toggle('active', index === activeCardIndex);
-    
-    // Add click handler
-    newDot.addEventListener('click', () => {
-      if (isTransitioning) return;
-      switchToCard(index);
+    // Then set up new event listeners for each dot
+    const newDots = newContainer.querySelectorAll('.dot');
+    newDots.forEach((dot, index) => {
+      // Set active state
+      dot.classList.toggle('active', index === activeCardIndex);
+      
+      // Add click handler with proper target check
+      dot.addEventListener('click', function(e) {
+        e.stopPropagation(); // Prevent event bubbling
+        if (isTransitioning) return;
+        
+        // Only switch if we're clicking on a different dot
+        if (index !== activeCardIndex) {
+          switchToCard(index);
+        }
+      });
     });
-  });
+  }
 }
 
 // Setup touch handlers
@@ -147,6 +157,8 @@ function switchToCard(index) {
   if (isTransitioning) return;
   isTransitioning = true;
   
+  console.log(`Switching to card ${index}`);
+  
   // Update active index
   activeCardIndex = index;
   
@@ -156,7 +168,7 @@ function switchToCard(index) {
   // Update dots
   updateDotIndicators();
   
-  // Reset transition flag
+  // Reset transition flag after animation completes
   setTimeout(() => isTransitioning = false, 300);
 }
 
