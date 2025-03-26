@@ -1,0 +1,100 @@
+/* Responsive styles for different screen sizes */
+
+/* Small screens adjustments */
+@media (max-width: 400px) {
+  .container {
+    padding: 5px;
+  }
+  
+  h1 {
+    font-size: 1.4rem;
+  }
+  
+  .reading-value {
+    font-size: 1.4rem;
+  }
+}
+
+/* Tablets and larger phones */
+@media (min-width: 601px) and (max-width: 800px) {
+  .card {
+    padding: 15px;
+  }
+  
+  .container {
+    max-width: 95%;
+  }
+}
+
+/* Header responsive adjustments */
+@media (max-width: 480px) {
+  .header-logo {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 8px;
+  }
+  
+  .header-container h1 {
+    font-size: 1.4rem;
+  }
+  
+  .theme-toggle {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .theme-toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .card {
+    padding: 15px 12px;
+    width: calc(100% - 24px) !important;
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+  
+  .reading-value {
+    font-size: 1.6rem;
+  }
+  
+  .header-logo {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+  }
+}
+
+/* Additional responsive adjustments for very small screens */
+@media (max-height: 700px) and (max-width: 600px) {
+  header h1 {
+    font-size: 1.1rem;
+  }
+  
+  h2 {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+  }
+}
+
+/* Orientation-specific styles */
+@media (orientation: landscape) and (max-width: 600px) {
+  .card {
+    max-height: 85vh;
+    min-height: 40vh;
+  }
+  
+  h2 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+  
+  .reading-value {
+    font-size: 1.6rem;
+  }
+  
+  .reading-label, .reading-unit {
+    font-size: 0.75rem;
+  }
+}

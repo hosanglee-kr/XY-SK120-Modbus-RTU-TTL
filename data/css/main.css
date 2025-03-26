@@ -1,0 +1,19 @@
+/* Main CSS file that imports all other modular CSS files */
+
+/* Import theme variables */
+@import url('theme.css');
+
+/* Import base styles */
+@import url('base.css');
+
+/* Import layout styles */
+@import url('layout.css');
+
+/* Import component styles */
+@import url('components.css');
+
+/* Import responsive styles */
+@import url('responsive.css');
+
+/* Import mobile-specific styles */
+@import url('mobile.css');

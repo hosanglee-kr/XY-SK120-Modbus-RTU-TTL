@@ -85,6 +85,9 @@ function init() {
   // Initialize swipeable cards for mobile
   initSwipeCards();
   
+  // Initialize the Lottie animation
+  initPowerButton();
+  
   // Remove the loading class after layout calculations are complete
   setTimeout(() => {
     document.body.classList.remove('loading');
@@ -228,13 +231,20 @@ function updatePsuUI(data) {
   }
 }
 
-// Update output status display
+// Update output status display - updated to work with new power button
 function updateOutputStatus(enabled) {
   if (elements.outputStatus) {
     elements.outputStatus.textContent = enabled ? "ON" : "OFF";
     elements.outputStatus.className = enabled ? "status-value on" : "status-value off";
   }
   
+  // Update power button state visually
+  const powerButton = document.querySelector('.power-button');
+  if (powerButton) {
+    powerButton.classList.toggle('on', enabled);
+  }
+  
+  // Keep this for backward compatibility
   if (elements.toggleOutput) {
     elements.toggleOutput.textContent = enabled ? "Turn Output OFF" : "Turn Output ON";
   }
@@ -264,12 +274,23 @@ function togglePowerOutput() {
     }));
     
     // Temporary UI feedback while waiting for response
-    elements.toggleOutput.disabled = true;
-    setTimeout(() => {
-      elements.toggleOutput.disabled = false;
-    }, 1000);
+    const powerButton = document.querySelector('.power-button');
+    if (powerButton) {
+      // Show opposite state immediately for better UX
+      powerButton.classList.toggle('on', !currentState);
+    }
+    
+    if (elements.toggleOutput) {
+      elements.toggleOutput.disabled = true;
+      setTimeout(() => {
+        elements.toggleOutput.disabled = false;
+      }, 1000);
+    }
   } else {
     alert("WebSocket not connected. Cannot control power supply.");
+    
+    // Try to reconnect
+    initWebSocket();
   }
 }
 
@@ -364,8 +385,7 @@ function updateWifiUI(data) {
   
   elements.wifiRssi.textContent = `${signalStrength} (${rssi} dBm)`;
   
-  // Also update the device IP in the header
-  elements.deviceIp.textContent = data.ip || window.location.hostname;
+  // The device IP header update has been removed
 }
 
 // Setup event listeners
@@ -440,6 +460,35 @@ function setupEventListeners() {
   if (elements.themeToggle) {
     elements.themeToggle.addEventListener('click', toggleTheme);
   }
+  
+  // Add validation for decimal number inputs
+  const decimalInputs = document.querySelectorAll('input[inputmode="decimal"]');
+  decimalInputs.forEach(input => {
+    input.addEventListener('input', function(e) {
+      // Allow only numbers and a single decimal point
+      let value = e.target.value;
+      value = value.replace(/[^0-9.]/g, ''); // Remove anything that's not a digit or decimal
+      
+      // Ensure only one decimal point
+      const parts = value.split('.');
+      if (parts.length > 2) {
+        value = parts[0] + '.' + parts.slice(1).join('');
+      }
+      
+      e.target.value = value;
+    });
+  });
+  
+  // Add validation for numeric inputs (integers only)
+  const numericInputs = document.querySelectorAll('input[inputmode="numeric"]');
+  numericInputs.forEach(input => {
+    input.addEventListener('input', function(e) {
+      // Allow only numbers
+      let value = e.target.value;
+      value = value.replace(/[^0-9]/g, ''); // Remove anything that's not a digit
+      e.target.value = value;
+    });
+  });
 }
 
 // Save configuration to server
@@ -479,6 +528,23 @@ function toggleTheme() {
   localStorage.setItem('theme', newTheme);
 }
 
+// Update logo color function - increase stroke width for better visibility
+function updateLogoColor() {
+  const headerLogo = document.querySelector('.header-logo svg path');
+  if (headerLogo) {
+    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    if (theme === 'dark') {
+      // Use brighter yellow-green gradient colors in dark mode
+      headerLogo.style.fill = 'var(--secondary-color)';
+      headerLogo.setAttribute('stroke-width', '1.5'); // Slightly thicker stroke in dark mode
+    } else {
+      // Use default gradient in light mode
+      headerLogo.style.fill = 'var(--secondary-color)';
+      headerLogo.setAttribute('stroke-width', '1'); // Normal stroke in light mode
+    }
+  }
+}
+
 // Set the theme
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -495,9 +561,12 @@ function setTheme(theme) {
       elements.themeColorMeta.setAttribute('content', '#2c3e50');
     }
   }
+  
+  // Update logo color
+  updateLogoColor();
 }
 
-// Remove the complex swipeable cards implementation and replace with a simpler version
+// Restore a working version of the swipe card implementation with simpler mechanics
 function initSwipeCards() {
   // Check if we're on mobile
   if (window.innerWidth <= 600) {
@@ -512,10 +581,20 @@ function initSwipeCards() {
     const cards = document.querySelectorAll('.card');
     
     if (dots.length > 0 && cards.length > 0) {
-      dots.forEach((dot, index) => {
+      // Clear any existing event listeners to prevent duplicates
+      dots.forEach((dot) => {
+        const newDot = dot.cloneNode(true);
+        dot.parentNode.replaceChild(newDot, dot);
+      });
+      
+      // Reselect dots after replacement
+      const freshDots = document.querySelectorAll('.dot');
+      
+      // Add click event handlers to dots
+      freshDots.forEach((dot, index) => {
         dot.addEventListener('click', () => {
           // Hide all cards
-          cards.forEach(card => {
+          cards.forEach((card, i) => {
             card.style.display = 'none';
           });
           
@@ -525,20 +604,53 @@ function initSwipeCards() {
           }
           
           // Update active dot
-          dots.forEach(d => {
+          freshDots.forEach(d => {
             d.classList.remove('active');
           });
           dot.classList.add('active');
         });
       });
       
-      // Initialize - show first card, hide others
+      // Initialize the first card as visible, others hidden
       cards.forEach((card, i) => {
         card.style.display = i === 0 ? 'block' : 'none';
       });
+      
+      // Ensure first dot is active
+      if (freshDots[0]) {
+        freshDots[0].classList.add('active');
+      }
+      
+      // Add basic touch swipe detection
+      let touchStartX = 0;
+      let touchEndX = 0;
+      
+      document.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+      }, false);
+      
+      document.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      }, false);
+      
+      function handleSwipe() {
+        const swipeThreshold = 50;
+        const activeDotIndex = Array.from(freshDots).findIndex(dot => dot.classList.contains('active'));
+        
+        if (touchEndX < touchStartX - swipeThreshold) {
+          // Left swipe - next card
+          const nextIndex = (activeDotIndex + 1) % freshDots.length;
+          freshDots[nextIndex].click();
+        } else if (touchEndX > touchStartX + swipeThreshold) {
+          // Right swipe - previous card
+          const prevIndex = (activeDotIndex - 1 + freshDots.length) % freshDots.length;
+          freshDots[prevIndex].click();
+        }
+      }
     }
   } else {
-    // On desktop, hide dots indicator and show all cards
+    // On desktop, show all cards and hide dot indicators
     const dotsIndicator = document.getElementById('dots-indicator');
     if (dotsIndicator) {
       dotsIndicator.style.display = 'none';
@@ -549,6 +661,46 @@ function initSwipeCards() {
     cards.forEach(card => {
       card.style.display = 'block';
     });
+  }
+}
+
+// Fix power button initialization
+function initPowerButton() {
+  const powerAnimContainer = document.getElementById('power-animation-container');
+  if (!powerAnimContainer) {
+    console.error('Power animation container not found');
+    return;
+  }
+  
+  console.log('Initializing power button');
+  
+  // Create a simple button with text
+  powerAnimContainer.innerHTML = '<div class="power-button">POWER</div>';
+  
+  // Get the button and add click handler
+  const powerButton = powerAnimContainer.querySelector('.power-button');
+  if (powerButton) {
+    powerButton.addEventListener('click', function() {
+      console.log('Power button clicked');
+      
+      // Get current state from the output status display
+      const currentState = elements.outputStatus.textContent === "ON";
+      
+      // Add visual feedback
+      powerButton.classList.add('active');
+      setTimeout(() => {
+        powerButton.classList.remove('active');
+      }, 300);
+      
+      // Send the toggle command
+      togglePowerOutput();
+    });
+    
+    // Set initial state
+    setTimeout(() => {
+      const isOn = elements.outputStatus.textContent === "ON";
+      powerButton.classList.toggle('on', isOn);
+    }, 1000);
   }
 }
 
@@ -566,4 +718,7 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('orientationchange', function() {
     setTimeout(initSwipeCards, 300);
   });
+
+  // Add logo color update
+  updateLogoColor();
 });
