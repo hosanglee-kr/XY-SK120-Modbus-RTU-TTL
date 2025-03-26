@@ -5,7 +5,7 @@ import { initWebSocket } from './menu_connection.js';
 // Toggle power output
 function togglePowerOutput() {
   // Get current state
-  const currentState = elements.outputStatus.textContent === "ON";
+  const currentState = elements.outputStatus && elements.outputStatus.textContent === "ON";
   console.log("Current output state:", currentState, "Toggling to:", !currentState);
   
   // Send command to toggle to opposite state
@@ -101,9 +101,10 @@ function initPowerButton() {
       togglePowerOutput();
     });
     
-    // Set initial state
+    // Set initial state with null check
     setTimeout(() => {
-      const isOn = elements.outputStatus.textContent === "ON";
+      // Add null check before accessing textContent
+      const isOn = elements.outputStatus && elements.outputStatus.textContent === "ON";
       powerButton.classList.toggle('on', isOn);
     }, 1000);
   }
