@@ -96,7 +96,6 @@ header h1 {
   display: flex;
   align-items: center;
   padding-top: 10px;
-  border-top: 1px solid var(--border-color);
   justify-content: center;
   padding: 8px 0;
   margin-bottom: 3px;

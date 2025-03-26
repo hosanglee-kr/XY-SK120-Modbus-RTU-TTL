@@ -1,32 +1,91 @@
 /* Styles for UI components */
 
-/* Theme Toggle Button */
-.theme-toggle {
-  background-color: var(--card-color);
-  border: 1px solid var(--border-color);
+/* Theme Toggle Button - now in configuration card */
+.config-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.theme-switch {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+}
+
+.theme-label {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: var(--text-color);
+  flex: 1;
+}
+
+.switch-container {
+  position: relative;
+  width: 50px;
+  height: 24px;
+  margin: 0 12px;
+}
+
+.theme-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+}
+
+.theme-input:checked + .switch-slider {
+  background-color: var(--secondary-color);
+}
+
+.theme-input:checked + .switch-slider:before {
+  transform: translateX(26px);
+}
+
+.theme-toggle {
+  width: 24px;
+  height: 24px;
   display: flex;
   justify-content: center;
   align-items: center;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 
 .theme-toggle svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   fill: var(--text-color);
-  display: block;
-  aspect-ratio: 1 / 1;
 }
 
 /* Header Logo - Updated for pattern fill */
 .header-logo {
-  width: 96px;
-  height: 96px;
-  margin-bottom: 16px;
+  width: 64px;
+  height: 64px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -55,10 +114,73 @@
   stroke-width: 1.5 !important;
 }
 
+/* Header container with title and controls */
+.header-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  width: 100%;
+  flex-wrap: nowrap; /* Ensure no wrapping on main layout */
+}
+
+.header-left {
+  flex: 0 0 auto;
+  margin-right: 8px;
+}
+
+.header-center {
+  flex: 1 1 auto;
+  text-align: left;
+  min-width: 0; /* Allow text to shrink below content width */
+}
+
+/* Updated header-right for direct power button */
+.header-right {
+  flex: 0 0 auto;
+  margin-left: 8px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 .header-container h1 {
-  margin: 8px 0 0 0;
-  text-align: center;
+  margin: 0;
+  text-align: left;
   font-size: 1.8rem;
+  word-wrap: break-word; /* Allow long words to break */
+  overflow-wrap: break-word;
+  hyphens: auto;
+  line-height: 1.2; /* Tighter line height for wrapped text */
+}
+
+/* Remove .header-controls class */
+
+/* Adjust power button container */
+.header-right .power-button-container {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  height: 36px; /* Match height previously set for header-controls */
+}
+
+#power-animation-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Output status - keep these for API functionality but hide visually */
+#output-status {
+  position: absolute;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  width: 1px;
+  margin: -1px;
+  overflow: hidden;
 }
 
 /* Buttons */
@@ -94,24 +216,53 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Readings */
+/* Readings - updated for inline units and colored values */
+.reading-item {
+  width: 31%;
+  min-width: 75px;
+  text-align: center;
+  margin-bottom: 5px;
+}
+
 .reading-label {
   font-size: 1rem;
   color: var(--text-color);
   opacity: 0.7;
+  margin-bottom: 5px;
+}
+
+.reading-display {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
 }
 
 .reading-value {
   font-size: 2.2rem;
   font-weight: bold;
-  color: var(--secondary-color);
   line-height: 1.1;
 }
 
 .reading-unit {
-  font-size: 1rem;
-  color: var(--text-color);
-  opacity: 0.7;
+  font-size: 2.2rem;
+  font-weight: bold;
+  margin-left: 2px;
+}
+
+/* Specific colors for each reading type */
+.reading-item.voltage .reading-value,
+.reading-item.voltage .reading-unit {
+  color: #64ff00; /* Green from logo top */
+}
+
+.reading-item.current .reading-value,
+.reading-item.current .reading-unit {
+  color: #fff500; /* Yellow from logo bottom */
+}
+
+.reading-item.power .reading-value,
+.reading-item.power .reading-unit {
+  color: #b73dff; /* Purple from logo stroke */
 }
 
 /* Status indicators */

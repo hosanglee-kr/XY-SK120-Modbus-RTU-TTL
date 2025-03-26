@@ -112,6 +112,8 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('orientationchange', function() {
     setTimeout(forceReinitSwipeCards, 300);
   });
+  
+  // Remove theme checkbox handling from here - it's now in menu_theme.js
 });
 
 // Export functions for use in other modules

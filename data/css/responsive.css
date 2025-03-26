@@ -64,6 +64,73 @@
     height: 64px !important;
     margin-bottom: 12px !important;
   }
+  
+  /* Adjust header controls for small screens */
+  .header-controls {
+    padding: 3px 10px;
+    margin-top: 2px;
+  }
+  
+  .header-controls .status-label,
+  .header-controls .status-value {
+    font-size: 0.8rem;
+  }
+  
+  /* Make header more compact */
+  .header-container h1 {
+    margin: 5px 0 8px 0;
+    font-size: 1.3rem;
+  }
+  
+  /* Responsive adjustment for theme toggle in configuration */
+  .config-header {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+  
+  .theme-label {
+    font-size: 0.85rem;
+  }
+  
+  .switch-container {
+    width: 40px;
+    height: 20px;
+    margin: 0 8px;
+  }
+  
+  .switch-slider:before {
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+  }
+  
+  .theme-input:checked + .switch-slider:before {
+    transform: translateX(20px);
+  }
+  
+  .theme-toggle {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .theme-toggle svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  /* Very small screens - make header controls stack vertically */
+  .header-controls {
+    flex-direction: column;
+    padding: 5px;
+  }
+  
+  .header-controls .status-row {
+    margin-right: 0;
+    margin-bottom: 5px;
+  }
 }
 
 /* Larger logo for tablets and PWA */
@@ -123,5 +190,323 @@
   
   .reading-label, .reading-unit {
     font-size: 0.75rem;
+  }
+}
+
+/* More compact layout for Power Supply Control on mobile */
+@media (max-width: 767px) {
+  /* Make readings more compact */
+  .readings {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  
+  .reading-item {
+    width: 31%;
+    min-width: 75px;
+    text-align: center;
+    margin-bottom: 5px;
+  }
+  
+  .reading-label {
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+  }
+  
+  .reading-value, 
+  .reading-unit {
+    font-size: 1.6rem;
+    margin: 0;
+    line-height: 1;
+  }
+  
+  .reading-unit {
+    font-size: 0.8rem;
+    display: inline-block;
+  }
+  
+  /* More compact input fields */
+  .control-inputs {
+    margin-top: 5px;
+  }
+  
+  .form-group {
+    margin-bottom: 8px;
+  }
+  
+  .form-group label {
+    font-size: 0.85rem;
+    margin-bottom: 2px;
+  }
+  
+  .input-with-button {
+    display: flex;
+    align-items: center;
+  }
+  
+  .input-with-button input {
+    flex: 1;
+    padding: 6px 8px;
+    height: 30px;
+  }
+  
+  .input-with-button button {
+    padding: 6px 10px;
+    height: 30px;
+    font-size: 0.85rem;
+    margin-left: 5px;
+  }
+  
+  /* More compact button */
+  .button-group {
+    margin-top: 8px;
+  }
+  
+  .button-group button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+  
+  /* Make status more compact */
+  .status-row {
+    margin-bottom: 5px;
+  }
+  
+  .power-button-container {
+    margin: 8px 0;
+  }
+  
+  /* Reduce card padding */
+  .card {
+    padding: 12px;
+  }
+  
+  /* Adjust heading size */
+  .card h2 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1.3rem;
+  }
+}
+
+/* Header responsive adjustments with horizontal layout */
+@media (max-width: 600px) {
+  .header-container h1 {
+    font-size: 1.2rem;
+  }
+  
+  .header-logo {
+    width: 48px !important;
+    height: 48px !important;
+  }
+  
+  .header-controls {
+    padding: 3px 8px;
+  }
+  
+  .header-controls .status-label,
+  .header-controls .status-value {
+    font-size: 0.75rem;
+  }
+  
+  .card {
+    margin-top: 10px; /* Reduced margin to get more vertical space */
+  }
+}
+
+@media (max-width: 420px) {
+  .header-container {
+    flex-wrap: wrap;
+  }
+  
+  .header-left {
+    order: 1;
+    flex: 0 0 48px;
+  }
+  
+  .header-center {
+    order: 2;
+    flex: 1 1 auto;
+  }
+  
+  .header-right {
+    order: 3;
+    flex: 1 0 100%;
+    margin-left: 0;
+    margin-top: 5px;
+  }
+  
+  .header-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Extremely small screens */
+@media (max-width: 360px) {
+  .header-container {
+    margin-bottom: 8px;
+  }
+  
+  .header-logo {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  .header-container h1 {
+    font-size: 1rem;
+  }
+}
+
+/* Revised header responsive adjustments for single-row layout */
+@media (max-width: 700px) {
+  .header-container {
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .header-center h1 {
+    font-size: calc(1rem + 1vw); /* Responsive font size based on viewport width */
+    line-height: 1.1;
+  }
+  
+  .header-logo {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    margin-bottom: 0 !important; /* Remove bottom margin */
+  }
+  
+  .header-controls {
+    padding: 3px 8px;
+    height: 36px; /* Adjusted height for smaller screens */
+    font-size: 0.9rem;
+  }
+  
+  /* Adjust the controls for better fit */
+  .header-controls .status-label,
+  .header-controls .status-value {
+    font-size: 0.75rem;
+  }
+  
+  .card {
+    margin-top: 10px; /* Reduced margin to get more vertical space */
+  }
+  
+  .header-controls {
+    padding: 2px 8px 2px 8px; /* Equal left/right padding */
+    height: 32px; /* Adjusted height for smaller screens */
+  }
+  
+  /* Make label and value vertically centered */
+  .header-controls .status-row,
+  .header-controls .power-button-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .header-controls {
+    padding: 2px 6px;
+    height: 32px;
+  }
+  
+  /* Updated responsive styles for power button without header-controls */
+  .header-right .power-button-container {
+    height: 32px;
+  }
+}
+
+@media (max-width: 520px) {
+  .header-container {
+    margin-bottom: 8px;
+  }
+  
+  .header-center h1 {
+    font-size: 0.95rem; /* Fixed smaller size for very small screens */
+  }
+  
+  .header-logo {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+  }
+  
+  .header-controls {
+    padding: 2px 6px;
+    height: 30px; /* Smaller height for very small screens */
+  }
+  
+  .header-controls .status-row {
+    margin-right: 6px; /* Reduced but equal spacing */
+  }
+  
+  .header-controls .status-label,
+  .header-controls .status-value {
+    font-size: 0.7rem; /* Both same size */
+  }
+  
+  .header-controls .power-button-container {
+    transform: scale(0.85); /* Slightly smaller */
+    margin: 0 0 0 3px; /* Consistent spacing */
+  }
+  
+  .header-controls {
+    padding: 2px 6px 2px 6px; /* Equal padding */
+    height: 28px; /* Smaller but consistent height */
+  }
+  
+  .header-controls .status-row {
+    margin-right: 5px; /* Consistent spacing */
+  }
+  
+  .header-controls .power-button-container {
+    transform: scale(0.85);
+    margin: 0; /* No margin to ensure clean alignment */
+  }
+  
+  /* Ensure power animation container doesn't extend beyond boundary */
+  #power-animation-container {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .header-controls {
+    padding: 2px 4px;
+    height: 28px;
+  }
+  
+  /* Remove .status-row styles references */
+  
+  .header-controls .power-button-container {
+    transform: scale(0.85);
+    margin: 0;
+  }
+  
+  .header-right .power-button-container {
+    height: 28px;
+    transform: scale(0.85);
+  }
+}
+
+/* Remove rules that would put controls on a separate row */
+@media (max-width: 420px) {
+  .header-container {
+    flex-wrap: nowrap; /* Force single row */
+  }
+  
+  .header-left, .header-center, .header-right {
+    order: unset; /* Remove ordering that would stack elements */
+  }
+  
+  .header-right {
+    flex: 0 0 auto;
+    margin-left: 4px;
+    margin-top: 0;
+  }
+  
+  .header-controls {
+    width: auto;
   }
 }
