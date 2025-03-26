@@ -81,34 +81,39 @@
             </div>
         </header>
         
-        <!-- Power Supply Control Card -->
+        <!-- Readings display - moved outside cards to be always visible -->
+        <div class="readings-container">
+            <div class="readings">
+                <div class="reading-item voltage">
+                    <div class="reading-label">Voltage</div>
+                    <div class="reading-display">
+                        <span class="reading-value" id="psu-voltage">--</span>
+                        <span class="reading-unit">V</span>
+                    </div>
+                </div>
+                <div class="reading-item current">
+                    <div class="reading-label">Current</div>
+                    <div class="reading-display">
+                        <span class="reading-value" id="psu-current">--</span>
+                        <span class="reading-unit">A</span>
+                    </div>
+                </div>
+                <div class="reading-item power">
+                    <div class="reading-label">Power</div>
+                    <div class="reading-display">
+                        <span class="reading-value" id="psu-power">--</span>
+                        <span class="reading-unit">W</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Basic Control Card -->
         <div class="card">
-            <h2>Power Supply Control</h2>
+            <h2>Basic Control</h2>
             <div class="power-supply-control">
                 <div class="control-settings">
-                    <div class="readings">
-                        <div class="reading-item voltage">
-                            <div class="reading-label">Voltage</div>
-                            <div class="reading-display">
-                                <span class="reading-value" id="psu-voltage">--</span>
-                                <span class="reading-unit">V</span>
-                            </div>
-                        </div>
-                        <div class="reading-item current">
-                            <div class="reading-label">Current</div>
-                            <div class="reading-display">
-                                <span class="reading-value" id="psu-current">--</span>
-                                <span class="reading-unit">A</span>
-                            </div>
-                        </div>
-                        <div class="reading-item power">
-                            <div class="reading-label">Power</div>
-                            <div class="reading-display">
-                                <span class="reading-value" id="psu-power">--</span>
-                                <span class="reading-unit">W</span>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Readings moved to outside the card -->
                     
                     <div class="control-inputs">
                         <div class="form-group compact">

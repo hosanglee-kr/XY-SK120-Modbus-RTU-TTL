@@ -59,11 +59,25 @@ header h1 {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
+/* New readings container outside of cards */
+.readings-container {
+  background-color: var(--card-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  margin-bottom: 15px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="dark"] .readings-container {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
 .readings {
   display: flex;
   justify-content: space-around;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
 
 .reading-item {

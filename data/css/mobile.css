@@ -63,14 +63,24 @@
     margin-bottom: 10px;
   }
   
-  /* Reading styles */
+  /* Reading styles - updated for outside container */
+  .readings-container {
+    background-color: var(--card-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 8px 10px;
+    margin: 0 10px 15px 10px;
+    overflow: hidden;
+    width: calc(100% - 20px) !important;
+  }
+  
   .readings {
     flex-direction: row;
     flex-wrap: nowrap;
     justify-content: space-between;
     width: 100% !important;
     display: flex !important;
-    margin: 10px -5px;
+    margin: 0;
     overflow: hidden;
   }
   
