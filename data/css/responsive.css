@@ -161,6 +161,40 @@
     line-height: 1;
   }
   
+  /* Compact inputs with standardized height */
+  .control-inputs { margin-top: 5px; }
+  .form-group { margin-bottom: 8px; }
+  .form-group label { font-size: 0.85rem; margin-bottom: 4px; }
+  
+  .input-with-button {
+    display: flex;
+    align-items: stretch;
+  }
+  
+  .input-with-button input {
+    flex: 1;
+    padding: 0 8px;
+    height: 40px !important; /* Force consistent height */
+  }
+  
+  .input-with-button button {
+    padding: 0 10px;
+    height: 40px !important; /* Force consistent height */
+    font-size: 0.85rem;
+    margin-left: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Compact buttons with standardized height */
+  .button-group { margin-top: 8px; }
+  .button-group button { 
+    padding: 0 12px; 
+    font-size: 0.85rem; 
+    height: 40px !important; /* Force consistent height */
+  }
+  
   /* Compact inputs */
   .control-inputs { margin-top: 5px; }
   .form-group { margin-bottom: 8px; }
@@ -194,6 +228,27 @@
   
   /* Compact card header */
   .card h2 { margin-top: 0; margin-bottom: 8px; font-size: 1.3rem; }
+  
+  /* Improved mode settings inputs for mobile */
+  .mode-settings .input-with-button {
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+  }
+  
+  .mode-settings .input-with-button input {
+    flex: 1;
+    min-width: 0;
+    height: 40px !important;
+  }
+  
+  .mode-settings .input-with-button button {
+    min-width: 70px;
+    padding: 0 8px;
+    height: 40px !important;
+    font-size: 0.85rem;
+  }
 }
 
 /* Force single row layout for header */
