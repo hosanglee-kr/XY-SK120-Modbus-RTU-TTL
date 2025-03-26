@@ -1,0 +1,191 @@
+/* Mobile-specific styles */
+
+@media (max-width: 600px) {
+  /* Basic container and card styles */
+  .container {
+    max-width: 100%;
+    padding: 10px;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 60px !important; /* Increased to account for the extra padding */
+  }
+  
+  .card {
+    background-color: var(--card-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 12px 10px;
+    margin-bottom: 15px;
+    overflow-y: auto;
+    min-height: auto;
+    max-height: calc(80vh - 120px);
+    width: calc(100% - 20px) !important;
+    margin-left: 10px;
+    margin-right: 10px;
+    display: none;
+    box-sizing: border-box;
+  }
+  
+  /* Header styles */
+  header {
+    margin-bottom: 10px;
+  }
+  
+  header h1 {
+    font-size: 1.3rem;
+  }
+  
+  .ip-display {
+    font-size: 0.7rem;
+    margin-top: 2px;
+  }
+  
+  /* Button styles */
+  .button-group {
+    flex-direction: column;
+  }
+  
+  button {
+    margin-bottom: 10px;
+    min-height: 44px;
+    padding: 8px 12px;
+  }
+  
+  /* Form element styles */
+  input, select {
+    height: 44px;
+    font-size: 16px;
+  }
+  
+  .form-group {
+    margin-bottom: 10px;
+  }
+  
+  /* Reading styles - updated for outside container */
+  .readings-container {
+    background-color: var(--card-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 8px 10px;
+    margin: 0 10px 15px 10px;
+    overflow: hidden;
+    width: calc(100% - 20px) !important;
+  }
+  
+  .readings {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    width: 100% !important;
+    display: flex !important;
+    margin: 0;
+    overflow: hidden;
+  }
+  
+  .reading-item {
+    flex: 1 !important;
+    min-width: 0 !important;
+    margin: 5px;
+    text-align: center;
+  }
+  
+  .reading-value {
+    font-size: 1.8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .reading-label, .reading-unit {
+    font-size: 0.8rem;
+  }
+  
+  /* Status row styles */
+  .status-row {
+    justify-content: center;
+  }
+  
+  /* Output status buttons */
+  .output-status button {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    width: 80%;
+    max-width: 300px;
+  }
+  
+  /* Lock scrolling for page, allow only card scrolling */
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+  }
+  
+  /* Make card take available space and scroll */
+  .card {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    flex: 1;
+    max-height: none !important;
+    height: auto !important;
+  }
+  
+  /* Prevent container from scrolling */
+  .cards-container {
+    overflow: hidden !important;
+    flex: 1;
+    display: flex !important;
+    transform: none !important;
+    width: 100% !important;
+  }
+  
+  /* Swipe prevention during handling */
+  body.swiping {
+    overflow: hidden;
+    touch-action: none;
+  }
+  
+  /* Dots indicator */
+  .dots-indicator {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 10px 0 20px 0 !important; /* Regular padding + 10px extra at bottom */
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    text-align: center !important;
+    background-color: var(--background-color) !important;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1) !important;
+    z-index: 100 !important;
+  }
+  
+  /* Dot ripple effect */
+  .dot::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--secondary-color);
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(1);
+    transition: all 0.3s ease;
+  }
+  
+  .dot:active::after {
+    opacity: 0.3;
+    transform: scale(1.5);
+  }
+}

@@ -23,6 +23,16 @@ def pre_build_callback(*args, **kwargs):
     script_path = os.path.join(env.subst("$PROJECT_DIR"), "scripts", "pre_build_script.py")
     env.Execute("$PYTHONEXE " + script_path)
 
+# Define a function for filesystem operations
+def fs_callback(*args, **kwargs):
+    script_path = os.path.join(env.subst("$PROJECT_DIR"), "scripts", "fs_script.py")
+    env.Execute("$PYTHONEXE " + script_path)
+
+# Define a function to analyze filesystem size
+def analyze_fs_size_callback(*args, **kwargs):
+    script_path = os.path.join(env.subst("$PROJECT_DIR"), "scripts", "analyze_fs_size.py")
+    env.Execute("$PYTHONEXE " + script_path + " --env=" + env.subst("$PIOENV"))
+
 # Register custom targets with a more unique name
 env.AddCustomTarget(
     name="firmware-size",
@@ -59,5 +69,41 @@ env.AddCustomTarget(
     description="Executes pre-build tasks like version updates or configuration generation"
 )
 
+# Register the filesystem operations target
+env.AddCustomTarget(
+    name="prepare-fs",
+    dependencies=None,
+    actions=[fs_callback],
+    title="Prepare Filesystem",
+    description="Prepares filesystem data before uploading to device"
+)
+
+# Register the filesystem size analysis target
+env.AddCustomTarget(
+    name="analyze-fs-size",
+    dependencies=None,
+    actions=[analyze_fs_size_callback],
+    title="Analyze Filesystem Size",
+    description="Shows detailed filesystem image size information"
+)
+
+# Add a combined target that runs all pre-build tasks in sequence
+def all_prep_callback(*args, **kwargs):
+    pre_build_callback()
+    gen_partitions_callback()
+    fs_callback()
+    print("All preparation tasks completed successfully!")
+
+env.AddCustomTarget(
+    name="prepare-all",
+    dependencies=None,
+    actions=[all_prep_callback],
+    title="Prepare Everything",
+    description="Runs all preparation tasks in sequence"
+)
+
 # Add pre-build hook to automatically run the pre-build script before each build
 env.AddPreAction("buildprog", pre_build_callback)
+
+# Remove the pre-action hook for filesystem upload to fix build issues
+# env.AddPreAction("uploadfs", fs_callback)

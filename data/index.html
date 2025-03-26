@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XY-SK120 120W DPS</title>
+    
+    <!-- Move splash screen styles to external file -->
+    <link rel="stylesheet" href="css/splash.css">
+    <link rel="stylesheet" href="css/main.css">
+    
+    <!-- Updated Favicon references -->
+    <link rel="icon" href="favicon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="favicon/apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="XY-SK120">
+    <meta name="theme-color" content="#2c3e50" id="theme-color">
+
+    <script type="module" src="main.js"></script>
+</head>
+<body>
+    <!-- Splash screen -->
+    <div class="splash-screen" id="splash-screen">
+        <div class="splash-logo">
+            <svg width="64" xmlns="http://www.w3.org/2000/svg" height="64" viewBox="0 0 64 64" fill="none">
+              <g style="fill: rgb(0, 0, 0);" class="frame-children">
+                <defs>
+                  <linearGradient id="splash-a" x1=".5" y1="0" x2=".5" y2="1">
+                    <stop offset=".37" stop-color="#64ff00"/>
+                    <stop offset=".65" stop-color="#fff500"/>
+                  </linearGradient>
+                  <pattern patternUnits="userSpaceOnUse" x="8" y="4" width="48" height="56.002" patternTransform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" id="splash-b">
+                    <rect width="48" height="56.002" style="fill: url(#splash-a);"/>
+                  </pattern>
+                </defs>
+                <path d="M38.973,4.253C39.777,4.701,40.172,5.638,39.931,6.525L34.619,26.000L54.000,26.000C54.797,26.000,55.517,26.473,55.834,27.203C56.152,27.934,56.005,28.783,55.461,29.365L27.461,59.365C26.834,60.039,25.827,60.197,25.023,59.749C24.219,59.300,23.825,58.360,24.069,57.472L29.381,38.000L10.000,38.000C9.203,38.000,8.483,37.527,8.166,36.797C7.848,36.066,7.995,35.217,8.539,34.635L36.539,4.635C37.166,3.963,38.171,3.806,38.973,4.253Z" fill="url(#splash-b)" clip-rule="evenodd" fill-rule="evenodd" class="fills"/>
+                <path d="M38.973,4.253C39.777,4.701,40.172,5.638,39.931,6.525L34.619,26.000L54.000,26.000C54.797,26.000,55.517,26.473,55.834,27.203C56.152,27.934,56.005,28.783,55.461,29.365L27.461,59.365C26.834,60.039,25.827,60.197,25.023,59.749C24.219,59.300,23.825,58.360,24.069,57.472L29.381,38.000L10.000,38.000C9.203,38.000,8.483,37.527,8.166,36.797C7.848,36.066,7.995,35.217,8.539,34.635L36.539,4.635C37.166,3.963,38.171,3.806,38.973,4.253Z" style="fill: none; stroke-width: 1.5; stroke: rgb(183, 61, 255); stroke-opacity: 1;" class="stroke-shape"/>
+              </g>
+            </svg>
+        </div>
+        <div class="spinner"></div>
+        <div class="splash-text">Loading XY-SK120 Interface...</div>
+    </div>
+    
+    <div class="container">
+        <header>
+            <div class="header-container">
+                <div class="header-left">
+                    <div class="header-logo">
+                        <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" class="logo-svg">
+                          <defs>
+                            <linearGradient id="fill-color-gradient" x1="0.5" y1="0" x2="0.5" y2="1">
+                              <stop offset="0.37" stop-color="#64ff00" stop-opacity="1"></stop>
+                              <stop offset="0.65" stop-color="#fff500" stop-opacity="1"></stop>
+                            </linearGradient>
+                            <pattern id="fill-pattern" patternUnits="userSpaceOnUse" x="8" y="4" width="48" height="56" patternTransform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)">
+                              <rect width="48" height="56" style="fill:url(#fill-color-gradient)"></rect>
+                            </pattern>
+                          </defs>
+                          <path d="M38.973,4.253C39.777,4.701,40.172,5.638,39.931,6.525L34.619,26.000L54.000,26.000C54.797,26.000,55.517,26.473,55.834,27.203C56.152,27.934,56.005,28.783,55.461,29.365L27.461,59.365C26.834,60.039,25.827,60.197,25.023,59.749C24.219,59.300,23.825,58.360,24.069,57.472L29.381,38.000L10.000,38.000C9.203,38.000,8.483,37.527,8.166,36.797C7.848,36.066,7.995,35.217,8.539,34.635L36.539,4.635C37.166,3.963,38.171,3.806,38.973,4.253Z" 
+                          fill="url(#fill-pattern)" 
+                          stroke="#b73dff" 
+                          stroke-width="1.5"
+                          style="fill:url(#fill-pattern) !important; fill-opacity:1;"
+                          ></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="header-center">
+                    <h1>XY-SK120 120W DPS</h1>
+                </div>
+                <div class="header-right">
+                    <div class="power-button-container">
+                        <div id="power-animation-container"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Readings display - moved outside cards to be always visible -->
+        <div class="readings-container">
+            <div class="readings">
+                <div class="reading-item voltage">
+                    <div class="reading-label">Voltage</div>
+                    <div class="reading-display">
+                        <span class="reading-value" id="psu-voltage">--</span>
+                        <span class="reading-unit">V</span>
+                    </div>
+                </div>
+                <div class="reading-item current">
+                    <div class="reading-label">Current</div>
+                    <div class="reading-display">
+                        <span class="reading-value" id="psu-current">--</span>
+                        <span class="reading-unit">A</span>
+                    </div>
+                </div>
+                <div class="reading-item power">
+                    <div class="reading-label">Power</div>
+                    <div class="reading-display">
+                        <span class="reading-value" id="psu-power">--</span>
+                        <span class="reading-unit">W</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Basic Control Card -->
+        <div class="card">
+            <h2>Basic Control</h2>
+            <div class="power-supply-control">
+                <div class="control-settings">
+                    <!-- Readings moved to outside the card -->
+                    
+                    <div class="control-inputs">
+                        <div class="form-group compact">
+                            <label for="set-voltage">Set Voltage (V)</label>
+                            <div class="input-with-button">
+                                <input type="number" id="set-voltage" min="0" max="30" step="0.1" inputmode="decimal" pattern="[0-9]*\.?[0-9]*">
+                                <button id="apply-voltage" class="secondary">Set</button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group compact">
+                            <label for="set-current">Set Current (A)</label>
+                            <div class="input-with-button">
+                                <input type="number" id="set-current" min="0" max="5" step="0.01" inputmode="decimal" pattern="[0-9]*\.?[0-9]*">
+                                <button id="apply-current" class="secondary">Set</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button id="refresh-psu" class="secondary">Refresh</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Configuration Card -->
+        <div class="card">
+            <h2>Configuration</h2>
+            
+            <!-- Theme toggle control -->
+            <div class="config-header">
+                <label class="theme-switch" for="theme-checkbox">
+                    <span class="theme-label">Dark Mode</span>
+                    <div class="switch-container">
+                        <input type="checkbox" id="theme-checkbox" class="theme-input">
+                        <span class="switch-slider"></span>
+                    </div>
+                    <div class="theme-toggle" id="theme-toggle" title="Toggle dark mode">
+                        <!-- Moon icon for light theme (shows when in light mode) -->
+                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>
+                        </svg>
+                        <!-- Sun icon for dark theme (shows when in dark mode) -->
+                        <svg class="sun-icon" style="display: none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0-5a1 1 0 0 0 1-1V1a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1zm0 19a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1zm10-10h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2zM4 12a1 1 0 0 0-1-1H2a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1zm16.95-7.05a1 1 0 0 0-1.41 0l-1 1a1 1 0 0 0 1.41 1.41l1-1a1 1 0 0 0 0-1.41zm-16.9 14.1a1 1 0 0 0-1.41 0l-1 1a1 1 0 0 0 1.41 1.41l1-1a1 1 0 0 0 0-1.41zm14.1 0a1 1 0 0 0 0 1.41l1 1a1 1 0 0 0 1.41-1.41l-1-1a1 1 0 0 0-1.41 0zm-16.1-14.1a1 1 0 0 0 0-1.41l-1-1a1 1 0 0 0-1.41 1.41l1 1a1 1 0 0 0 1.41 0z"/>
+                        </svg>
+                    </div>
+                </label>
+            </div>
+            
+            <form id="configForm">
+                <div class="form-group">
+                    <label for="deviceName">Device Name</label>
+                    <input type="text" id="deviceName" name="deviceName">
+                </div>
+                
+                <div class="form-group">
+                    <label for="modbusId">Modbus ID</label>
+                    <input type="number" id="modbusId" name="modbusId" min="1" max="247" inputmode="numeric" pattern="[0-9]*">
+                </div>
+                
+                <div class="form-group">
+                    <label for="baudRate">Baud Rate</label>
+                    <select id="baudRate" name="baudRate">
+                        <option value="4800">4800</option>
+                        <option value="9600">9600</option>
+                        <option value="19200">19200</option>
+                        <option value="38400">38400</option>
+                        <option value="57600">57600</option>
+                        <option value="115200">115200</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="dataBits">Data Bits</label>
+                    <select id="dataBits" name="dataBits">
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="parity">Parity</label>
+                    <select id="parity" name="parity">
+                        <option value="0">None</option>
+                        <option value="1">Odd</option>
+                        <option value="2">Even</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="stopBits">Stop Bits</label>
+                    <select id="stopBits" name="stopBits">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="updateInterval">Update Interval (ms)</label>
+                    <input type="number" id="updateInterval" name="updateInterval" min="1000" max="60000" inputmode="numeric" pattern="[0-9]*">
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="primary">Save Configuration</button>
+                    <button type="button" id="resetBtn">Reset Device</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- WiFi Status card -->
+        <div class="card">
+            <h2>WiFi Status</h2>
+            <div class="wifi-status">
+                <div class="status-row">
+                    <div class="status-label">Status:</div>
+                    <div class="status-value" id="wifi-status">Unknown</div>
+                </div>
+                <div class="status-row">
+                    <div class="status-label">SSID:</div>
+                    <div class="status-value" id="wifi-ssid">--</div>
+                </div>
+                <div class="status-row">
+                    <div class="status-label">IP Address:</div>
+                    <div class="status-value" id="wifi-ip">--</div>
+                </div>
+                <div class="status-row">
+                    <div class="status-label">Signal Strength:</div>
+                    <div class="status-value" id="wifi-rssi">--</div>
+                </div>
+                <div class="button-group">
+                    <button type="button" id="wifiResetBtn" class="danger">Reset WiFi Settings</button>
+                    <button type="button" id="wifiRefreshBtn" class="secondary">Refresh Status</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dots indicator for mobile -->
+        <div class="dots-indicator" id="dots-indicator">
+            <div class="dot active" title="Power Supply"></div>
+            <div class="dot" title="Configuration"></div>
+            <div class="dot" title="WiFi Status"></div>
+        </div>
+    </div>
+    
+    <!-- Consolidated scripts -->
+    <script src="js/splash.js"></script>
+    <script src="debug.js"></script>
+    <script src="mobileFix.js"></script>
+</body>
+</html>
