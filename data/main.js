@@ -1,6 +1,12 @@
 import { elements } from './modules/elements_registry.js';
-import { initSwipeCards, forceReinitSwipeCards } from './modules/menu_interface.js';
-import { initWebSocket, requestPsuStatus } from './modules/menu_connection.js';
+import { initSwipeCards, forceReinitSwipeCards, setupOperatingModeTabs } from './modules/menu_interface.js';
+import { 
+  initWebSocket, 
+  requestPsuStatus, 
+  requestOperatingMode, 
+  websocketConnected,
+  startPeriodicUpdates 
+} from './modules/menu_connection.js';
 import { setVoltageValue, setCurrentValue, initPowerButton, initBasicControls } from './modules/menu_basic.js';
 import { updateUI } from './modules/menu_display.js';
 
@@ -30,14 +36,20 @@ function applyTheme(isDark) {
   }
 }
 
-// Fetch data from device
+// Fetch data from device - fallback to REST API if WebSocket is not available
 function fetchData() {
   console.log("Fetching data from API...");
   
+  if (websocketConnected) {
+    requestPsuStatus();
+    return;
+  }
+  
+  // Fallback to REST API
   fetch('/api/data')
     .then(response => response.json())
     .then(data => {
-      console.log("Data received:", data);
+      console.log("Data received from REST API:", data);
       updateUI(data);
       lastDataUpdate = Date.now();
     })
@@ -50,23 +62,29 @@ function fetchData() {
 function init() {
   console.log("Initializing application...");
   
+  // Set up event listeners first
+  setupEventListeners();
+  
   // Initialize WebSocket connection
   initWebSocket();
-  
-  // Set up event listeners
-  setupEventListeners();
   
   // Initialize UI components
   initPowerButton();
   initBasicControls();
-  initSwipeCards();
   
-  // Initial data fetch
-  fetchData();
-  requestPsuStatus();
+  // Initialize card swiping
+  setTimeout(() => {
+    initSwipeCards();
+    setupOperatingModeTabs(); // Make sure this is called to initialize operation mode tabs
+  }, 500);
   
-  // Set up periodic data refresh
-  setInterval(fetchData, 5000);
+  // Start periodic updates
+  startPeriodicUpdates();
+  
+  // Initial data fetch (as fallback)
+  setTimeout(() => {
+    fetchData();
+  }, 1000);
   
   // Fetch WiFi status
   fetchWifiStatus();
@@ -85,7 +103,10 @@ function setupEventListeners() {
   }
   
   if (elements.refreshPsu) {
-    elements.refreshPsu.addEventListener('click', requestPsuStatus);
+    elements.refreshPsu.addEventListener('click', () => {
+      requestPsuStatus();
+      requestOperatingMode();
+    });
   }
   
   // Theme toggle
@@ -98,10 +119,11 @@ function setupEventListeners() {
   // Handle window resize events
   window.addEventListener('resize', debounce(forceReinitSwipeCards, 250));
   
-  // Handle visibility change
+  // Handle visibility change - update data when page becomes visible again
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
       requestPsuStatus();
+      requestOperatingMode();
     }
   });
 }
@@ -157,7 +179,7 @@ function debounce(func, wait) {
   };
 }
 
-// Initialize on DOM ready - single initialization point
+// Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', init);
 
 export { fetchData };

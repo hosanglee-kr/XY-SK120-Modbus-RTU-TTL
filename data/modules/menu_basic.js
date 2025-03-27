@@ -336,8 +336,11 @@ function updateKeyLockStatus(isLocked) {
   const keyLockSlider = document.getElementById('key-lock-slider');
   
   if (keyLockSlider) {
-    // Toggle the active class based on lock state
-    keyLockSlider.classList.toggle('active', isLocked);
+    if (isLocked) {
+      keyLockSlider.classList.add('active');
+    } else {
+      keyLockSlider.classList.remove('active');
+    }
   }
 }
 
@@ -429,64 +432,84 @@ function disableCpMode() {
   }
 }
 
-// Handle operation mode tabs
+// Handle operation mode tabs - replaced by the improved version in menu_interface.js
 function initModeTabs() {
-  const tabs = document.querySelectorAll('.mode-tab');
-  const modeSettings = document.querySelectorAll('.mode-settings');
-  
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      // Deactivate all tabs
-      tabs.forEach(t => t.classList.remove('active'));
-      
-      // Hide all settings
+  // This function is now obsolete - the complete implementation is in setupOperatingModeTabs
+  // in menu_interface.js. Just calling that function instead.
+  if (typeof window.setupOperatingModeTabs === 'function') {
+    window.setupOperatingModeTabs();
+  } else {
+    console.log('Using simplified mode tab init as a fallback');
+    
+    const tabs = document.querySelectorAll('.mode-tab');
+    const modeSettings = document.querySelectorAll('.mode-settings');
+    
+    // Just make sure at least one tab is active
+    let hasActive = false;
+    tabs.forEach(tab => {
+      if (tab.classList.contains('active')) hasActive = true;
+    });
+    
+    if (!hasActive && tabs.length > 0) {
+      tabs[0].classList.add('active');
+    }
+    
+    // Show settings for the active tab
+    const activeTab = document.querySelector('.mode-tab.active');
+    if (activeTab) {
+      const mode = activeTab.getAttribute('data-mode');
       modeSettings.forEach(setting => setting.classList.remove('active'));
       
-      // Activate the clicked tab
-      tab.classList.add('active');
-      
-      // Show the corresponding settings
-      const mode = tab.getAttribute('data-mode');
-      if (mode !== 'normal') {
-        const modeElement = document.getElementById(`${mode}-settings`);
-        if (modeElement) {
-          modeElement.classList.add('active');
-        }
+      if (mode) {
+        const targetSetting = document.getElementById(`${mode}-settings`);
+        if (targetSetting) targetSetting.classList.add('active');
       }
-    });
-  });
+    }
+  }
 }
 
 // Fix power button initialization
 function initPowerButton() {
   const powerCheckbox = document.getElementById('power-checkbox');
-  if (!powerCheckbox) {
-    console.error('Power checkbox not found');
+  const powerSlider = document.getElementById('power-slider');
+  
+  if (!powerCheckbox || !powerSlider) {
+    console.error('Power checkbox or slider not found');
     return;
   }
   
   console.log('Initializing power toggle');
   
   // Add click handler
-  powerCheckbox.addEventListener('change', function() {
-    console.log('Power toggle changed to:', this.checked);
+  powerSlider.addEventListener('click', function() {
+    const isCurrentlyActive = this.classList.contains('active');
+    const newState = !isCurrentlyActive;
+    
+    // Update the hidden checkbox for form submission
+    powerCheckbox.checked = newState;
+    
+    console.log('Power toggle changed to:', newState);
     
     // Send the toggle command
     togglePowerOutput();
   });
   
-  // Set initial state with null check after a small delay to ensure the UI is ready
+  // Set initial state after a small delay
   setTimeout(() => {
     const isOn = elements.outputStatus && elements.outputStatus.textContent === "ON";
-    powerCheckbox.checked = isOn;
+    updatePowerState(isOn);
   }, 1000);
 }
 
 // Update output state for power toggle
 function updatePowerState(isOn) {
-  const powerCheckbox = document.getElementById('power-checkbox');
-  if (powerCheckbox) {
-    powerCheckbox.checked = isOn;
+  const powerSlider = document.getElementById('power-slider');
+  if (powerSlider) {
+    if (isOn) {
+      powerSlider.classList.add('active');
+    } else {
+      powerSlider.classList.remove('active');
+    }
   }
 }
 
@@ -510,7 +533,11 @@ function initBasicControls() {
       toggleKeyLock(newState);
       
       // Update UI immediately for responsiveness (will be confirmed by response)
-      this.classList.toggle('active', newState);
+      if (newState) {
+        this.classList.add('active');
+      } else {
+        this.classList.remove('active');
+      }
     });
   }
   

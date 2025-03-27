@@ -194,6 +194,13 @@ struct ProtectionSettings {
   float batteryCutoffCurrent;    // Battery charge cutoff current (A)
 };
 
+// Operating mode enum
+enum OperatingMode {
+  MODE_CV = 0,  // Constant Voltage
+  MODE_CC = 1,  // Constant Current
+  MODE_CP = 2   // Constant Power
+};
+
 class XY_SKxxx {
 public:
   XY_SKxxx(uint8_t rxPin, uint8_t txPin, uint8_t slaveID);
@@ -449,6 +456,9 @@ public:
   bool getBatteryCutoffCurrent(float &current);
   float getCachedBatteryCutoffCurrent(bool refresh = false);
   bool updateBatteryCutoffCurrent(bool force = false);
+
+  // Operating mode access method
+  OperatingMode getOperatingMode(bool refresh = false);
 
 private:
   uint8_t _rxPin;

@@ -437,3 +437,18 @@ bool XY_SKxxx::updateStartupSetting(bool force) {
   
   return false;
 }
+
+/* Access to cached constant voltage and constant current values */
+float XY_SKxxx::getCachedConstantVoltage(bool refresh) {
+  if (refresh) {
+    updateConstantVoltageCurrentSettings(true);
+  }
+  return _protection.constantVoltage;
+}
+
+float XY_SKxxx::getCachedConstantCurrent(bool refresh) {
+  if (refresh) {
+    updateConstantVoltageCurrentSettings(true);
+  }
+  return _protection.constantCurrent;
+}

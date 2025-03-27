@@ -9,6 +9,52 @@
   border-bottom: 1px solid var(--border-color);
 }
 
+/* ===== UNIFIED SWITCH STYLES ===== */
+/* Base switch container */
+.switch-container {
+  position: relative;
+  width: 50px;
+  height: 24px;
+  border-radius: 24px;
+  background-color: #f1f1f1;
+  transition: .4s;
+  margin: 0 12px;
+  /* Add subtle inner border for better definition */
+  box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .switch-container {
+  background-color: #333;
+}
+
+/* Base switch slider style */
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+  box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== THEME SWITCH ===== */
 .theme-switch {
   display: flex;
   align-items: center;
@@ -23,55 +69,89 @@
   flex: 1;
 }
 
-.switch-container {
-  position: relative;
-  width: 50px;
-  height: 24px;
-  margin: 0 12px;
-}
-
-.theme-input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.switch-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 24px;
-  /* Add subtle inner border for better definition */
-  box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.1);
-}
-
-.switch-slider:before {
-  position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-  /* Add shadow to thumb for better definition */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.theme-input:checked + .switch-slider {
+/* Theme switch active state */
+#theme-slider.active {
   background-color: var(--secondary-color);
 }
 
-.theme-input:checked + .switch-slider:before {
+#theme-slider.active:before {
   left: auto;
   right: 4px;
   transform: translateX(0);
+}
+
+/* ===== POWER SWITCH ===== */
+.power-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Power switch active state */
+#power-slider {
+  background-color: var(--danger-color); /* Default is red/off */
+}
+
+#power-slider.active {
+  background-color: var(--success-color); /* Green when on */
+}
+
+#power-slider.active:before {
+  left: auto;
+  right: 4px;
+  transform: translateX(0);
+}
+
+/* ===== KEY LOCK SWITCH ===== */
+.key-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+.key-label {
+  font-weight: bold;
+  margin-right: 10px;
+  flex: 1;
+}
+
+/* Handle the active state for keylock slider */
+#key-lock-slider {
+  background-color: var(--success-color); /* Default unlocked (green) */
+}
+
+#key-lock-slider.active {
+  background-color: var(--danger-color); /* Locked (red) */
+}
+
+#key-lock-slider.active:before {
+  left: auto;
+  right: 4px;
+  transform: translateX(0);
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .switch-container {
+    width: 46px;
+    height: 24px;
+    margin: 0 8px;
+  }
+  
+  .switch-slider:before {
+    height: 14px;
+    width: 14px;
+  }
+  
+  /* Ensure all slider thumbs stay within bounds */
+  .switch-slider.active:before {
+    left: auto;
+    right: 4px;
+    transform: translateX(0) !important;
+  }
 }
 
 .theme-toggle {
@@ -120,48 +200,125 @@
   stroke-width: 1.5 !important;
 }
 
-/* Header container with title and controls */
+/* Redesigned Header - SINGLE LINE LAYOUT */
 .header-container {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 15px;
+  justify-content: center;
   width: 100%;
-  flex-wrap: nowrap; /* Ensure no wrapping on main layout */
+  margin-bottom: 15px;
+  position: relative;
 }
 
+/* Combined logo and title in single line */
+.header-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Adjust logo size to be smaller and fit inline */
+.header-logo {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  margin-right: 12px;
+}
+
+/* Hide the separate center container */
+.header-center {
+  display: none;
+}
+
+/* Title styling directly inside header-left */
+.header-left h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: bold;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Hide the header-right completely */
+.header-right {
+  display: none;
+}
+
+/* Responsive header adjustments */
+@media (max-width: 480px) {
+  .header-logo {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    margin-right: 10px;
+  }
+  
+  .header-left h1 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Header container with title and controls - FIXED ALIGNMENT */
+.header-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 15px;
+  justify-content: space-between; /* Key for proper spacing */
+}
+
+/* Left section - push to the left edge */
 .header-left {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   margin-right: 8px;
+  min-width: 64px;
 }
 
+/* Center section - allow to grow but keep centered text */
 .header-center {
   flex: 1 1 auto;
-  text-align: left;
-  min-width: 0; /* Allow text to shrink below content width */
+  overflow: hidden;
+  text-align: center;
+  min-width: 0;
 }
 
-/* Updated header-right for direct power button */
+/* Right section - push to the right edge */
 .header-right {
   flex: 0 0 auto;
-  margin-left: 8px;
   display: flex;
-  justify-content: flex-end;
   align-items: center;
+  justify-content: flex-end;
+  margin-left: 8px;
+  min-width: 64px;
 }
 
 .header-container h1 {
   margin: 0;
-  text-align: left;
   font-size: 1.8rem;
-  word-wrap: break-word; /* Allow long words to break */
-  overflow-wrap: break-word;
-  hyphens: auto;
-  line-height: 1.2; /* Tighter line height for wrapped text */
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  font-weight: bold;
+  text-align: center;
 }
 
-/* Remove .header-controls class */
+/* Responsive header adjustments */
+@media (max-width: 480px) {
+  .header-container h1 {
+    font-size: 1.4rem; /* Smaller font on mobile */
+    white-space: normal; /* Allow wrapping on smaller screens */
+  }
+  
+  .header-left, .header-right {
+    min-width: 48px; /* Smaller min-width on mobile */
+  }
+}
 
 /* Adjust power button container */
 .header-right .power-button-container {
@@ -262,14 +419,27 @@ button.danger {
   padding: 8px 12px;
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  color: var(--text-color);
   opacity: 0.7;
   font-weight: bold;
   transition: all 0.3s ease;
+  height: 40px; /* Standardized height */
+}
+
+/* Update mode-specific colors to exactly match the reading and status row colors */
+.mode-tab[data-mode="cv"] {
+  color: #64ff00; /* Exact same green as voltage reading and CV mode display */
+}
+
+.mode-tab[data-mode="cc"] {
+  color: #fff500; /* Exact same yellow as current reading and CC mode display */
+}
+
+.mode-tab[data-mode="cp"] {
+  color: #b73dff; /* Exact same purple as power reading and CP mode display */
 }
 
 .mode-tab.active {
-  border-bottom: 2px solid var(--secondary-color);
+  border-bottom: 2px solid currentColor; /* Use the same color as the text */
   opacity: 1;
 }
 
@@ -318,17 +488,17 @@ button.danger {
 /* Specific colors for each reading type */
 .reading-item.voltage .reading-value,
 .reading-item.voltage .reading-unit {
-  color: #64ff00; /* Green from logo top */
+  color: #64ff00; /* Same green used for CV mode */
 }
 
 .reading-item.current .reading-value,
 .reading-item.current .reading-unit {
-  color: #fff500; /* Yellow from logo bottom */
+  color: #fff500; /* Same yellow used for CC mode */
 }
 
 .reading-item.power .reading-value,
 .reading-item.power .reading-unit {
-  color: #b73dff; /* Purple from logo stroke */
+  color: #b73dff; /* Same purple used for CP mode */
 }
 
 /* Status indicators */
@@ -373,9 +543,13 @@ button.danger {
 
 /* Power Button - Enhanced now that it's the only output control */
 .power-button-container {
+  margin: 0;
+  padding: 0;
   display: flex;
   justify-content: center;
-  margin: 0;
+  height: 24px;
+  width: 50px; /* Match width with the switch container */
+  position: relative; /* Establish positioning context */
 }
 
 .power-button {
@@ -1578,4 +1752,482 @@ body.popup-open .readings-container {
   bottom: 0 !important;
   background-color: rgba(0, 0, 0, 0.5);
   display: none;
+}
+
+/* Power Switch and Slider Styles */
+.power-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.power-switch .switch-container {
+  position: relative;
+  width: 50px;
+  height: 24px;
+  border-radius: 24px;
+  background-color: #f1f1f1;
+  margin: 0;
+}
+
+.power-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.power-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--danger-color); /* Red when off */
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.power-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.power-input:checked + .power-slider {
+  background-color: var(--success-color); /* Green when on */
+}
+
+.power-input:checked + .power-slider:before {
+  left: auto;
+  right: 4px;
+  transform: translateX(0);
+}
+
+/* Key Lock Slider - Fixed Styles */
+.key-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+.key-label {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: var(--text-color);
+  flex: 1;
+}
+
+.key-switch .switch-container {
+  position: relative;
+  width: 50px;
+  height: 24px;
+  border-radius: 24px;
+  background-color: #f1f1f1;
+  cursor: pointer;
+  margin: 0 12px;
+}
+
+[data-theme="dark"] .key-switch .switch-container {
+  background-color: #333;
+}
+
+.key-switch .switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--success-color); /* Green when unlocked */
+  transition: .4s;
+  border-radius: 24px;
+  /* Remove display: flex and text-related properties */
+  /* No longer needs to display text */
+}
+
+.key-switch .switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.key-switch .switch-slider.active {
+  background-color: var(--danger-color); /* Red when locked */
+}
+
+.key-switch .switch-slider.active:before {
+  left: auto;
+  right: 4px;
+  transform: translateX(0);
+}
+
+/* Mobile adjustments to prevent thumb from going outside slider */
+@media (max-width: 600px) {
+  .power-slider:before,
+  .key-switch .switch-slider:before {
+    height: 14px;
+    width: 14px;
+    left: 4px;
+    bottom: 5px;
+  }
+  
+  .power-input:checked + .power-slider:before,
+  .key-switch .switch-slider.active:before {
+    left: auto;
+    right: 4px;
+    transform: translateX(0) !important;
+  }
+  
+  .power-switch .switch-container,
+  .key-switch .switch-container {
+    width: 46px;
+    height: 24px;
+  }
+}
+
+/* Adjust position of power toggle in header - FIX DISPLAY ISSUES */
+.header-right .power-button-container {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  width: auto;
+  min-width: 50px; /* Ensure minimum width for visibility */
+}
+
+.header-right .switch-container {
+  margin: 0 5px;
+  width: 50px; /* Explicitly set width */
+  height: 24px;
+  min-width: 50px; /* Enforce minimum width */
+  display: block; /* Ensure display is block */
+  position: relative;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.power-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: auto;
+  min-width: 50px; /* Minimum width to ensure visibility */
+}
+
+/* Make sure the slider is visible */
+.power-slider {
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+/* Mobile adjustments for power button */
+@media (max-width: 600px) {
+  /* ...existing code... */
+  
+  .header-right .power-button-container {
+    min-width: 46px; /* Slightly smaller on mobile */
+  }
+  
+  .header-right .switch-container {
+    width: 46px;
+    min-width: 46px;
+  }
+  
+  .power-switch {
+    min-width: 46px;
+  }
+}
+
+/* MODIFIED READINGS CONTAINER WITH POWER BUTTON */
+.readings-container {
+  position: relative;
+  z-index: 20 !important;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Status row with power button */
+.status-row {
+  display: flex;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
+  justify-content: space-between; /* Changed from center to space-between */
+  padding: 8px 0;
+  margin-bottom: 3px;
+  flex-wrap: nowrap; /* Prevent wrapping */
+}
+
+/* Left side of status row with output status */
+.status-info {
+  display: flex;
+  align-items: center;
+}
+
+/* Right side with power button */
+.status-controls {
+  display: flex;
+  align-items: center;
+}
+
+/* Power Switch - Moved from header to status row */
+.power-button-container {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  width: 50px; /* Match width with the switch container */
+  position: relative; /* Establish positioning context */
+}
+
+.power-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: 50px; /* Match width with container */
+  height: 24px; /* Match height with container */
+  position: absolute; /* Position exactly within container */
+  top: 0;
+  left: 0;
+}
+
+.power-switch .switch-container {
+  position: relative;
+  width: 50px;
+  height: 24px;
+  border-radius: 24px;
+  background-color: #f1f1f1;
+  margin: 0;
+  padding: 0;
+  visibility: visible !important;
+  opacity: 1 !important;
+  box-sizing: border-box; /* Ensure padding is included in dimensions */
+  display: block; /* Force display block */
+}
+
+.power-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  pointer-events: none; /* Allow clicks to pass through */
+}
+
+.power-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--danger-color); /* Red when off */
+  transition: .4s;
+  border-radius: 24px;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.power-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.power-input:checked + .power-slider {
+  background-color: var(--success-color); /* Green when on */
+}
+
+.power-input:checked + .power-slider:before {
+  left: auto;
+  right: 4px;
+  transform: translateX(0);
+}
+
+/* Mobile adjustments for power button */
+@media (max-width: 600px) {
+  .power-button-container {
+    width: 46px;
+  }
+  
+  .power-switch {
+    width: 46px;
+  }
+  
+  .power-switch .switch-container {
+    width: 46px;
+  }
+  
+  .power-slider:before {
+    height: 14px;
+    width: 14px;
+  }
+}
+
+/* Power Switch - Moved from header to status row */
+.power-button-container {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  width: auto;
+  min-width: 50px;
+}
+
+.power-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: auto;
+  min-width: 50px;
+}
+
+.power-switch .switch-container {
+  position: relative;
+  width: 50px;
+  height: 24px;
+  border-radius: 24px;
+  background-color: #f1f1f1;
+  margin: 0;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .status-row {
+    padding: 8px 5px;
+  }
+  
+  .power-button-container {
+    min-width: 46px;
+  }
+  
+  .power-switch {
+    min-width: 46px;
+  }
+  
+  .power-switch .switch-container {
+    width: 46px;
+    height: 24px;
+  }
+}
+
+/* Operating Mode display in status row */
+.operating-mode {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  margin: 0 10px;
+  font-size: 0.95rem;
+}
+
+#operatingModeDisplay {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+#operatingModeDisplay.mode-cv {
+  color: #64ff00; /* Green for CV mode */
+}
+
+#operatingModeDisplay.mode-cc {
+  color: #fff500; /* Yellow for CC mode */
+}
+
+#operatingModeDisplay.mode-cp {
+  color: #b73dff; /* Purple for CP mode */
+}
+
+[data-theme="dark"] #operatingModeDisplay {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Adjust status row to fit operating mode */
+.status-row {
+  display: flex;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
+  justify-content: space-between;
+  padding: 8px 0;
+  margin-bottom: 3px;
+  flex-wrap: nowrap;
+}
+
+.status-info {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+.operating-mode {
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+.status-controls {
+  flex: 0 0 auto;
+}
+
+/* Mobile adjustments for status row */
+@media (max-width: 600px) {
+  .status-row {
+    padding: 8px 5px;
+    gap: 5px;
+  }
+  
+  .status-info {
+    flex: 0 0 auto;
+  }
+  
+  .operating-mode {
+    flex: 1 1 auto;
+    font-size: 0.9rem;
+  }
+  
+  #operatingModeDisplay {
+    padding: 2px 6px;
+  }
 }

@@ -38,7 +38,28 @@ export const elements = {
   applyCp: document.getElementById('apply-cp'),
   cpModeOn: document.getElementById('cp-mode-on'),
   cpModeOff: document.getElementById('cp-mode-off'),
-  modeTabs: document.querySelectorAll('.mode-tab')
+  modeTabs: document.querySelectorAll('.mode-tab'),
+  // Power control
+  powerCheckbox: document.getElementById('power-checkbox'),
+  keyLockSlider: document.getElementById('key-lock-slider'),
+  // Operating mode elements
+  operatingMode: document.getElementById('operatingMode'),
+  operatingModeValue: document.getElementById('operatingModeValue'),
+  voltageSetValue: document.getElementById('voltageSetValue'),
+  currentSetValue: document.getElementById('currentSetValue'),
+  powerSetValue: document.getElementById('powerSetValue'),
+  powerSetSection: document.getElementById('powerSetSection'),
+  modeSettings: document.querySelectorAll('.mode-settings'),
+  // Configuration elements
+  deviceName: document.getElementById('deviceName'),
+  modbusId: document.getElementById('modbusId'),
+  baudRate: document.getElementById('baudRate'),
+  dataBits: document.getElementById('dataBits'),
+  parity: document.getElementById('parity'),
+  stopBits: document.getElementById('stopBits'),
+  updateInterval: document.getElementById('updateInterval'),
+  // Theme toggle
+  themeCheckbox: document.getElementById('theme-checkbox')
 };
 
 // Swipe elements
