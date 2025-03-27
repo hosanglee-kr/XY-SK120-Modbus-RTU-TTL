@@ -122,3 +122,25 @@ uint16_t XY_SKxxx::getCVCCState(bool refresh) {
   }
   return _status.cvccMode;
 }
+
+/* Unified operating mode method */
+OperatingMode XY_SKxxx::getOperatingMode(bool refresh) {
+  if (refresh) {
+    // Update both device state and constant power settings
+    updateDeviceState(true);
+    updateConstantPowerSettings(true);
+  }
+  
+  // Check operating modes in priority order:
+  // 1. First check if constant power mode is enabled (highest priority)
+  if (_status.cpModeEnabled) {
+    return MODE_CP;
+  }
+  // 2. Then check CV/CC mode
+  else if (_status.cvccMode == 1) {
+    return MODE_CC;
+  }
+  else {
+    return MODE_CV;
+  }
+}

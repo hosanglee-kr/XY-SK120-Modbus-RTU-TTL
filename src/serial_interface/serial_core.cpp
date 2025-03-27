@@ -201,18 +201,24 @@ void displayDeviceStatus(XY_SKxxx* ps) {
   Serial.println(" W");
   
   // Check operating mode
-  bool cpMode = ps->isConstantPowerModeEnabled(true);
-  bool ccMode = ps->isInConstantCurrentMode(false);
-  
   Serial.print("Operating Mode: ");
-  if (cpMode) {
-    Serial.println("Constant Power (CP)");
-    float cpValue = ps->getCachedConstantPower(true);
-    Serial.print("CP Setting: ");
-    Serial.print(cpValue, 2);
-    Serial.println(" W");
-  } else {
-    Serial.println(ccMode ? "Constant Current (CC)" : "Constant Voltage (CV)");
+  OperatingMode mode = ps->getOperatingMode(true);
+  float cpValue; // Move variable declaration outside of switch statement
+
+  switch (mode) {
+    case MODE_CP:
+      Serial.println("Constant Power (CP)");
+      cpValue = ps->getCachedConstantPower(false); // Already refreshed in getOperatingMode
+      Serial.print("CP Setting: ");
+      Serial.print(cpValue, 2);
+      Serial.println(" W");
+      break;
+    case MODE_CC:
+      Serial.println("Constant Current (CC)");
+      break;
+    case MODE_CV:
+      Serial.println("Constant Voltage (CV)");
+      break;
   }
   
   // Front panel keys status - IMPORTANT ADDITION

@@ -1,4 +1,5 @@
 import { swipeElements } from './elements_registry.js';
+import { sendCommand, requestPsuStatus, requestOperatingMode } from './menu_connection.js';
 
 // Global variables for touch handling
 let touchStartX = 0;
@@ -213,4 +214,167 @@ window.addEventListener('DOMContentLoaded', initSwipeCards);
 window.addEventListener('load', forceReinitSwipeCards);
 window.addEventListener('orientationchange', () => setTimeout(forceReinitSwipeCards, 300));
 
-export { initSwipeCards, forceReinitSwipeCards };
+// Set up operating mode tabs
+function setupOperatingModeTabs() {
+  // Get all mode tabs and settings panels
+  const modeTabs = document.querySelectorAll('.mode-tab');
+  const modeSettings = document.querySelectorAll('.mode-settings');
+  
+  if (!modeTabs.length || !modeSettings.length) {
+    console.warn('Mode tabs or settings panels not found');
+    return;
+  }
+  
+  console.log('Setting up operation mode tabs:', modeTabs.length, 'tabs found');
+  
+  // Initially hide all settings panels except the active one
+  modeSettings.forEach((panel, index) => {
+    panel.style.display = index === 0 ? 'block' : 'none';
+  });
+  
+  // Add click event listeners to tabs
+  modeTabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => {
+      // Update active tab
+      modeTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      
+      // Show corresponding settings panel
+      modeSettings.forEach((panel, i) => {
+        panel.style.display = i === index ? 'block' : 'none';
+      });
+      
+      // Get the mode from the data attribute
+      const mode = tab.getAttribute('data-mode');
+      console.log('Selected mode:', mode);
+      
+      // If not selecting 'normal', set the operating mode
+      if (mode !== 'normal') {
+        // If it's a "CP" mode tab, enable CP mode first
+        if (mode === 'cp') {
+          console.log('Enabling CP mode');
+          sendCommand({ action: 'setConstantPowerMode', enable: true });
+        } else if (mode !== 'normal') {
+          // For CV/CC modes, ensure CP mode is disabled
+          console.log('Disabling CP mode for', mode, 'mode');
+          sendCommand({ action: 'setConstantPowerMode', enable: false });
+        }
+        
+        // Request an update after a short delay
+        setTimeout(() => {
+          requestPsuStatus();
+          requestOperatingMode();
+        }, 500);
+      }
+    });
+  });
+  
+  // Set up mode setting application buttons
+  setupOperatingModeSetters();
+}
+
+// Set up operating mode setting buttons
+function setupOperatingModeSetters() {
+  // CV mode apply button
+  const applyCvButton = document.getElementById('apply-cv');
+  if (applyCvButton) {
+    applyCvButton.addEventListener('click', () => {
+      const cvVoltageInput = document.getElementById('set-cv-voltage');
+      if (cvVoltageInput && cvVoltageInput.value) {
+        const voltage = parseFloat(cvVoltageInput.value);
+        if (!isNaN(voltage) && voltage >= 0) {
+          // Disable CP mode first
+          sendCommand({ action: 'setConstantPowerMode', enable: false });
+          
+          // Then set the CV value
+          setTimeout(() => {
+            sendCommand({ action: 'setConstantVoltage', voltage: voltage });
+            
+            // Request updates after a short delay
+            setTimeout(() => {
+              requestPsuStatus();
+              requestOperatingMode();
+            }, 500);
+          }, 200);
+        }
+      }
+    });
+  }
+  
+  // CC mode apply button
+  const applyCcButton = document.getElementById('apply-cc');
+  if (applyCcButton) {
+    applyCcButton.addEventListener('click', () => {
+      const ccCurrentInput = document.getElementById('set-cc-current');
+      if (ccCurrentInput && ccCurrentInput.value) {
+        const current = parseFloat(ccCurrentInput.value);
+        if (!isNaN(current) && current >= 0) {
+          // Disable CP mode first
+          sendCommand({ action: 'setConstantPowerMode', enable: false });
+          
+          // Then set the CC value
+          setTimeout(() => {
+            sendCommand({ action: 'setConstantCurrent', current: current });
+            
+            // Request updates after a short delay
+            setTimeout(() => {
+              requestPsuStatus();
+              requestOperatingMode();
+            }, 500);
+          }, 200);
+        }
+      }
+    });
+  }
+  
+  // CP mode apply button
+  const applyCpButton = document.getElementById('apply-cp');
+  if (applyCpButton) {
+    applyCpButton.addEventListener('click', () => {
+      const cpPowerInput = document.getElementById('set-cp-power');
+      if (cpPowerInput && cpPowerInput.value) {
+        const power = parseFloat(cpPowerInput.value);
+        if (!isNaN(power) && power >= 0) {
+          // Set the CP value
+          sendCommand({ action: 'setConstantPower', power: power });
+          
+          // Request updates after a short delay
+          setTimeout(() => {
+            requestPsuStatus();
+            requestOperatingMode();
+          }, 500);
+        }
+      }
+    });
+  }
+  
+  // CP mode enable/disable buttons
+  const cpModeOnButton = document.getElementById('cp-mode-on');
+  const cpModeOffButton = document.getElementById('cp-mode-off');
+  
+  if (cpModeOnButton) {
+    cpModeOnButton.addEventListener('click', () => {
+      sendCommand({ action: 'setConstantPowerMode', enable: true });
+      
+      // Request updates after a short delay
+      setTimeout(() => {
+        requestPsuStatus();
+        requestOperatingMode();
+      }, 500);
+    });
+  }
+  
+  if (cpModeOffButton) {
+    cpModeOffButton.addEventListener('click', () => {
+      sendCommand({ action: 'setConstantPowerMode', enable: false });
+      
+      // Request updates after a short delay
+      setTimeout(() => {
+        requestPsuStatus();
+        requestOperatingMode();
+      }, 500);
+    });
+  }
+}
+
+export { initSwipeCards, forceReinitSwipeCards, setupOperatingModeTabs };

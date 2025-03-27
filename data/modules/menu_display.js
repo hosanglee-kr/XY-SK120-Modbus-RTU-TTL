@@ -1,84 +1,4 @@
 import { elements } from './elements_registry.js';
-import { updateKeyLockStatus, updatePowerState } from './menu_basic.js';
-
-// Update the UI with data
-function updateUI(data) {
-  console.log('Updating UI with data:', data);
-  
-  // Power supply data update - with additional null checks
-  if (data.outputEnabled !== undefined) {
-    updateOutputStatus(data.outputEnabled);
-  }
-  
-  // Get the reading elements directly for maximum reliability
-  const voltageElement = document.getElementById('psu-voltage');
-  const currentElement = document.getElementById('psu-current');
-  const powerElement = document.getElementById('psu-power');
-  
-  if (data.voltage !== undefined && voltageElement) {
-    voltageElement.textContent = parseFloat(data.voltage).toFixed(2);
-  }
-  
-  if (data.current !== undefined && currentElement) {
-    currentElement.textContent = parseFloat(data.current).toFixed(3);
-  }
-  
-  if (data.power !== undefined && powerElement) {
-    powerElement.textContent = parseFloat(data.power).toFixed(1);
-  }
-}
-
-// Update PSU UI with specific status response
-function updatePsuUI(data) {
-  // Debug output to help diagnose issues
-  console.log('Updating PSU UI with:', data);
-  
-  if (!data.connected) {
-    const outputStatus = document.getElementById('output-status');
-    if (outputStatus) {
-      outputStatus.textContent = "Not Connected";
-      outputStatus.className = "status-value error";
-    }
-    return;
-  }
-  
-  // Update output status
-  updateOutputStatus(data.outputEnabled);
-  
-  // Update key lock status if available in data
-  if (data.keyLocked !== undefined) {
-    updateKeyLockStatus(data.keyLocked);
-  }
-  
-  // Get the reading elements directly
-  const voltageElement = document.getElementById('psu-voltage');
-  const currentElement = document.getElementById('psu-current');
-  const powerElement = document.getElementById('psu-power');
-  
-  if (voltageElement) {
-    voltageElement.textContent = parseFloat(data.voltage).toFixed(2);
-  }
-  
-  if (currentElement) {
-    currentElement.textContent = parseFloat(data.current).toFixed(3);
-  }
-  
-  if (powerElement) {
-    powerElement.textContent = parseFloat(data.power).toFixed(1);
-  }
-  
-  // Prefill input fields with current values if they exist
-  const setVoltageInput = document.getElementById('set-voltage');
-  const setCurrentInput = document.getElementById('set-current');
-  
-  if (setVoltageInput) {
-    setVoltageInput.value = parseFloat(data.voltage).toFixed(2);
-  }
-  
-  if (setCurrentInput) {
-    setCurrentInput.value = parseFloat(data.current).toFixed(3);
-  }
-}
 
 // Update output status display
 function updateOutputStatus(enabled) {
@@ -95,4 +15,89 @@ function updateOutputStatus(enabled) {
   updatePowerState(enabled);
 }
 
-export { updateUI, updatePsuUI, updateOutputStatus };
+// Update PSU UI with comprehensive data
+function updatePsuUI(data) {
+  console.log('Updating PSU UI with data:', data);
+  
+  // Check if we have valid data
+  if (!data || !data.connected) {
+    console.warn('Cannot update UI: Power supply not connected');
+    return;
+  }
+  
+  // Update voltage display
+  const voltageElement = document.getElementById('psu-voltage');
+  if (voltageElement && data.voltage !== undefined) {
+    voltageElement.textContent = data.voltage.toFixed(2);
+  }
+  
+  // Update current display
+  const currentElement = document.getElementById('psu-current');
+  if (currentElement && data.current !== undefined) {
+    currentElement.textContent = data.current.toFixed(3);
+  }
+  
+  // Update power display
+  const powerElement = document.getElementById('psu-power');
+  if (powerElement && data.power !== undefined) {
+    powerElement.textContent = data.power.toFixed(2);
+  }
+  
+  // Update output status if provided
+  if (data.outputEnabled !== undefined) {
+    updateOutputStatus(data.outputEnabled);
+  }
+  
+  // Update operating mode if provided
+  if (data.operatingMode) {
+    const modeElement = document.getElementById('operatingMode');
+    if (modeElement) {
+      modeElement.textContent = data.operatingMode;
+      modeElement.className = `mode-${data.operatingMode.toLowerCase()}`;
+    }
+  }
+}
+
+// Update power button state
+function updatePowerState(isOn) {
+  const powerCheckbox = document.getElementById('power-checkbox');
+  if (powerCheckbox) {
+    powerCheckbox.checked = isOn;
+  }
+}
+
+// Update UI from basic API data (fallback)
+function updateUI(data) {
+  // Basic fallback for when we don't have the comprehensive data structure
+  console.log('Updating UI with basic data:', data);
+  
+  // Update voltage display
+  const voltageElement = document.getElementById('psu-voltage');
+  if (voltageElement && data.voltage !== undefined) {
+    voltageElement.textContent = data.voltage.toFixed(2);
+  }
+  
+  // Update current display
+  const currentElement = document.getElementById('psu-current');
+  if (currentElement && data.current !== undefined) {
+    currentElement.textContent = data.current.toFixed(3);
+  }
+  
+  // Update power display
+  const powerElement = document.getElementById('psu-power');
+  if (powerElement && data.power !== undefined) {
+    powerElement.textContent = data.power.toFixed(2);
+  }
+  
+  // Update output status if provided
+  if (data.outputEnabled !== undefined) {
+    updateOutputStatus(data.outputEnabled);
+  }
+}
+
+export {
+  updateOutputStatus,
+  updatePsuUI,
+  updateUI,
+  updatePowerState
+};
