@@ -470,35 +470,45 @@ function initModeTabs() {
 
 // Fix power button initialization
 function initPowerButton() {
-  const powerCheckbox = document.getElementById('power-checkbox');
-  const powerSlider = document.getElementById('power-slider');
-  
-  if (!powerCheckbox || !powerSlider) {
-    console.error('Power checkbox or slider not found');
-    return;
+  console.log("Initializing power button...");
+  // Try both possible element IDs to be backward compatible
+  const powerCheckbox = document.getElementById('power-toggle');
+  if (!powerCheckbox) {
+    console.error("Power toggle checkbox not found! Checking alternative IDs...");
+    // Try fallback IDs
+    const altCheckbox = document.getElementById('power-checkbox');
+    if (!altCheckbox) {
+      console.error("No power toggle element found with any known ID. UI control won't work.");
+      return;
+    } else {
+      console.log("Found power checkbox with alternative ID");
+      setupToggleListener(altCheckbox);
+    }
+  } else {
+    setupToggleListener(powerCheckbox);
   }
-  
-  console.log('Initializing power toggle');
-  
-  // Add click handler
-  powerSlider.addEventListener('click', function() {
-    const isCurrentlyActive = this.classList.contains('active');
-    const newState = !isCurrentlyActive;
+
+  function setupToggleListener(element) {
+    // Remove any existing listeners to prevent duplicates
+    const newElement = element.cloneNode(true);
+    element.parentNode.replaceChild(newElement, element);
     
-    // Update the hidden checkbox for form submission
-    powerCheckbox.checked = newState;
-    
-    console.log('Power toggle changed to:', newState);
-    
-    // Send the toggle command
-    togglePowerOutput();
-  });
-  
-  // Set initial state after a small delay
-  setTimeout(() => {
-    const isOn = elements.outputStatus && elements.outputStatus.textContent === "ON";
-    updatePowerState(isOn);
-  }, 1000);
+    // Add change listener
+    newElement.addEventListener('change', function() {
+      console.log("Power toggle changed, new state:", this.checked);
+      sendCommand({ 
+        action: 'setOutputState', 
+        enabled: this.checked 
+      });
+      
+      // Update UI immediately for responsiveness
+      const outputStatus = document.getElementById('output-status');
+      if (outputStatus) {
+        outputStatus.textContent = this.checked ? "ON" : "OFF";
+        outputStatus.className = this.checked ? "status-on" : "status-off";
+      }
+    });
+  }
 }
 
 // Update output state for power toggle

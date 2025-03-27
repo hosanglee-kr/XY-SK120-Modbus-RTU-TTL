@@ -216,69 +216,29 @@ window.addEventListener('orientationchange', () => setTimeout(forceReinitSwipeCa
 
 // Set up operating mode tabs
 function setupOperatingModeTabs() {
-  // Get all mode tabs and settings panels
-  const modeTabs = document.querySelectorAll('.mode-tab');
-  const modeSettings = document.querySelectorAll('.mode-settings');
+  const tabs = document.querySelectorAll('.tw-mode-tab');
+  const contents = document.querySelectorAll('#cv-settings, #cc-settings, #cp-settings');
   
-  if (!modeTabs.length || !modeSettings.length) {
-    console.warn('Mode tabs or settings panels not found');
-    return;
-  }
-  
-  console.log('Setting up operation mode tabs:', modeTabs.length, 'tabs found');
-  
-  // Initially show only the first settings panel (CV by default)
-  modeSettings.forEach((panel, index) => {
-    panel.classList.remove('active');
-  });
-  document.getElementById('cv-settings').classList.add('active');
-  
-  // Set first tab (CV) as active
-  modeTabs.forEach(tab => tab.classList.remove('active'));
-  document.querySelector('.mode-tab[data-mode="cv"]').classList.add('active');
-  
-  // Add click event listeners to tabs
-  modeTabs.forEach(tab => {
+  tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       // Update active tab
-      modeTabs.forEach(t => t.classList.remove('active'));
+      tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       
-      // Get the mode from the data attribute
+      // Show corresponding content
       const mode = tab.getAttribute('data-mode');
-      console.log('Selected mode:', mode);
-      
-      // Show corresponding settings panel based on mode
-      modeSettings.forEach(panel => {
-        panel.classList.remove('active');
+      contents.forEach(content => {
+        content.classList.add('hidden');
+        content.classList.remove('block');
       });
       
-      // Find and activate the correct panel
-      const targetPanel = document.getElementById(`${mode}-settings`);
-      if (targetPanel) {
-        targetPanel.classList.add('active');
+      const activeContent = document.getElementById(`${mode}-settings`);
+      if (activeContent) {
+        activeContent.classList.remove('hidden');
+        activeContent.classList.add('block');
       }
-      
-      // Set the operating mode
-      if (mode === 'cp') {
-        console.log('Enabling CP mode');
-        sendCommand({ action: 'setConstantPowerMode', enable: true });
-      } else {
-        // For CV/CC modes, ensure CP mode is disabled
-        console.log('Disabling CP mode for', mode, 'mode');
-        sendCommand({ action: 'setConstantPowerMode', enable: false });
-      }
-      
-      // Request an update after a short delay
-      setTimeout(() => {
-        requestPsuStatus();
-        requestOperatingMode();
-      }, 500);
     });
   });
-  
-  // Setup operating mode setters
-  setupOperatingModeSetters();
 }
 
 // Set up operating mode setting buttons
@@ -342,15 +302,20 @@ function setupOperatingModeSetters() {
       const cpPowerInput = document.getElementById('set-cp-power');
       if (cpPowerInput && cpPowerInput.value) {
         const power = parseFloat(cpPowerInput.value);
-        if (!isNaN(power) && power >= 0) {
-          // Set the CP value
+        if (!isNaN(power) && power >= 0 && power <= 120) {
+          // First set the power value
           sendCommand({ action: 'setConstantPower', power: power });
           
-          // Request updates after a short delay
+          // Then enable CP mode
           setTimeout(() => {
-            requestPsuStatus();
-            requestOperatingMode();
-          }, 500);
+            sendCommand({ action: 'setConstantPowerMode', enable: true });
+            
+            // Request updates after a short delay
+            setTimeout(() => {
+              requestPsuStatus();
+              requestOperatingMode();
+            }, 500);
+          }, 200);
         }
       }
     });
@@ -385,4 +350,137 @@ function setupOperatingModeSetters() {
   }
 }
 
-export { initSwipeCards, forceReinitSwipeCards, setupOperatingModeTabs };
+// Function to initialize card swiping for mobile
+function initSwipeCards() {
+  const isMobile = window.innerWidth <= 600;
+  
+  if (!isMobile) {
+    // On desktop, show all cards
+    showAllCards();
+    return;
+  }
+  
+  const cards = document.querySelectorAll('.tw-card');
+  const dots = document.querySelectorAll('.tw-dot');
+  let currentCardIndex = 0;
+  
+  // Show only the first card initially
+  updateCardVisibility();
+  
+  // Set up touch handling
+  setupTouchHandling();
+  
+  // Set up dot indicators
+  setupDotIndicators();
+  
+  function setupTouchHandling() {
+    const container = document.querySelector('.max-w-4xl');
+    if (!container) return;
+    
+    let startX, startY, distX, distY;
+    const threshold = 100; // Minimum distance required for swipe
+    
+    container.addEventListener('touchstart', function(e) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      document.body.classList.add('swiping');
+    }, { passive: true });
+    
+    container.addEventListener('touchmove', function(e) {
+      if (!startX || !startY) return;
+      
+      distX = e.touches[0].clientX - startX;
+      distY = e.touches[0].clientY - startY;
+      
+      // If mostly horizontal swipe, prevent default to avoid page scrolling
+      if (Math.abs(distX) > Math.abs(distY) && Math.abs(distX) > 10) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+    
+    container.addEventListener('touchend', function(e) {
+      if (!distX) return;
+      
+      if (Math.abs(distX) >= threshold) {
+        if (distX > 0 && currentCardIndex > 0) {
+          // Swipe right - show previous card
+          currentCardIndex--;
+        } else if (distX < 0 && currentCardIndex < cards.length - 1) {
+          // Swipe left - show next card
+          currentCardIndex++;
+        }
+        updateCardVisibility();
+      }
+      
+      // Reset
+      startX = startY = distX = distY = null;
+      document.body.classList.remove('swiping');
+    }, { passive: true });
+  }
+  
+  function setupDotIndicators() {
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        currentCardIndex = index;
+        updateCardVisibility();
+      });
+    });
+  }
+  
+  function updateCardVisibility() {
+    // Hide all cards
+    cards.forEach(card => {
+      card.style.display = 'none';
+    });
+    
+    // Show current card
+    if (cards[currentCardIndex]) {
+      cards[currentCardIndex].style.display = 'block';
+    }
+    
+    // Update dots
+    dots.forEach((dot, index) => {
+      if (index === currentCardIndex) {
+        dot.classList.add('active');
+      } else {
+        dot.classList.remove('active');
+      }
+    });
+  }
+}
+
+// Force reinitialize card swiping (used when window resizes)
+function forceReinitSwipeCards() {
+  const isMobile = window.innerWidth <= 600;
+  const cards = document.querySelectorAll('.tw-card');
+  const dots = document.getElementById('dots-indicator');
+  
+  if (isMobile) {
+    // Mobile view - first fix visibility issues
+    cards.forEach(card => {
+      card.style.removeProperty('display');
+    });
+    
+    // Then reinitialize swiping
+    initSwipeCards();
+    
+    // Show dots
+    if (dots) dots.style.display = 'flex';
+  } else {
+    // Desktop view - show all cards
+    showAllCards();
+    
+    // Hide dots
+    if (dots) dots.style.display = 'none';
+  }
+}
+
+// Helper function to show all cards (desktop view)
+function showAllCards() {
+  const cards = document.querySelectorAll('.tw-card');
+  cards.forEach(card => {
+    card.style.display = 'block';
+  });
+}
+
+export { initSwipeCards, forceReinitSwipeCards, setupOperatingModeTabs, setupOperatingModeSetters };

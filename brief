@@ -1,2 +1,0 @@
-brief
-can you add wifimanger and start a asyncweb and create a web-ui with a simple html, js and css. then build the websocket_interface.cpp and implement all functions in serial_monitor_interface.cpp so users can interface the DPS in a web browser?

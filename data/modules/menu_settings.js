@@ -158,6 +158,56 @@ function setupEventListeners() {
       e.target.value = value;
     });
   });
+  
+  // Setup voltage preset popup
+  setupVoltagePresetPopup();
+}
+
+// Setup voltage preset popup with new class names
+function setupVoltagePresetPopup() {
+  const presetButton = document.getElementById('voltage-preset-btn');
+  const popup = document.getElementById('voltage-popup');
+  const overlay = document.getElementById('voltage-overlay');
+  const voltageOptions = popup.querySelectorAll('div[data-voltage]');
+  
+  if (presetButton && popup && overlay) {
+    // Open popup when button is clicked
+    presetButton.addEventListener('click', () => {
+      popup.classList.remove('hidden');
+      popup.classList.add('flex');
+      overlay.classList.remove('hidden');
+      document.body.classList.add('popup-open');
+    });
+    
+    // Close popup when overlay is clicked
+    overlay.addEventListener('click', closePopup);
+    
+    // Handle voltage selection
+    voltageOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        const voltage = option.getAttribute('data-voltage');
+        const voltageInput = document.getElementById('set-voltage');
+        
+        if (voltageInput && voltage) {
+          voltageInput.value = voltage;
+          
+          // Highlight the selected option
+          voltageOptions.forEach(opt => opt.classList.remove('bg-secondary', 'text-white'));
+          option.classList.add('bg-secondary', 'text-white');
+          
+          // Close popup after selection
+          closePopup();
+        }
+      });
+    });
+  }
+  
+  function closePopup() {
+    popup.classList.add('hidden');
+    popup.classList.remove('flex');
+    overlay.classList.add('hidden');
+    document.body.classList.remove('popup-open');
+  }
 }
 
 export { loadConfiguration, fetchWifiStatus, saveConfiguration, setupEventListeners };

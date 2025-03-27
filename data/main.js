@@ -17,22 +17,18 @@ let darkMode = localStorage.getItem('darkMode') === 'true';
 // Apply theme immediately
 applyTheme(darkMode);
 
-// Single function to apply theme changes
+// Updated applyTheme function to handle checkbox state properly
 function applyTheme(isDark) {
-  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  if (isDark) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
   
   // Update theme color meta tag
   const themeColorMeta = document.getElementById('theme-color');
   if (themeColorMeta) {
     themeColorMeta.setAttribute('content', isDark ? '#121212' : '#2c3e50');
-  }
-  
-  // Update theme toggle icons
-  const moonIcon = document.querySelector('.moon-icon');
-  const sunIcon = document.querySelector('.sun-icon');
-  if (moonIcon && sunIcon) {
-    moonIcon.style.display = isDark ? 'none' : 'block';
-    sunIcon.style.display = isDark ? 'block' : 'none';
   }
 }
 
@@ -58,74 +54,144 @@ function fetchData() {
     });
 }
 
-// Initialize the application
+// Initialize the application with a slight delay to ensure DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM content loaded, initializing application...');
+    
+    // Force re-initialize elements registry first
+    document.dispatchEvent(new Event('elementsRegistryInit'));
+    
+    // Set a short timeout to make sure all elements are available
+    setTimeout(init, 100);
+});
+
+// Apply theme immediately
+const darkMode = localStorage.getItem('darkMode') === 'true';
+applyTheme(darkMode);
+
+// Function to initialize the UI and components with better error handling
 function init() {
-  console.log("Initializing application...");
-  
-  // Set up event listeners first
-  setupEventListeners();
-  
-  // Initialize WebSocket connection
-  initWebSocket();
-  
-  // Initialize UI components
-  initPowerButton();
-  initBasicControls();
-  
-  // Initialize card swiping
-  setTimeout(() => {
-    initSwipeCards();
-    setupOperatingModeTabs(); // Make sure this is called to initialize operation mode tabs
-  }, 500);
-  
-  // Start periodic updates
-  startPeriodicUpdates();
-  
-  // Initial data fetch (as fallback)
-  setTimeout(() => {
-    fetchData();
-  }, 1000);
-  
-  // Fetch WiFi status
-  fetchWifiStatus();
-  setInterval(fetchWifiStatus, 30000);
+    console.log("Initializing application components...");
+    
+    try {
+        // Debug: Check critical elements exist
+        console.log("Power toggle element exists:", !!document.getElementById('power-toggle'));
+        console.log("Power slider element exists:", !!document.getElementById('power-slider'));
+        
+        // Set up event listeners first
+        setupEventListeners();
+        
+        // Initialize WebSocket connection
+        initWebSocket();
+        
+        // Initialize UI components
+        initPowerButton();
+        initBasicControls();
+        
+        // Start periodic updates
+        startPeriodicUpdates();
+        
+        // Initial data fetch (as fallback)
+        setTimeout(() => {
+            fetchData();
+        }, 1000);
+        
+        // Fetch WiFi status
+        fetchWifiStatus();
+        setInterval(fetchWifiStatus, 30000);
+        
+        console.log("Application initialization complete");
+    } catch (err) {
+        console.error("Error during initialization:", err);
+    }
 }
 
-// Set up event listeners
+// Enhanced event listener setup with resilience
 function setupEventListeners() {
-  // Voltage and current controls
-  if (elements.applyVoltage) {
-    elements.applyVoltage.addEventListener('click', setVoltageValue);
-  }
-  
-  if (elements.applyCurrent) {
-    elements.applyCurrent.addEventListener('click', setCurrentValue);
-  }
-  
-  if (elements.refreshPsu) {
-    elements.refreshPsu.addEventListener('click', () => {
-      requestPsuStatus();
-      requestOperatingMode();
+    // Voltage and current controls
+    attachClickHandler('apply-voltage', setVoltageValue);
+    attachClickHandler('apply-current', setCurrentValue);
+    attachClickHandler('refresh-psu', () => {
+        requestPsuStatus();
+        requestOperatingMode();
     });
-  }
-  
-  // Theme toggle
-  const themeCheckbox = document.getElementById('theme-checkbox');
-  if (themeCheckbox) {
-    themeCheckbox.checked = darkMode;
-    themeCheckbox.addEventListener('change', toggleDarkMode);
-  }
-  
-  // Handle window resize events
-  window.addEventListener('resize', debounce(forceReinitSwipeCards, 250));
-  
-  // Handle visibility change - update data when page becomes visible again
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-      requestPsuStatus();
-      requestOperatingMode();
+    
+    // Theme toggle with peer-based styling
+    const themeCheckbox = document.getElementById('theme-checkbox');
+    if (themeCheckbox) {
+        themeCheckbox.checked = darkMode;
+        themeCheckbox.addEventListener('change', toggleDarkMode);
     }
-  });
+    
+    // Setup voltage preset popup
+    setupVoltagePresetPopup();
+    
+    // Document visibility changes
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            requestPsuStatus();
+            requestOperatingMode();
+        }
+    });
+}
+
+// Helper function to safely attach click handlers
+function attachClickHandler(id, handler) {
+    const element = document.getElementById(id);
+    if (element) {
+        // Remove any existing handlers first (to prevent duplicates)
+        const newElement = element.cloneNode(true);
+        element.parentNode.replaceChild(newElement, element);
+        newElement.addEventListener('click', handler);
+    } else {
+        console.warn(`Element with ID "${id}" not found for click handler`);
+    }
+}
+
+// Setup voltage preset popup
+function setupVoltagePresetPopup() {
+    const presetButton = document.getElementById('voltage-preset-btn');
+    const popup = document.getElementById('voltage-popup');
+    const overlay = document.getElementById('voltage-overlay');
+    
+    if (!presetButton || !popup || !overlay) {
+        console.warn('Voltage preset elements not found');
+        return;
+    }
+    
+    // Open popup when button is clicked
+    presetButton.addEventListener('click', () => {
+        popup.classList.remove('hidden');
+        popup.classList.add('flex');
+        overlay.classList.remove('hidden');
+        document.body.classList.add('popup-open');
+    });
+    
+    // Close popup when overlay is clicked
+    overlay.addEventListener('click', closePopup);
+    
+    // Handle voltage selection
+    const voltageOptions = popup.querySelectorAll('div[data-voltage]');
+    voltageOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            const voltage = option.getAttribute('data-voltage');
+            const voltageInput = document.getElementById('set-voltage');
+            
+            if (voltageInput && voltage) {
+                voltageInput.value = voltage;
+                
+                // Close popup after selection
+                closePopup();
+            }
+        });
+    });
+    
+    function closePopup() {
+        popup.classList.add('hidden');
+        popup.classList.remove('flex');
+        overlay.classList.add('hidden');
+        document.body.classList.remove('popup-open');
+    }
 }
 
 // Toggle dark mode function 

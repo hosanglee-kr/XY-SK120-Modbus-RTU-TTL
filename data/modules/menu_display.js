@@ -95,9 +95,21 @@ function updateOperatingModeDisplay(data) {
 
 // Update power button state
 function updatePowerState(isOn) {
-  const powerCheckbox = document.getElementById('power-checkbox');
+  // Try both possible element IDs
+  const powerCheckbox = document.getElementById('power-toggle') || document.getElementById('power-checkbox');
+  
   if (powerCheckbox) {
     powerCheckbox.checked = isOn;
+    
+    // Also update any possible slider indicator
+    const powerSlider = document.getElementById('power-slider');
+    if (powerSlider) {
+      if (isOn) {
+        powerSlider.classList.add('active');
+      } else {
+        powerSlider.classList.remove('active');
+      }
+    }
   }
 }
 

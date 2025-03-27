@@ -11,8 +11,14 @@ let websocketConnected = false;
 // Initialize WebSocket connection
 function initWebSocket() {
   // Don't reconnect if already connecting or connected
-  if (isConnecting) return;
-  if (websocket && websocket.readyState === WebSocket.OPEN) return;
+  if (isConnecting) {
+    console.log("Already attempting to connect WebSocket, skipping duplicate request");
+    return;
+  }
+  if (websocket && websocket.readyState === WebSocket.OPEN) {
+    console.log("WebSocket already connected, skipping reconnection");
+    return;
+  }
   
   // Reset state
   isConnecting = true;
@@ -20,7 +26,10 @@ function initWebSocket() {
   
   // Close existing connection if any
   if (websocket) {
-    try { websocket.close(); } 
+    try { 
+      console.log("Closing existing WebSocket connection before creating new one");
+      websocket.close(); 
+    } 
     catch (e) { console.error('Error closing WebSocket:', e); }
   }
   
@@ -33,10 +42,17 @@ function initWebSocket() {
     websocket = new WebSocket(wsUrl);
     
     websocket.onopen = () => {
-      console.log('WebSocket connected successfully');
+      console.log('WebSocket connected successfully!');
       isConnecting = false;
       reconnectAttempts = 0;
       websocketConnected = true;
+      
+      // Update UI to show connected state
+      const connectionStatus = document.getElementById('connection-status');
+      if (connectionStatus) {
+        connectionStatus.textContent = 'Connected';
+        connectionStatus.className = 'connected';
+      }
       
       // Request initial data
       requestPsuStatus();

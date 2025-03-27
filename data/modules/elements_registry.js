@@ -12,7 +12,7 @@ export const elements = {
   deviceIp: document.getElementById('device-ip'),
   // Power Supply elements
   outputStatus: document.getElementById('output-status'),
-  toggleOutput: document.getElementById('toggle-output'),
+  toggleOutput: document.getElementById('power-toggle'), // Changed from 'toggle-output'
   psuVoltage: document.getElementById('psu-voltage'),
   psuCurrent: document.getElementById('psu-current'),
   psuPower: document.getElementById('psu-power'),
@@ -38,9 +38,9 @@ export const elements = {
   applyCp: document.getElementById('apply-cp'),
   cpModeOn: document.getElementById('cp-mode-on'),
   cpModeOff: document.getElementById('cp-mode-off'),
-  modeTabs: document.querySelectorAll('.mode-tab'),
+  modeTabs: document.querySelectorAll('.tw-mode-tab, .mode-tab'), // Support both class names
   // Power control
-  powerCheckbox: document.getElementById('power-checkbox'),
+  powerCheckbox: document.getElementById('power-toggle'), // Changed from power-checkbox
   keyLockSlider: document.getElementById('key-lock-slider'),
   // Operating mode elements
   operatingMode: document.getElementById('operatingMode'),
@@ -62,10 +62,24 @@ export const elements = {
   themeCheckbox: document.getElementById('theme-checkbox')
 };
 
+// Initialize elements on DOM content loaded to fix timing issues
+document.addEventListener('DOMContentLoaded', () => {
+  // Re-initialize elements after DOM is fully loaded
+  Object.keys(elements).forEach(key => {
+    if (key.toLowerCase().includes('queryselector')) {
+      elements[key] = document.querySelectorAll(elements[key]?.selector || '.tw-mode-tab, .mode-tab');
+    } else {
+      elements[key] = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
+    }
+  });
+  
+  console.log('Elements registry re-initialized after DOM loaded');
+});
+
 // Swipe elements
 export const swipeElements = {
   cardsContainer: document.getElementById('cards-container'),
-  dots: document.querySelectorAll('.dot'),
-  cards: document.querySelectorAll('.card'),
+  dots: document.querySelectorAll('.tw-dot, .dot'),
+  cards: document.querySelectorAll('.card, .tw-card, .card-panel'),
   dotsIndicator: document.getElementById('dots-indicator')
 };

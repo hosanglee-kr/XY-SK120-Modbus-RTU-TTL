@@ -1,15 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XY-SK120 120W DPS</title>
     
-    <!-- Move splash screen styles to external file -->
-    <link rel="stylesheet" href="css/splash.css">
-    <link rel="stylesheet" href="css/main.css">
+    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="css/tailwind.css">
     
-    <!-- Updated Favicon references -->
+    <!-- Favicon references -->
     <link rel="icon" href="favicon/favicon.ico" type="image/x-icon">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
@@ -19,55 +18,18 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="XY-SK120">
     <meta name="theme-color" content="#2c3e50" id="theme-color">
-
-    <!-- Emergency card layout in head -->
-    <style>
-      @media (max-width: 600px) {
-        .card { display: none !important; }
-        .card:first-of-type { display: block !important; }
-      }
-      @media (min-width: 601px) {
-        .card { display: block !important; }
-      }
-      
-      /* Removed the temporary hiding of readings container */
-    </style>
     
-    <!-- Consolidated scripts - moved all script references to one place -->
-    <script src="js/splash.js"></script>
-    <script src="js/card-fixer.js"></script>
+    <!-- Main application script - load after DOM is ready -->
     <script type="module" src="main.js"></script>
 </head>
-<body>
-    <!-- Splash screen -->
-    <div class="splash-screen" id="splash-screen">
-        <div class="splash-logo">
-            <svg width="64" xmlns="http://www.w3.org/2000/svg" height="64" viewBox="0 0 64 64" fill="none">
-              <g style="fill: rgb(0, 0, 0);" class="frame-children">
-                <defs>
-                  <linearGradient id="splash-a" x1=".5" y1="0" x2=".5" y2="1">
-                    <stop offset=".37" stop-color="#64ff00"/>
-                    <stop offset=".65" stop-color="#fff500"/>
-                  </linearGradient>
-                  <pattern patternUnits="userSpaceOnUse" x="8" y="4" width="48" height="56.002" patternTransform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" id="splash-b">
-                    <rect width="48" height="56.002" style="fill: url(#splash-a);"/>
-                  </pattern>
-                </defs>
-                <path d="M38.973,4.253C39.777,4.701,40.172,5.638,39.931,6.525L34.619,26.000L54.000,26.000C54.797,26.000,55.517,26.473,55.834,27.203C56.152,27.934,56.005,28.783,55.461,29.365L27.461,59.365C26.834,60.039,25.827,60.197,25.023,59.749C24.219,59.300,23.825,58.360,24.069,57.472L29.381,38.000L10.000,38.000C9.203,38.000,8.483,37.527,8.166,36.797C7.848,36.066,7.995,35.217,8.539,34.635L36.539,4.635C37.166,3.963,38.171,3.806,38.973,4.253Z" fill="url(#splash-b)" clip-rule="evenodd" fill-rule="evenodd" class="fills"/>
-                <path d="M38.973,4.253C39.777,4.701,40.172,5.638,39.931,6.525L34.619,26.000L54.000,26.000C54.797,26.000,55.517,26.473,55.834,27.203C56.152,27.934,56.005,28.783,55.461,29.365L27.461,59.365C26.834,60.039,25.827,60.197,25.023,59.749C24.219,59.300,23.825,58.360,24.069,57.472L29.381,38.000L10.000,38.000C9.203,38.000,8.483,37.527,8.166,36.797C7.848,36.066,7.995,35.217,8.539,34.635L36.539,4.635C37.166,3.963,38.171,3.806,38.973,4.253Z" style="fill: none; stroke-width: 1.5; stroke: rgb(183, 61, 255); stroke-opacity: 1;" class="stroke-shape"/>
-              </g>
-            </svg>
-        </div>
-        <div class="spinner"></div>
-        <div class="splash-text">Loading XY-SK120 Interface...</div>
-    </div>
-    
-    <div class="container">
-        <header>
-            <div class="header-container">
-                <div class="header-left">
-                    <div class="header-logo">
-                        <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" class="logo-svg">
+<body class="bg-background dark:bg-background-dark h-full">
+    <div class="max-w-4xl mx-auto p-4 sm:p-5 flex flex-col h-full md:pb-5 pb-16">
+        <!-- Header component -->
+        <header class="mb-5">
+            <div class="flex items-center justify-center w-full mb-4">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 min-w-12 mr-3 relative flex justify-center items-center">
+                        <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full overflow-visible">
                           <defs>
                             <linearGradient id="fill-color-gradient" x1="0.5" y1="0" x2="0.5" y2="1">
                               <stop offset="0.37" stop-color="#64ff00" stop-opacity="1"></stop>
@@ -85,342 +47,359 @@
                           ></path>
                         </svg>
                     </div>
-                    <h1>XY-SK120 120W DPS</h1>
+                    <h1 class="text-2xl font-bold text-primary dark:text-white truncate">XY-SK120 120W DPS</h1>
                 </div>
             </div>
         </header>
         
-        <!-- Readings display - fixed visibility issues -->
-        <div class="readings-container">
-            <div class="readings">
-                <div class="reading-item voltage">
-                    <div class="reading-label">Voltage</div>
-                    <div class="reading-display">
-                        <span class="reading-value" id="psu-voltage">--</span>
-                        <span class="reading-unit">V</span>
+        <!-- Readings display -->
+        <div class="tw-readings-container">
+            <div class="tw-readings">
+                <div class="tw-reading-item tw-reading-voltage">
+                    <div class="tw-reading-label">Voltage</div>
+                    <div class="flex justify-center items-baseline">
+                        <span class="tw-reading-value" id="psu-voltage">--</span>
+                        <span class="tw-reading-unit">V</span>
                     </div>
                 </div>
-                <div class="reading-item current">
-                    <div class="reading-label">Current</div>
-                    <div class="reading-display">
-                        <span class="reading-value" id="psu-current">--</span>
-                        <span class="reading-unit">A</span>
+                <div class="tw-reading-item tw-reading-current">
+                    <div class="tw-reading-label">Current</div>
+                    <div class="flex justify-center items-baseline">
+                        <span class="tw-reading-value" id="psu-current">--</span>
+                        <span class="tw-reading-unit">A</span>
                     </div>
                 </div>
-                <div class="reading-item power">
-                    <div class="reading-label">Power</div>
-                    <div class="reading-display">
-                        <span class="reading-value" id="psu-power">--</span>
-                        <span class="reading-unit">W</span>
+                <div class="tw-reading-item tw-reading-power">
+                    <div class="tw-reading-label">Power</div>
+                    <div class="flex justify-center items-baseline">
+                        <span class="tw-reading-value" id="psu-power">--</span>
+                        <span class="tw-reading-unit">W</span>
                     </div>
                 </div>
             </div>
-            <div class="status-row">
-                <div class="status-info">
-                    <span class="status-label">Output:</span>
-                    <span class="status-value" id="output-status">--</span>
+            <div class="flex items-center justify-between py-2 mt-2 border-t border-border dark:border-border-dark">
+                <div class="flex items-center">
+                    <span class="font-bold mr-1 text-sm">Output:</span>
+                    <span class="mr-2 text-sm" id="output-status">--</span>
                 </div>
-                <div class="operating-mode">
-                    <span id="operatingModeDisplay">--</span>
+                <div class="flex-1 text-center">
+                    <span id="operatingModeDisplay" class="font-bold text-sm bg-black/5 dark:bg-white/10 px-2 py-0.5 rounded">--</span>
                 </div>
-                <div class="status-controls">
-                    <!-- Fixed power switch structure -->
-                    <div class="power-button-container">
-                        <label class="power-switch">
-                            <input type="checkbox" id="power-checkbox" style="display:none;">
-                            <span class="switch-slider" id="power-slider"></span>
+                <div class="flex items-center">
+                    <!-- Fixed power switch -->
+                    <div class="relative w-[50px] h-6 flex items-center justify-center">
+                        <label class="inline-flex relative items-center cursor-pointer">
+                            <input type="checkbox" id="power-toggle" class="sr-only peer">
+                            <div class="w-[50px] h-6 bg-gray-400 rounded-full peer peer-focus:ring-2 peer-focus:ring-secondary 
+                                 peer-checked:bg-secondary transition-colors duration-300" id="power-slider">
+                            </div>
+                            <div class="absolute top-[2px] left-1 bg-white w-4 h-4 rounded-full transition-all duration-300
+                                 peer-checked:left-[30px] shadow-md">
+                            </div>
                         </label>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Basic Control Card - Enhanced inline style for immediate visibility -->
-        <div class="card" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
-            <h2>Basic Control</h2>
-            <div class="power-supply-control">
-                <div class="control-settings">
-                    <!-- Readings moved to outside the card -->
-                    
-                    <div class="control-inputs">
-                        <div class="form-group compact">
-                            <label for="set-voltage">Set Voltage (V)</label>
-                            <div class="input-with-button small">
-                                <input type="number" id="set-voltage" min="0" max="30" step="0.1" inputmode="decimal" pattern="[0-9]*\.?[0-9]*">
-                                <button id="apply-voltage" class="secondary">Set</button>
-                            </div>
-                            
-                            <!-- Replace multiple preset buttons with a single hold-to-select button -->
-                            <div class="voltage-presets">
-                                <button id="voltage-preset-btn" class="preset-hold-btn">
-                                    Common Voltages
-                                    <span class="hint-text">Tap to select</span>
-                                </button>
+        <!-- Card container with Tailwind scroll snap for mobile -->
+        <div class="relative h-full">
+            <!-- Mobile card navigation tabs -->
+            <div class="md:hidden flex border-b border-border dark:border-border-dark mb-4">
+                <button data-target="basic-card" 
+                    class="card-tab flex-1 text-center py-2 border-b-2 border-secondary text-primary dark:text-white font-medium">
+                    Basic
+                </button>
+                <button data-target="operation-card" 
+                    class="card-tab flex-1 text-center py-2 border-b-2 border-transparent text-gray-500 dark:text-gray-400 font-medium">
+                    Operation
+                </button>
+                <button data-target="config-card" 
+                    class="card-tab flex-1 text-center py-2 border-b-2 border-transparent text-gray-500 dark:text-gray-400 font-medium">
+                    Config
+                </button>
+                <button data-target="wifi-card" 
+                    class="card-tab flex-1 text-center py-2 border-b-2 border-transparent text-gray-500 dark:text-gray-400 font-medium">
+                    WiFi
+                </button>
+            </div>
+            
+            <!-- Card wrapper -->
+            <div class="h-full md:grid md:grid-cols-2 md:gap-4 md:auto-rows-min overflow-hidden">
+                <!-- Basic Control Card -->
+                <div id="basic-card" class="card tw-card bg-card dark:bg-card-dark rounded-lg shadow p-4 mb-4 transition-theme duration-300 block md:block">
+                    <h2 class="text-xl font-bold mb-3 text-center text-primary dark:text-white">Basic Control</h2>
+                    <div>
+                        <div>
+                            <div class="mt-1">
+                                <div class="mb-2">
+                                    <label for="set-voltage" class="block mb-1 font-medium text-sm">Set Voltage (V)</label>
+                                    <div class="tw-input-with-button-small">
+                                        <input type="number" id="set-voltage" min="0" max="30" step="0.1" inputmode="decimal" pattern="[0-9]*\.?[0-9]*" class="w-3/5">
+                                        <button id="apply-voltage" class="w-2/5 bg-gray-600 text-white">Set</button>
+                                    </div>
+                                    
+                                    <!-- Voltage presets -->
+                                    <div class="mt-3">
+                                        <button id="voltage-preset-btn" class="w-full bg-secondary text-white rounded flex items-center justify-between px-3 h-9">
+                                            Common Voltages
+                                            <span class="text-xs opacity-80 ml-2">Tap to select</span>
+                                        </button>
+                                        
+                                        <!-- Popup for voltage selection -->
+                                        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-overlay hidden" id="voltage-overlay"></div>
+                                        <div id="voltage-popup" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-card dark:bg-card-dark rounded-xl shadow-lg z-popup w-[85%] max-w-[280px] max-h-[60vh] overflow-hidden flex flex-col">
+                                            <div class="text-center p-3 font-bold border-b border-border dark:border-border-dark bg-primary text-white rounded-t-xl">Select Voltage</div>
+                                            <div class="overflow-y-auto flex-1">
+                                                <div class="p-0 flex flex-col">
+                                                    <div class="h-10 flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-border dark:border-border-dark" data-voltage="1.8">1.8V</div>
+                                                    <div class="h-10 flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-border dark:border-border-dark" data-voltage="3.3">3.3V</div>
+                                                    <div class="h-10 flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-border dark:border-border-dark" data-voltage="4.2">4.2V</div>
+                                                    <div class="h-10 flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-border dark:border-border-dark" data-voltage="5">5V</div>
+                                                    <div class="h-10 flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-border dark:border-border-dark" data-voltage="9">9V</div>
+                                                    <div class="h-10 flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-border dark:border-border-dark" data-voltage="12">12V</div>
+                                                    <div class="h-10 flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-border dark:border-border-dark" data-voltage="15">15V</div>
+                                                    <div class="h-10 flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-border dark:border-border-dark" data-voltage="18">18V</div>
+                                                    <div class="h-10 flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" data-voltage="20">20V</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 
-                                <!-- Popup menu for voltage selection (hidden by default) -->
-                                <div class="popup-overlay" id="voltage-overlay"></div>
-                                <div id="voltage-popup" class="voltage-popup">
-                                    <div class="voltage-popup-title">Select Voltage</div>
-                                    <div class="voltage-popup-content">
-                                        <div class="voltage-option" data-voltage="1.8">1.8V</div>
-                                        <div class="voltage-option" data-voltage="3.3">3.3V</div>
-                                        <div class="voltage-option" data-voltage="4.2">4.2V</div>
-                                        <div class="voltage-option" data-voltage="5">5V</div>
-                                        <div class="voltage-option" data-voltage="9">9V</div>
-                                        <div class="voltage-option" data-voltage="12">12V</div>
-                                        <div class="voltage-option" data-voltage="15">15V</div>
-                                        <div class="voltage-option" data-voltage="18">18V</div>
-                                        <div class="voltage-option" data-voltage="20">20V</div>
+                                <div class="mb-2">
+                                    <label for="set-current" class="block mb-1 font-medium text-sm">Set Current (A)</label>
+                                    <div class="tw-input-with-button-small">
+                                        <input type="number" id="set-current" min="0" max="5" step="0.01" inputmode="decimal" pattern="[0-9]*\.?[0-9]*" class="w-3/5">
+                                        <button id="apply-current" class="w-2/5 bg-gray-600 text-white">Set</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Key lock control -->
+                                <div class="mb-2">
+                                    <div class="flex items-center justify-between my-2 cursor-pointer">
+                                        <span class="text-sm font-bold flex-1">Front Panel Keys</span>
+                                        <div class="relative w-[50px] h-6 flex items-center justify-center">
+                                            <label class="inline-flex relative items-center cursor-pointer">
+                                                <input type="checkbox" id="key-lock-checkbox" class="sr-only peer">
+                                                <div class="w-[50px] h-6 bg-gray-400 rounded-full peer peer-focus:ring-2 peer-focus:ring-secondary 
+                                                     peer-checked:bg-secondary transition-colors duration-300">
+                                                </div>
+                                                <div class="absolute top-[2px] left-1 bg-white w-4 h-4 rounded-full transition-all duration-300
+                                                     peer-checked:left-[30px] shadow-md">
+                                                </div>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            
+                            <div class="flex justify-between mt-4">
+                                <button id="refresh-psu" class="bg-gray-600 text-white">Refresh</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Operation Mode Card -->
+                <div id="operation-card" class="card tw-card bg-card dark:bg-card-dark rounded-lg shadow p-4 mb-4 transition-theme duration-300 hidden md:block">
+                    <h2 class="text-xl font-bold mb-3 text-center text-primary dark:text-white">Operation Modes</h2>
+                    <div class="w-full">
+                        <div class="flex border-b border-border dark:border-border-dark mb-4">
+                            <!-- Mode tabs with specific color classes -->
+                            <button class="tw-mode-tab mode-tab tw-mode-tab-cv active" data-mode="cv">CV</button>
+                            <button class="tw-mode-tab mode-tab tw-mode-tab-cc" data-mode="cc">CC</button>
+                            <button class="tw-mode-tab mode-tab tw-mode-tab-cp" data-mode="cp">CP</button>
                         </div>
                         
-                        <div class="form-group compact">
-                            <label for="set-current">Set Current (A)</label>
-                            <div class="input-with-button small">
-                                <input type="number" id="set-current" min="0" max="5" step="0.01" inputmode="decimal" pattern="[0-9]*\.?[0-9]*">
-                                <button id="apply-current" class="secondary">Set</button>
+                        <!-- Mode Settings -->
+                        <div class="block py-2" id="cv-settings">
+                            <div class="mb-3">
+                                <label for="set-cv-voltage" class="block mb-1 font-medium text-sm">Constant Voltage (V)</label>
+                                <div class="tw-input-with-button">
+                                    <input type="number" id="set-cv-voltage" min="0" max="30" step="0.1" inputmode="decimal">
+                                    <button id="apply-cv" class="bg-gray-600 text-white">Apply</button>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Key lock control - minimal fix -->
-                        <div class="form-group compact">
-                            <div class="key-switch">
-                                <span class="key-label">Front Panel Keys</span>
-                                <div class="switch-container">
-                                    <div class="switch-slider" id="key-lock-slider"></div>
+                        <div class="hidden py-2" id="cc-settings">
+                            <div class="mb-3">
+                                <label for="set-cc-current" class="block mb-1 font-medium text-sm">Constant Current (A)</label>
+                                <div class="tw-input-with-button">
+                                    <input type="number" id="set-cc-current" min="0" max="5" step="0.01" inputmode="decimal">
+                                    <button id="apply-cc" class="bg-gray-600 text-white">Apply</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="hidden py-2" id="cp-settings">
+                            <div class="mb-3">
+                                <label for="set-cp-power" class="block mb-1 font-medium text-sm">Constant Power (W)</label>
+                                <div class="tw-input-with-button">
+                                    <input type="number" id="set-cp-power" min="0" max="120" step="0.5" inputmode="decimal">
+                                    <button id="apply-cp" class="bg-gray-600 text-white">Apply</button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-1">
+                                <label class="block mb-1 font-medium text-sm">CP Mode</label>
+                                <div class="flex gap-2">
+                                    <button id="cp-mode-on" class="flex-1 bg-success text-white">Enable</button>
+                                    <button id="cp-mode-off" class="flex-1 bg-danger text-white">Disable</button>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="button-group">
-                        <button id="refresh-psu" class="secondary">Refresh</button>
-                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- NEW OPERATION MODE CARD - Fix tab-to-content mapping -->
-        <div class="card">
-            <h2>Operation Modes</h2>
-            <div class="mode-selector">
-                <div class="mode-tabs">
-                    <!-- Remove "Normal" tab and add correct data-mode attributes -->
-                    <button class="mode-tab active" data-mode="cv">CV</button>
-                    <button class="mode-tab" data-mode="cc">CC</button>
-                    <button class="mode-tab" data-mode="cp">CP</button>
-                </div>
-                
-                <!-- Mode Settings (fix IDs to correctly match tab data-mode) -->
-                <div class="mode-settings active" id="cv-settings">
-                    <div class="form-group compact">
-                        <label for="set-cv-voltage">Constant Voltage (V)</label>
-                        <div class="input-with-button">
-                            <input type="number" id="set-cv-voltage" min="0" max="30" step="0.1" inputmode="decimal">
-                            <button id="apply-cv" class="secondary">Apply</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mode-settings" id="cc-settings">
-                    <div class="form-group compact">
-                        <label for="set-cc-current">Constant Current (A)</label>
-                        <div class="input-with-button">
-                            <input type="number" id="set-cc-current" min="0" max="5" step="0.01" inputmode="decimal">
-                            <button id="apply-cc" class="secondary">Apply</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mode-settings" id="cp-settings">
-                    <div class="form-group compact">
-                        <label for="set-cp-power">Constant Power (W)</label>
-                        <div class="input-with-button">
-                            <input type="number" id="set-cp-power" min="0" max="120" step="0.5" inputmode="decimal">
-                            <button id="apply-cp" class="secondary">Apply</button>
-                        </div>
+                <!-- Configuration Card -->
+                <div id="config-card" class="card tw-card bg-card dark:bg-card-dark rounded-lg shadow p-4 mb-4 transition-theme duration-300 hidden md:block">
+                    <h2 class="text-xl font-bold mb-3 text-center text-primary dark:text-white">Configuration</h2>
+                    
+                    <!-- Theme toggle control -->
+                    <div class="flex items-center mb-4 pb-3 border-b border-border dark:border-border-dark">
+                        <label class="flex items-center cursor-pointer w-full" for="theme-checkbox">
+                            <span class="text-sm font-bold flex-1">Dark Mode</span>
+                            <div class="relative w-[50px] h-6 flex items-center justify-center">
+                                <label class="inline-flex relative items-center cursor-pointer">
+                                    <input type="checkbox" id="theme-checkbox" class="sr-only peer">
+                                    <div class="w-[50px] h-6 bg-gray-400 rounded-full peer peer-focus:ring-2 peer-focus:ring-secondary 
+                                         peer-checked:bg-secondary transition-colors duration-300">
+                                    </div>
+                                    <div class="absolute top-[2px] left-1 bg-white w-4 h-4 rounded-full transition-all duration-300
+                                         peer-checked:left-[30px] shadow-md">
+                                    </div>
+                                </label>
+                            </div>
+                        </label>
                     </div>
                     
-                    <div class="form-group compact">
-                        <label>CP Mode</label>
-                        <div class="button-group horizontal">
-                            <button id="cp-mode-on" class="success">Enable</button>
-                            <button id="cp-mode-off" class="danger">Disable</button>
+                    <form id="configForm">
+                        <div class="mb-3">
+                            <label for="deviceName" class="block mb-1 font-medium text-sm">Device Name</label>
+                            <input type="text" id="deviceName" name="deviceName">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="modbusId" class="block mb-1 font-medium text-sm">Modbus ID</label>
+                            <input type="number" id="modbusId" name="modbusId" min="1" max="247" inputmode="numeric" pattern="[0-9]*">
+                        </div>
+                        
+                        <!-- Additional configuration fields... -->
+                        
+                        <div class="flex justify-between gap-3">
+                            <button type="submit" class="flex-1 bg-secondary text-white">Save Configuration</button>
+                            <button type="button" id="resetBtn" class="flex-1 bg-gray-600 text-white">Reset Device</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- WiFi Status card -->
+                <div id="wifi-card" class="card tw-card bg-card dark:bg-card-dark rounded-lg shadow p-4 mb-4 transition-theme duration-300 hidden md:block">
+                    <h2 class="text-xl font-bold mb-3 text-center text-primary dark:text-white">WiFi Status</h2>
+                    <div>
+                        <div class="flex items-center py-1">
+                            <div class="font-bold mr-1">Status:</div>
+                            <div id="wifi-status">Unknown</div>
+                        </div>
+                        <div class="flex items-center py-1">
+                            <div class="font-bold mr-1">SSID:</div>
+                            <div id="wifi-ssid">--</div>
+                        </div>
+                        <!-- Additional WiFi status fields... -->
+                        <div class="flex justify-between gap-3 mt-4">
+                            <button type="button" id="wifiResetBtn" class="flex-1 bg-danger text-white">Reset WiFi Settings</button>
+                            <button type="button" id="wifiRefreshBtn" class="flex-1 bg-gray-600 text-white">Refresh Status</button>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Configuration Card -->
-        <div class="card" style="display: none !important;">
-            <h2>Configuration</h2>
-            
-            <!-- Theme toggle control -->
-            <div class="config-header">
-                <label class="theme-switch" for="theme-checkbox">
-                    <span class="theme-label">Dark Mode</span>
-                    <div class="switch-container">
-                        <input type="checkbox" id="theme-checkbox" style="display:none;">
-                        <span class="switch-slider" id="theme-slider"></span>
-                    </div>
-                </label>
-            </div>
-            
-            <form id="configForm">
-                <div class="form-group">
-                    <label for="deviceName">Device Name</label>
-                    <input type="text" id="deviceName" name="deviceName">
-                </div>
-                
-                <div class="form-group">
-                    <label for="modbusId">Modbus ID</label>
-                    <input type="number" id="modbusId" name="modbusId" min="1" max="247" inputmode="numeric" pattern="[0-9]*">
-                </div>
-                
-                <div class="form-group">
-                    <label for="baudRate">Baud Rate</label>
-                    <select id="baudRate" name="baudRate">
-                        <option value="4800">4800</option>
-                        <option value="9600">9600</option>
-                        <option value="19200">19200</option>
-                        <option value="38400">38400</option>
-                        <option value="57600">57600</option>
-                        <option value="115200">115200</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="dataBits">Data Bits</label>
-                    <select id="dataBits" name="dataBits">
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="parity">Parity</label>
-                    <select id="parity" name="parity">
-                        <option value="0">None</option>
-                        <option value="1">Odd</option>
-                        <option value="2">Even</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="stopBits">Stop Bits</label>
-                    <select id="stopBits" name="stopBits">
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="updateInterval">Update Interval (ms)</label>
-                    <input type="number" id="updateInterval" name="updateInterval" min="1000" max="60000" inputmode="numeric" pattern="[0-9]*">
-                </div>
-                
-                <div class="button-group">
-                    <button type="submit" class="primary">Save Configuration</button>
-                    <button type="button" id="resetBtn">Reset Device</button>
-                </div>
-            </form>
-        </div>
-        
-        <!-- WiFi Status card -->
-        <div class="card" style="display: none !important;">
-            <h2>WiFi Status</h2>
-            <div class="wifi-status">
-                <div class="status-row">
-                    <div class="status-label">Status:</div>
-                    <div class="status-value" id="wifi-status">Unknown</div>
-                </div>
-                <div class="status-row">
-                    <div class="status-label">SSID:</div>
-                    <div class="status-value" id="wifi-ssid">--</div>
-                </div>
-                <div class="status-row">
-                    <div class="status-label">IP Address:</div>
-                    <div class="status-value" id="wifi-ip">--</div>
-                </div>
-                <div class="status-row">
-                    <div class="status-label">Signal Strength:</div>
-                    <div class="status-value" id="wifi-rssi">--</div>
-                </div>
-                <div class="button-group">
-                    <button type="button" id="wifiResetBtn" class="danger">Reset WiFi Settings</button>
-                    <button type="button" id="wifiRefreshBtn" class="secondary">Refresh Status</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Dots indicator for mobile -->
-        <div class="dots-indicator" id="dots-indicator">
-            <div class="dot active" title="Basic Control"></div>
-            <div class="dot" title="Operation Modes"></div>
-            <div class="dot" title="Configuration"></div>
         </div>
     </div>
     
-    <!-- More aggressive card fix script - place after splash.js -->
+    <!-- Simple card navigation script - integrated into the HTML -->
     <script>
-        // Run this immediately after page load
-        (function() {
-            console.log('Main card fix script running');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all card tabs and panels
+            const tabs = document.querySelectorAll('.card-tab');
+            const panels = document.querySelectorAll('.card');
             
-            // Run the fix multiple times to ensure it takes effect
-            fixCardsNow();
-            setTimeout(fixCardsNow, 100);
-            setTimeout(fixCardsNow, 500);
-            
-            // Start polling for card visibility
-            let visibilityCheckCount = 0;
-            const checkInterval = setInterval(function() {
-                visibilityCheckCount++;
-                const firstCard = document.querySelector('.card');
-                
-                if (firstCard && getComputedStyle(firstCard).display === 'none') {
-                    console.log('Card still not visible, forcing it visible');
-                    fixCardsNow();
-                } else {
-                    console.log('Cards appear to be visible now');
-                    if (visibilityCheckCount >= 5) {
-                        clearInterval(checkInterval);
-                    }
-                }
-            }, 300);
-            
-            function fixCardsNow() {
-                const isMobile = window.innerWidth <= 600;
-                const cards = document.querySelectorAll('.card');
-                
-                if (isMobile) {
-                    // Mobile view - show only first card
-                    cards.forEach((card, index) => {
-                        if (index === 0) {
-                            card.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important;';
-                        } else {
-                            card.style.cssText = 'display: none !important;';
+            // Add click event to each tab
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Get the target panel
+                    const targetId = tab.getAttribute('data-target');
+                    
+                    // Hide all panels and remove active class from tabs
+                    panels.forEach(panel => {
+                        if (window.innerWidth <= 768) { // Only hide in mobile mode
+                            panel.classList.add('hidden');
                         }
                     });
                     
-                    // Make dots visible
-                    const dots = document.getElementById('dots-indicator');
-                    if (dots) dots.style.display = 'flex';
-                } else {
-                    // Desktop view - show all cards
-                    cards.forEach(card => {
-                        card.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important;';
+                    tabs.forEach(t => {
+                        t.classList.remove('border-secondary', 'text-primary', 'dark:text-white');
+                        t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
                     });
                     
-                    // Hide dots
-                    const dots = document.getElementById('dots-indicator');
-                    if (dots) dots.style.display = 'none';
+                    // Show target panel and set active class on clicked tab
+                    if (targetId) {
+                        const targetPanel = document.getElementById(targetId);
+                        if (targetPanel) {
+                            targetPanel.classList.remove('hidden');
+                        }
+                    }
+                    
+                    tab.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                    tab.classList.add('border-secondary', 'text-primary', 'dark:text-white');
+                });
+            });
+            
+            // Handle resize to show/hide cards based on screen size
+            function handleResize() {
+                const isMobile = window.innerWidth < 768;
+                if (!isMobile) {
+                    // On desktop, show all panels
+                    panels.forEach(panel => panel.classList.remove('hidden'));
+                } else {
+                    // On mobile, show only the active tab's panel
+                    const activeTab = document.querySelector('.card-tab.border-secondary') || tabs[0];
+                    if (activeTab) {
+                        activeTab.click();
+                    }
                 }
             }
-        })();
+            
+            // Call on load and window resize
+            handleResize();
+            window.addEventListener('resize', handleResize);
+            
+            // Setup mode tabs
+            const modeTabs = document.querySelectorAll('.tw-mode-tab');
+            const modeSettings = document.querySelectorAll('#cv-settings, #cc-settings, #cp-settings');
+            
+            modeTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Update active tab
+                    modeTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show corresponding content
+                    const mode = tab.getAttribute('data-mode');
+                    modeSettings.forEach(content => {
+                        content.classList.add('hidden');
+                        content.classList.remove('block');
+                    });
+                    
+                    const activeContent = document.getElementById(`${mode}-settings`);
+                    if (activeContent) {
+                        activeContent.classList.remove('hidden');
+                        activeContent.classList.add('block');
+                    }
+                });
+            });
+        });
     </script>
 </body>
 </html>
