@@ -5,10 +5,12 @@ import {
   requestPsuStatus, 
   requestOperatingMode, 
   websocketConnected,
-  startPeriodicUpdates 
+  startPeriodicUpdates,
+  sendCommand
 } from './modules/menu_connection.js';
 import { setVoltageValue, setCurrentValue, initPowerButton, initBasicControls } from './modules/menu_basic.js';
 import { updateUI } from './modules/menu_display.js';
+import { initDeviceManager } from './modules/device_manager.js';
 
 // Global state
 let lastDataUpdate = 0;
@@ -54,55 +56,138 @@ function fetchData() {
     });
 }
 
-// Initialize the application with a slight delay to ensure DOM is ready
+// Initialize the application with better WebSocket handling
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM content loaded, initializing application...');
     
-    // Force re-initialize elements registry first
-    document.dispatchEvent(new Event('elementsRegistryInit'));
+    // Log WebSocket support
+    if ('WebSocket' in window) {
+        console.log('✅ WebSocket is supported by this browser');
+    } else {
+        console.error('❌ WebSocket is NOT supported by this browser');
+    }
     
-    // Set a short timeout to make sure all elements are available
-    setTimeout(init, 100);
+    // Add debugging tools
+    window.debugInfo = {
+        testConnection,
+        reinitWebSocket: initWebSocket,
+        sendManualCommand: sendCommand,
+        requestStatus: requestPsuStatus
+    };
+    
+    // Allow more time for slow connections to initialize
+    setTimeout(init, 500);
 });
 
-// Apply theme immediately
-const darkMode = localStorage.getItem('darkMode') === 'true';
-applyTheme(darkMode);
+// Testing function for connection troubleshooting
+function testConnection() {
+  console.log("Testing connection...");
+  
+  // Test WebSocket
+  if (websocketConnected) {
+    console.log("WebSocket connected: YES");
+  } else {
+    console.log("WebSocket connected: NO");
+    console.log("Attempting connection...");
+    initWebSocket();
+  }
+  
+  // Test critical elements
+  const powerToggle = document.getElementById('power-toggle');
+  const voltageInput = document.getElementById('set-voltage');
+  const voltageButton = document.getElementById('apply-voltage');
+  
+  console.log("Power toggle found:", !!powerToggle);
+  console.log("Voltage input found:", !!voltageInput);
+  console.log("Voltage button found:", !!voltageButton);
+  
+  // Try sending a command
+  console.log("Attempting to send status request...");
+  const success = sendCommand({ action: 'getStatus' });
+  console.log("Command send result:", success);
+  
+  return {
+    websocketConnected,
+    powerToggleExists: !!powerToggle,
+    voltageInputExists: !!voltageInput,
+    voltageButtonExists: !!voltageButton,
+    commandSent: success
+  };
+}
 
 // Function to initialize the UI and components with better error handling
 function init() {
     console.log("Initializing application components...");
     
     try {
-        // Debug: Check critical elements exist
-        console.log("Power toggle element exists:", !!document.getElementById('power-toggle'));
-        console.log("Power slider element exists:", !!document.getElementById('power-slider'));
+        // Initialize device manager first to ensure connection settings are loaded
+        initDeviceManager();
         
-        // Set up event listeners first
-        setupEventListeners();
-        
-        // Initialize WebSocket connection
+        // Initialize WebSocket with multiple attempts
         initWebSocket();
+        
+        // Try again after a short delay in case of initial timing issues
+        setTimeout(initWebSocket, 1000);
         
         // Initialize UI components
         initPowerButton();
         initBasicControls();
         
-        // Start periodic updates
-        startPeriodicUpdates();
+        // Set up event listeners after elements are available
+        setupEventListeners();
         
-        // Initial data fetch (as fallback)
+        // Start periodic updates with fallback mechanisms
+        setTimeout(startPeriodicUpdates, 1500);
+        
+        // Force data refresh after 2 seconds - fallback to HTTP if WebSocket fails
         setTimeout(() => {
-            fetchData();
-        }, 1000);
+            if (!websocketConnected) {
+                console.log("WebSocket not connected after 2 seconds, trying HTTP fallback");
+                fetch('/api/data')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateUI(data);
+                        console.log("Initial data loaded via HTTP");
+                    })
+                    .catch(error => {
+                        console.error('Error fetching data via HTTP:', error);
+                    });
+            }
+        }, 2000);
         
-        // Fetch WiFi status
-        fetchWifiStatus();
-        setInterval(fetchWifiStatus, 30000);
+        // Setup reconnect button with clearer feedback
+        const reconnectBtn = document.getElementById('reconnect-btn');
+        if (reconnectBtn) {
+            reconnectBtn.addEventListener('click', () => {
+                console.log("Manual reconnect requested");
+                
+                // Update status display
+                const statusElement = document.getElementById('websocket-status');
+                if (statusElement) {
+                    statusElement.textContent = 'Reconnecting...';
+                    statusElement.className = 'text-secondary font-bold';
+                }
+                
+                // Get current device IP
+                const currentDevice = localStorage.getItem('selectedDeviceIP') || 'localhost';
+                
+                // Try to reconnect
+                initWebSocket();
+                
+                // Provide feedback
+                alert(`Reconnecting to: ${currentDevice}`);
+            });
+        }
         
         console.log("Application initialization complete");
     } catch (err) {
         console.error("Error during initialization:", err);
+        
+        // Try to recover by using the HTTP API
+        fetch('/api/data')
+            .then(response => response.json())
+            .then(data => updateUI(data))
+            .catch(error => console.error('Recovery attempt failed:', error));
     }
 }
 

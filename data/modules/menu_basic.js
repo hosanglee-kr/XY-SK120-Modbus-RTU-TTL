@@ -2,55 +2,66 @@ import { elements } from './elements_registry.js';
 import { sendCommand, requestPsuStatus } from './menu_connection.js';
 import { initWebSocket } from './menu_connection.js';
 
-// Toggle power output
+// Fixed power toggle function - using direct DOM access instead of elements registry
 function togglePowerOutput() {
-  // Get current state
-  const currentState = elements.outputStatus && elements.outputStatus.textContent === "ON";
+  // Get output status element directly from DOM
+  const outputStatus = document.getElementById('output-status');
+  const currentState = outputStatus ? outputStatus.textContent === "ON" : false;
+  
   console.log("Current output state:", currentState, "Toggling to:", !currentState);
   
-  // Send command to toggle to opposite state
+  // Send command with direct action name
   const success = sendCommand({ 
-    action: "powerOutput", 
-    enable: !currentState 
+    action: "setOutputState",  // Use the correct action name
+    enabled: !currentState 
   });
   
   if (success) {
-    // Temporary UI feedback while waiting for response
-    const powerButton = document.querySelector('.power-button');
-    if (powerButton) {
-      // Show opposite state immediately for better UX
-      powerButton.classList.toggle('on', !currentState);
+    console.log("Power toggle command sent successfully");
+    
+    // Update UI immediately for better user feedback
+    if (outputStatus) {
+      outputStatus.textContent = !currentState ? "ON" : "OFF";
+      outputStatus.className = !currentState ? "status-on" : "status-off";
     }
     
-    if (elements.toggleOutput) {
-      elements.toggleOutput.disabled = true;
-      setTimeout(() => {
-        elements.toggleOutput.disabled = false;
-      }, 1000);
+    // Update power toggle
+    const powerToggle = document.getElementById('power-toggle');
+    if (powerToggle) {
+      powerToggle.checked = !currentState;
     }
   } else {
-    alert("WebSocket not connected. Cannot control power supply.");
-    
-    // Try to reconnect
-    initWebSocket();
+    console.error("Failed to send power toggle command");
   }
 }
 
-// Set voltage
+// Fixed setVoltageValue with better error handling
 function setVoltageValue() {
-  const voltage = parseFloat(elements.setVoltage.value);
+  console.log("Setting voltage value");
+  const voltageInput = document.getElementById('set-voltage');
+  
+  if (!voltageInput) {
+    console.error("Voltage input element not found");
+    return;
+  }
+  
+  const voltage = parseFloat(voltageInput.value);
   if (isNaN(voltage) || voltage < 0 || voltage > 30) {
     alert("Please enter a valid voltage between 0 and 30V");
     return;
   }
   
+  console.log(`Setting voltage to ${voltage}V`);
   const success = sendCommand({ 
     action: "setVoltage", 
     voltage: voltage 
   });
   
   if (!success) {
+    console.error("Failed to send voltage command");
     alert("WebSocket not connected. Cannot set voltage.");
+  } else {
+    console.log("Voltage command sent successfully");
   }
 }
 
@@ -275,21 +286,33 @@ function initVoltagePresetMenu() {
   }, { passive: true });
 }
 
-// Set current
+// Fixed setCurrentValue with better error handling
 function setCurrentValue() {
-  const current = parseFloat(elements.setCurrent.value);
+  console.log("Setting current value");
+  const currentInput = document.getElementById('set-current');
+  
+  if (!currentInput) {
+    console.error("Current input element not found");
+    return;
+  }
+  
+  const current = parseFloat(currentInput.value);
   if (isNaN(current) || current < 0 || current > 5) {
     alert("Please enter a valid current between 0 and 5A");
     return;
   }
   
+  console.log(`Setting current to ${current}A`);
   const success = sendCommand({ 
     action: "setCurrent", 
     current: current 
   });
   
   if (!success) {
+    console.error("Failed to send current command");
     alert("WebSocket not connected. Cannot set current.");
+  } else {
+    console.log("Current command sent successfully");
   }
 }
 
@@ -468,47 +491,42 @@ function initModeTabs() {
   }
 }
 
-// Fix power button initialization
+// More reliable power button initialization with direct DOM access
 function initPowerButton() {
-  console.log("Initializing power button...");
-  // Try both possible element IDs to be backward compatible
-  const powerCheckbox = document.getElementById('power-toggle');
-  if (!powerCheckbox) {
-    console.error("Power toggle checkbox not found! Checking alternative IDs...");
-    // Try fallback IDs
-    const altCheckbox = document.getElementById('power-checkbox');
-    if (!altCheckbox) {
-      console.error("No power toggle element found with any known ID. UI control won't work.");
-      return;
-    } else {
-      console.log("Found power checkbox with alternative ID");
-      setupToggleListener(altCheckbox);
-    }
-  } else {
-    setupToggleListener(powerCheckbox);
+  console.log("Initializing power button with direct DOM access...");
+  
+  // Get the power toggle element directly
+  const powerToggle = document.getElementById('power-toggle');
+  if (!powerToggle) {
+    console.error("Power toggle element not found in DOM. Check HTML structure.");
+    return;
   }
-
-  function setupToggleListener(element) {
-    // Remove any existing listeners to prevent duplicates
-    const newElement = element.cloneNode(true);
-    element.parentNode.replaceChild(newElement, element);
+  
+  console.log("Found power toggle element!");
+  
+  // Remove any existing event listeners to prevent duplicates
+  const newToggle = powerToggle.cloneNode(true);
+  powerToggle.parentNode.replaceChild(newToggle, powerToggle);
+  
+  // Add event listener for changes - send direct command
+  newToggle.addEventListener('change', function() {
+    console.log("Power toggle changed:", this.checked);
     
-    // Add change listener
-    newElement.addEventListener('change', function() {
-      console.log("Power toggle changed, new state:", this.checked);
-      sendCommand({ 
-        action: 'setOutputState', 
-        enabled: this.checked 
-      });
-      
-      // Update UI immediately for responsiveness
-      const outputStatus = document.getElementById('output-status');
-      if (outputStatus) {
-        outputStatus.textContent = this.checked ? "ON" : "OFF";
-        outputStatus.className = this.checked ? "status-on" : "status-off";
-      }
+    // Send command with exact action name
+    sendCommand({ 
+      action: 'setOutputState', 
+      enabled: this.checked 
     });
-  }
+    
+    // Update UI immediately
+    const outputStatus = document.getElementById('output-status');
+    if (outputStatus) {
+      outputStatus.textContent = this.checked ? "ON" : "OFF";
+      outputStatus.className = this.checked ? "status-on" : "status-off";
+    }
+  });
+  
+  console.log("Power button initialized successfully");
 }
 
 // Update output state for power toggle

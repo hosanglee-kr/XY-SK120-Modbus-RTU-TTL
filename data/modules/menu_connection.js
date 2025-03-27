@@ -1,5 +1,6 @@
 import { updateUI, updatePsuUI, updateOutputStatus } from './menu_display.js';
 
+// Make WebSocket available globally for debugging
 let websocket = null;
 let reconnectTimeout = null;
 let isConnecting = false;
@@ -8,15 +9,32 @@ const maxReconnectAttempts = 5;
 const reconnectDelay = 5000;
 let websocketConnected = false;
 
-// Initialize WebSocket connection
+// Get the configured WebSocket IP or use default
+function getWebSocketIP() {
+  // Get the selected device from localStorage or use default (localhost)
+  const selectedDevice = localStorage.getItem('selectedDeviceIP') || 'localhost';
+  
+  // If using "localhost", replace with the current hostname when not in development
+  if (selectedDevice === 'localhost' && 
+      window.location.hostname !== 'localhost' && 
+      window.location.hostname !== '127.0.0.1') {
+    return window.location.hostname;
+  }
+  
+  return selectedDevice;
+}
+
+// Initialize WebSocket connection with device selection support
 function initWebSocket() {
-  // Don't reconnect if already connecting or connected
+  // Show connection debug information
+  console.log("🔌 WEBSOCKET CONNECTION ATTEMPT");
+  console.log("Protocol:", window.location.protocol);
+  console.log("Host:", window.location.hostname);
+  console.log("Port:", window.location.port);
+  
+  // Don't reconnect if already connecting
   if (isConnecting) {
     console.log("Already attempting to connect WebSocket, skipping duplicate request");
-    return;
-  }
-  if (websocket && websocket.readyState === WebSocket.OPEN) {
-    console.log("WebSocket already connected, skipping reconnection");
     return;
   }
   
@@ -27,46 +45,74 @@ function initWebSocket() {
   // Close existing connection if any
   if (websocket) {
     try { 
-      console.log("Closing existing WebSocket connection before creating new one");
       websocket.close(); 
-    } 
-    catch (e) { console.error('Error closing WebSocket:', e); }
+      websocket = null;
+    } catch (e) { 
+      console.error('Error closing WebSocket:', e); 
+    }
   }
   
-  // Create WebSocket connection
   try {
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
-    console.log(`Connecting to WebSocket at ${wsUrl}`);
+    // Get the configured WebSocket IP
+    const deviceIP = getWebSocketIP();
     
+    // Determine protocol (ws:// or wss://)
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    
+    // Build WebSocket URL with configured IP
+    const wsUrl = `${wsProtocol}//${deviceIP}/ws`;
+    console.log(`Connecting to WebSocket at: ${wsUrl} (Device: ${deviceIP})`);
+    
+    // Create new WebSocket with the URL
     websocket = new WebSocket(wsUrl);
     
-    websocket.onopen = () => {
-      console.log('WebSocket connected successfully!');
+    // Make websocket available globally for debugging
+    window.websocket = websocket;
+    
+    // Update the connection status display
+    updateConnectionStatusDisplay('connecting', deviceIP);
+    
+    // Set up event handlers
+    websocket.onopen = function() {
+      console.log("✅ WebSocket connected successfully!");
       isConnecting = false;
       reconnectAttempts = 0;
       websocketConnected = true;
+      window.websocketConnected = true; // Global flag for debugging
       
-      // Update UI to show connected state
-      const connectionStatus = document.getElementById('connection-status');
-      if (connectionStatus) {
-        connectionStatus.textContent = 'Connected';
-        connectionStatus.className = 'connected';
-      }
+      // Update connection status display
+      updateConnectionStatusDisplay('connected', deviceIP);
       
       // Request initial data
       requestPsuStatus();
-      setTimeout(() => {
-        requestOperatingMode();
-      }, 1000); // Add delay before requesting operating mode
+      setTimeout(requestOperatingMode, 500);
+      
+      // Show success notification
+      alert(`Successfully connected to ${deviceIP}`);
     };
     
-    websocket.onclose = handleDisconnect;
-    websocket.onerror = handleError;
-    websocket.onmessage = handleMessage;
+    websocket.onclose = function(event) {
+      console.log(`WebSocket closed with code: ${event.code}`);
+      updateConnectionStatusDisplay('disconnected', deviceIP);
+      handleDisconnect();
+    };
+    
+    websocket.onerror = function(error) {
+      console.error("❌ WebSocket error:", error);
+      updateConnectionStatusDisplay('error', deviceIP);
+      handleError(error);
+    };
+    
+    websocket.onmessage = function(event) {
+      handleMessage(event);
+    };
   } catch (error) {
-    console.error('Error creating WebSocket:', error);
+    console.error("⚠️ Error creating WebSocket:", error);
+    updateConnectionStatusDisplay('error', getWebSocketIP());
     handleDisconnect();
+    
+    // Show detailed error
+    alert(`Failed to connect to ${getWebSocketIP()}: ${error.message}`);
   }
 }
 
@@ -145,37 +191,110 @@ function requestOperatingMode() {
   return sendCommand({ action: 'getOperatingMode' });
 }
 
-// Send a command through the WebSocket with fixed error handling
+// Modified sendCommand with better error handling
 function sendCommand(command) {
+  // Debug which command is being sent
+  console.log("🔼 Sending command:", command);
+  
   if (!websocket) {
-    console.log("WebSocket not initialized, attempting to connect");
+    console.error("❌ WebSocket not initialized");
+    // Try to connect
     initWebSocket();
+    
+    // Queue command to send after connection
+    if (command.action !== 'getStatus') { // Avoid queuing status requests
+      setTimeout(() => {
+        if (websocketConnected) sendCommand(command);
+      }, 1000);
+    }
     return false;
   }
   
   if (websocket.readyState === WebSocket.OPEN) {
     try {
       const commandStr = JSON.stringify(command);
-      console.log("Sending command:", commandStr);
       websocket.send(commandStr);
       return true;
     } catch (e) {
-      console.error('Error sending command:', e);
+      console.error("❌ Error sending command:", e);
       websocketConnected = false;
       return false;
     }
-  } else if (websocket.readyState === WebSocket.CONNECTING) {
-    console.log("WebSocket is connecting, command will be queued");
-    // Queue command to be sent when connected
-    setTimeout(() => {
-      sendCommand(command);
-    }, 1000);
-    return false;
   } else {
-    console.log("WebSocket not connected (state: " + websocket.readyState + "), attempting reconnect");
-    websocketConnected = false;
-    initWebSocket();
+    // Try HTTP fallback for important commands
+    if (command.action !== 'getStatus' && command.action !== 'getOperatingMode') {
+      useFallbackHttp(command);
+    }
+    
+    // If closed, try to reconnect
+    if (websocket.readyState === WebSocket.CLOSED) {
+      console.log("⚠️ WebSocket closed, attempting to reconnect");
+      initWebSocket();
+    } else {
+      console.log(`⚠️ WebSocket not ready (state: ${websocket.readyState})`);
+    }
     return false;
+  }
+}
+
+// Fallback to HTTP API when WebSocket fails
+function useFallbackHttp(command) {
+  console.log("ℹ️ Using HTTP fallback for command:", command);
+  
+  let url = '/api/';
+  let method = 'GET';
+  let body = null;
+  
+  // Map WebSocket commands to REST API endpoints
+  switch (command.action) {
+    case 'setOutputState':
+      url += 'power';
+      method = 'POST';
+      body = { enable: command.enabled };
+      break;
+    case 'setVoltage':
+      url += 'voltage';
+      method = 'POST';
+      body = { voltage: command.voltage };
+      break;
+    case 'setCurrent':
+      url += 'current';
+      method = 'POST';
+      body = { current: command.current };
+      break;
+    case 'getStatus':
+      url += 'data';
+      break;
+    default:
+      console.warn("⚠️ No HTTP fallback for command:", command.action);
+      return;
+  }
+  
+  // Send HTTP request
+  if (method === 'GET') {
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        console.log("✅ HTTP fallback success:", data);
+        updateUI(data);
+      })
+      .catch(err => console.error("❌ HTTP fallback error:", err));
+  } else {
+    fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log("✅ HTTP fallback success:", data);
+        // Get updated data
+        fetch('/api/data')
+          .then(response => response.json())
+          .then(data => updateUI(data))
+          .catch(err => console.error("❌ Error fetching data:", err));
+      })
+      .catch(err => console.error("❌ HTTP fallback error:", err));
   }
 }
 
@@ -229,23 +348,113 @@ function updateModeSettingsDisplay(data) {
 
 // Start periodic status updates
 function startPeriodicUpdates() {
-  // Initial request
-  requestPsuStatus();
+  console.log("⏱️ Starting periodic updates");
   
-  // Set up recurring updates
+  // Initially try HTTP if WebSocket isn't connected
+  if (!websocketConnected) {
+    console.log("ℹ️ WebSocket not connected, using HTTP for initial data");
+    fetch('/api/data')
+      .then(response => response.json())
+      .then(data => {
+        updateUI(data);
+        console.log("✅ Initial HTTP data loaded");
+      })
+      .catch(err => console.error("❌ Error fetching initial data:", err));
+  }
+  
+  // Set up recurring updates with WebSocket or HTTP fallback
   setInterval(() => {
     if (websocketConnected) {
       requestPsuStatus();
+    } else {
+      // Try to reconnect WebSocket first
+      if (reconnectAttempts < maxReconnectAttempts) {
+        console.log("🔄 Trying to reconnect WebSocket...");
+        initWebSocket();
+      }
+      
+      // Use HTTP fallback if not connected
+      if (!websocketConnected) {
+        console.log("ℹ️ Using HTTP fallback for status update");
+        fetch('/api/data')
+          .then(response => response.json())
+          .then(data => updateUI(data))
+          .catch(err => console.error("❌ HTTP fallback error:", err));
+      }
     }
   }, 5000);
-  
-  // Less frequent operating mode updates
-  setInterval(() => {
-    if (websocketConnected) {
-      requestOperatingMode();
-    }
-  }, 10000);
 }
+
+// Update the connection status display in the UI - improved with better visual feedback
+function updateConnectionStatusDisplay(status, deviceIP) {
+  const statusElement = document.getElementById('websocket-status');
+  const deviceElement = document.getElementById('connected-device');
+  
+  if (!statusElement || !deviceElement) return;
+  
+  // Update status text and styles
+  switch(status) {
+    case 'connected':
+      statusElement.textContent = 'Connected';
+      statusElement.className = 'text-success font-bold';
+      break;
+    case 'connecting':
+      statusElement.textContent = 'Connecting...';
+      statusElement.className = 'text-secondary font-bold';
+      break;
+    case 'disconnected':
+      statusElement.textContent = 'Disconnected';
+      statusElement.className = 'text-danger font-bold';
+      break;
+    case 'error':
+      statusElement.textContent = 'Connection Error';
+      statusElement.className = 'text-danger font-bold';
+      break;
+  }
+  
+  // Update device IP display
+  deviceElement.textContent = deviceIP;
+  
+  // Save connected device to make it easier to reconnect
+  if (status === 'connected') {
+    localStorage.setItem('lastConnectedIP', deviceIP);
+  }
+}
+
+// Connect to a specific device IP
+function connectToDevice(deviceIP) {
+  if (!deviceIP) return false;
+  
+  console.log(`Switching to device: ${deviceIP}`);
+  
+  // Save the selected device
+  localStorage.setItem('selectedDeviceIP', deviceIP);
+  
+  // Close any existing connection
+  if (websocket) {
+    try {
+      websocket.close();
+      websocket = null;
+    } catch (e) {
+      console.error('Error closing WebSocket:', e);
+    }
+  }
+  
+  // Reset connection state
+  websocketConnected = false;
+  isConnecting = false;
+  reconnectAttempts = 0;
+  
+  // Initialize connection to the new device
+  setTimeout(initWebSocket, 100);
+  
+  return true;
+}
+
+// Make these functions available globally for direct access
+window.initWebSocket = initWebSocket;
+window.connectToDevice = connectToDevice;
+window.getWebSocketIP = getWebSocketIP;
 
 // Export the essential functions
 export { 
@@ -257,5 +466,7 @@ export {
   updateOperatingModeDisplay, 
   updateModeSettingsDisplay,
   websocketConnected,
-  startPeriodicUpdates
+  startPeriodicUpdates,
+  connectToDevice,
+  getWebSocketIP
 };
