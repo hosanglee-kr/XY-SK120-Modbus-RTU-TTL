@@ -5,8 +5,8 @@
 /* Custom base styles that extend Tailwind */
 @layer base {
   html, body {
-    @apply h-full m-0 p-0 bg-background dark:bg-background-dark text-text dark:text-text-dark;
-    @apply font-sans transition-theme duration-300;
+    @apply h-full m-0 p-0 bg-background text-text;
+    @apply font-sans;
   }
   
   body.popup-open {
@@ -17,11 +17,11 @@
   input, select {
     @apply w-full h-input px-3 py-2 border border-border dark:border-border-dark rounded;
     @apply bg-card dark:bg-card-dark text-text dark:text-text-dark;
-    @apply transition-theme duration-300 ease-in-out text-base focus:outline-none focus:border-secondary;
+    @apply text-base focus:outline-none focus:border-secondary;
   }
   
   h1, h2 {
-    @apply text-primary dark:text-white;
+    @apply text-primary;
   }
   
   label {
@@ -29,9 +29,9 @@
   }
 
   button {
-    @apply h-input px-4 border-none rounded cursor-pointer text-white bg-gray-500;
-    @apply transition-opacity duration-300 ease-in-out flex items-center justify-center;
-    @apply hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply px-4 border-none rounded cursor-pointer text-white bg-gray-500;
+    @apply flex items-center justify-center hover:opacity-90;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
   }
 }
 
@@ -145,6 +145,11 @@
   
   .tw-dot.active {
     @apply bg-secondary transform scale-110 shadow-md;
+  }
+
+  /* Basic utilities needed for the minimal interface */
+  .card {
+    @apply bg-card rounded p-4 mb-4 border border-border;
   }
 }
 
