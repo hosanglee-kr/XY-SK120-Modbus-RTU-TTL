@@ -120,6 +120,9 @@
                     <span class="status-label">Output:</span>
                     <span class="status-value" id="output-status">--</span>
                 </div>
+                <div class="operating-mode">
+                    <span id="operatingModeDisplay">--</span>
+                </div>
                 <div class="status-controls">
                     <!-- Fixed power switch structure -->
                     <div class="power-button-container">
@@ -199,48 +202,19 @@
             </div>
         </div>
 
-        <!-- OPERATING MODE CARD -->
-        <div class="card">
-          <h2>Operating Mode</h2>
-          <div class="mode-display">
-            <div class="mode-info">
-              <span>Current Mode:</span>
-              <span id="operatingMode" class="mode-unknown">Unknown</span>
-            </div>
-            <div class="mode-value">
-              <span>Set Value:</span>
-              <span id="operatingModeValue">--</span>
-            </div>
-          </div>
-          <div class="mode-settings">
-            <div class="settings-row">
-              <span>Voltage Setting:</span>
-              <span id="voltageSetValue">-- V</span>
-            </div>
-            <div class="settings-row">
-              <span>Current Setting:</span>
-              <span id="currentSetValue">-- A</span>
-            </div>
-            <div id="powerSetSection" class="settings-row">
-              <span>Power Setting:</span>
-              <span id="powerSetValue">-- W</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- NEW OPERATION MODE CARD -->
+        <!-- NEW OPERATION MODE CARD - Fix tab-to-content mapping -->
         <div class="card">
             <h2>Operation Modes</h2>
             <div class="mode-selector">
                 <div class="mode-tabs">
-                    <button class="mode-tab active" data-mode="normal">Normal</button>
-                    <button class="mode-tab" data-mode="cv">CV</button>
+                    <!-- Remove "Normal" tab and add correct data-mode attributes -->
+                    <button class="mode-tab active" data-mode="cv">CV</button>
                     <button class="mode-tab" data-mode="cc">CC</button>
                     <button class="mode-tab" data-mode="cp">CP</button>
                 </div>
                 
-                <!-- Mode Settings (initially hidden) -->
-                <div class="mode-settings" id="cv-settings">
+                <!-- Mode Settings (fix IDs to correctly match tab data-mode) -->
+                <div class="mode-settings active" id="cv-settings">
                     <div class="form-group compact">
                         <label for="set-cv-voltage">Constant Voltage (V)</label>
                         <div class="input-with-button">
@@ -387,7 +361,6 @@
             <div class="dot active" title="Basic Control"></div>
             <div class="dot" title="Operation Modes"></div>
             <div class="dot" title="Configuration"></div>
-            <div class="dot" title="WiFi Status"></div>
         </div>
     </div>
     

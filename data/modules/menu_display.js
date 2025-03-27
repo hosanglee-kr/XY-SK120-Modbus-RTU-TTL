@@ -15,7 +15,7 @@ function updateOutputStatus(enabled) {
   updatePowerState(enabled);
 }
 
-// Update PSU UI with comprehensive data
+// Updated to handle operating mode display in status row
 function updatePsuUI(data) {
   console.log('Updating PSU UI with data:', data);
   
@@ -48,14 +48,49 @@ function updatePsuUI(data) {
     updateOutputStatus(data.outputEnabled);
   }
   
-  // Update operating mode if provided
+  // Update operating mode in status row
   if (data.operatingMode) {
-    const modeElement = document.getElementById('operatingMode');
-    if (modeElement) {
-      modeElement.textContent = data.operatingMode;
-      modeElement.className = `mode-${data.operatingMode.toLowerCase()}`;
-    }
+    updateOperatingModeDisplay(data);
   }
+}
+
+// New function to update operating mode display in status row
+function updateOperatingModeDisplay(data) {
+  const modeDisplay = document.getElementById('operatingModeDisplay');
+  
+  if (!modeDisplay) {
+    console.warn('Operating mode display element not found');
+    return;
+  }
+  
+  if (!data.operatingMode && !data.modeCode) {
+    modeDisplay.textContent = '--';
+    modeDisplay.className = '';
+    return;
+  }
+  
+  // Use modeCode if available, otherwise fallback to operatingMode
+  const modeCode = data.modeCode || data.operatingMode;
+  let displayText = modeCode;
+  let modeClass = 'mode-' + modeCode.toLowerCase();
+  
+  // Add value information based on the mode
+  if (modeCode === 'CV' && data.setValue !== undefined) {
+    displayText += ' ' + data.setValue.toFixed(2) + 'V';
+  } else if (modeCode === 'CC' && data.setValue !== undefined) {
+    displayText += ' ' + data.setValue.toFixed(3) + 'A';
+  } else if (modeCode === 'CP' && data.setValue !== undefined) {
+    displayText += ' ' + data.setValue.toFixed(1) + 'W';
+  } else if (modeCode === 'CV' && data.voltageSet !== undefined) {
+    displayText += ' ' + data.voltageSet.toFixed(2) + 'V';
+  } else if (modeCode === 'CC' && data.currentSet !== undefined) {
+    displayText += ' ' + data.currentSet.toFixed(3) + 'A';
+  } else if (modeCode === 'CP' && data.powerSet !== undefined) {
+    displayText += ' ' + data.powerSet.toFixed(1) + 'W';
+  }
+  
+  modeDisplay.textContent = displayText;
+  modeDisplay.className = modeClass;
 }
 
 // Update power button state
@@ -99,5 +134,6 @@ export {
   updateOutputStatus,
   updatePsuUI,
   updateUI,
-  updatePowerState
+  updatePowerState,
+  updateOperatingModeDisplay // Export the new function
 };

@@ -80,17 +80,17 @@
   to { opacity: 1; }
 }
 
-/* Mode-specific colors */
+/* Mode-specific colors - update to match the components.css colors */
 .mode-tab[data-mode="cv"] {
-  color: #2196F3;
+  color: #64ff00; /* Same green as CV mode in components.css */
 }
 
 .mode-tab[data-mode="cc"] {
-  color: #FF9800;
+  color: #fff500; /* Same yellow as CC mode in components.css */
 }
 
 .mode-tab[data-mode="cp"] {
-  color: #4CAF50;
+  color: #b73dff; /* Same purple as CP mode in components.css */
 }
 
 /* Key Lock Slider */

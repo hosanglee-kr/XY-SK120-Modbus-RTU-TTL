@@ -102,7 +102,7 @@ function handleMessage(event) {
       // Request updated status
       requestPsuStatus();
     } else if (data.action === 'operatingModeResponse') {
-      // Handle operating mode response
+      // Handle operating mode response in status row
       updateOperatingModeDisplay(data);
     } else {
       // Handle regular data updates
@@ -163,52 +163,24 @@ function sendCommand(command) {
   }
 }
 
-// Update operating mode display - fixed implementation
+// Update operating mode display - Updated for status row display
 function updateOperatingModeDisplay(data) {
   console.log("Updating operating mode display with data:", data);
   
-  if (!data.success) {
-    if (document.getElementById('operatingMode')) {
-      document.getElementById('operatingMode').textContent = 'Unknown';
-      document.getElementById('operatingMode').className = 'mode-unknown';
-    }
-    return;
+  // Import the new display function if it's not already available
+  if (typeof window.updateOperatingModeDisplay !== 'function') {
+    // Try to import from other modules
+    import('./menu_display.js').then(module => {
+      if (module.updateOperatingModeDisplay) {
+        module.updateOperatingModeDisplay(data);
+      }
+    }).catch(err => {
+      console.error("Could not import updateOperatingModeDisplay:", err);
+    });
+  } else {
+    // If the function is already available, call it directly
+    window.updateOperatingModeDisplay(data);
   }
-  
-  const modeElement = document.getElementById('operatingMode');
-  const modeValueElement = document.getElementById('operatingModeValue');
-  
-  if (modeElement) {
-    // Display mode name and code
-    modeElement.textContent = data.modeCode;
-    
-    // Add appropriate CSS class for styling
-    modeElement.className = `mode-${data.modeCode.toLowerCase()}`;
-  }
-  
-  // Display the current set value for that mode
-  if (modeValueElement) {
-    let valueText = '';
-    
-    switch (data.modeCode) {
-      case 'CV':
-        valueText = `${data.setValue.toFixed(2)} V`;
-        break;
-      case 'CC':
-        valueText = `${data.setValue.toFixed(3)} A`;
-        break;
-      case 'CP':
-        valueText = `${data.setValue.toFixed(1)} W`;
-        break;
-      default:
-        valueText = '--';
-    }
-    
-    modeValueElement.textContent = valueText;
-  }
-  
-  // Update mode settings display
-  updateModeSettingsDisplay(data);
 }
 
 // Update mode settings display

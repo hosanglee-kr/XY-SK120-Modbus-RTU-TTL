@@ -419,14 +419,27 @@ button.danger {
   padding: 8px 12px;
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  color: var(--text-color);
   opacity: 0.7;
   font-weight: bold;
   transition: all 0.3s ease;
+  height: 40px; /* Standardized height */
+}
+
+/* Update mode-specific colors to exactly match the reading and status row colors */
+.mode-tab[data-mode="cv"] {
+  color: #64ff00; /* Exact same green as voltage reading and CV mode display */
+}
+
+.mode-tab[data-mode="cc"] {
+  color: #fff500; /* Exact same yellow as current reading and CC mode display */
+}
+
+.mode-tab[data-mode="cp"] {
+  color: #b73dff; /* Exact same purple as power reading and CP mode display */
 }
 
 .mode-tab.active {
-  border-bottom: 2px solid var(--secondary-color);
+  border-bottom: 2px solid currentColor; /* Use the same color as the text */
   opacity: 1;
 }
 
@@ -475,17 +488,17 @@ button.danger {
 /* Specific colors for each reading type */
 .reading-item.voltage .reading-value,
 .reading-item.voltage .reading-unit {
-  color: #64ff00; /* Green from logo top */
+  color: #64ff00; /* Same green used for CV mode */
 }
 
 .reading-item.current .reading-value,
 .reading-item.current .reading-unit {
-  color: #fff500; /* Yellow from logo bottom */
+  color: #fff500; /* Same yellow used for CC mode */
 }
 
 .reading-item.power .reading-value,
 .reading-item.power .reading-unit {
-  color: #b73dff; /* Purple from logo stroke */
+  color: #b73dff; /* Same purple used for CP mode */
 }
 
 /* Status indicators */
@@ -2137,5 +2150,84 @@ body.popup-open .readings-container {
   .power-switch .switch-container {
     width: 46px;
     height: 24px;
+  }
+}
+
+/* Operating Mode display in status row */
+.operating-mode {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  margin: 0 10px;
+  font-size: 0.95rem;
+}
+
+#operatingModeDisplay {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+#operatingModeDisplay.mode-cv {
+  color: #64ff00; /* Green for CV mode */
+}
+
+#operatingModeDisplay.mode-cc {
+  color: #fff500; /* Yellow for CC mode */
+}
+
+#operatingModeDisplay.mode-cp {
+  color: #b73dff; /* Purple for CP mode */
+}
+
+[data-theme="dark"] #operatingModeDisplay {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Adjust status row to fit operating mode */
+.status-row {
+  display: flex;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
+  justify-content: space-between;
+  padding: 8px 0;
+  margin-bottom: 3px;
+  flex-wrap: nowrap;
+}
+
+.status-info {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+.operating-mode {
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+.status-controls {
+  flex: 0 0 auto;
+}
+
+/* Mobile adjustments for status row */
+@media (max-width: 600px) {
+  .status-row {
+    padding: 8px 5px;
+    gap: 5px;
+  }
+  
+  .status-info {
+    flex: 0 0 auto;
+  }
+  
+  .operating-mode {
+    flex: 1 1 auto;
+    font-size: 0.9rem;
+  }
+  
+  #operatingModeDisplay {
+    padding: 2px 6px;
   }
 }

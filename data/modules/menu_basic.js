@@ -432,32 +432,40 @@ function disableCpMode() {
   }
 }
 
-// Handle operation mode tabs
+// Handle operation mode tabs - replaced by the improved version in menu_interface.js
 function initModeTabs() {
-  const tabs = document.querySelectorAll('.mode-tab');
-  const modeSettings = document.querySelectorAll('.mode-settings');
-  
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      // Deactivate all tabs
-      tabs.forEach(t => t.classList.remove('active'));
-      
-      // Hide all settings
+  // This function is now obsolete - the complete implementation is in setupOperatingModeTabs
+  // in menu_interface.js. Just calling that function instead.
+  if (typeof window.setupOperatingModeTabs === 'function') {
+    window.setupOperatingModeTabs();
+  } else {
+    console.log('Using simplified mode tab init as a fallback');
+    
+    const tabs = document.querySelectorAll('.mode-tab');
+    const modeSettings = document.querySelectorAll('.mode-settings');
+    
+    // Just make sure at least one tab is active
+    let hasActive = false;
+    tabs.forEach(tab => {
+      if (tab.classList.contains('active')) hasActive = true;
+    });
+    
+    if (!hasActive && tabs.length > 0) {
+      tabs[0].classList.add('active');
+    }
+    
+    // Show settings for the active tab
+    const activeTab = document.querySelector('.mode-tab.active');
+    if (activeTab) {
+      const mode = activeTab.getAttribute('data-mode');
       modeSettings.forEach(setting => setting.classList.remove('active'));
       
-      // Activate the clicked tab
-      tab.classList.add('active');
-      
-      // Show the corresponding settings
-      const mode = tab.getAttribute('data-mode');
-      if (mode !== 'normal') {
-        const modeElement = document.getElementById(`${mode}-settings`);
-        if (modeElement) {
-          modeElement.classList.add('active');
-        }
+      if (mode) {
+        const targetSetting = document.getElementById(`${mode}-settings`);
+        if (targetSetting) targetSetting.classList.add('active');
       }
-    });
-  });
+    }
+  }
 }
 
 // Fix power button initialization

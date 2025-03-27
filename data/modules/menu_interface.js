@@ -76,7 +76,7 @@ function setupMobileView() {
   setupTouchHandlers();
 }
 
-// Update dot indicators to include Operation Mode card
+// Update dot indicators to match the number of cards
 function updateDotIndicators(dots) {
   if (!dots) dots = document.querySelectorAll('.dot');
   
@@ -227,49 +227,57 @@ function setupOperatingModeTabs() {
   
   console.log('Setting up operation mode tabs:', modeTabs.length, 'tabs found');
   
-  // Initially hide all settings panels except the active one
+  // Initially show only the first settings panel (CV by default)
   modeSettings.forEach((panel, index) => {
-    panel.style.display = index === 0 ? 'block' : 'none';
+    panel.classList.remove('active');
   });
+  document.getElementById('cv-settings').classList.add('active');
+  
+  // Set first tab (CV) as active
+  modeTabs.forEach(tab => tab.classList.remove('active'));
+  document.querySelector('.mode-tab[data-mode="cv"]').classList.add('active');
   
   // Add click event listeners to tabs
-  modeTabs.forEach((tab, index) => {
+  modeTabs.forEach(tab => {
     tab.addEventListener('click', () => {
       // Update active tab
       modeTabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       
-      // Show corresponding settings panel
-      modeSettings.forEach((panel, i) => {
-        panel.style.display = i === index ? 'block' : 'none';
-      });
-      
       // Get the mode from the data attribute
       const mode = tab.getAttribute('data-mode');
       console.log('Selected mode:', mode);
       
-      // If not selecting 'normal', set the operating mode
-      if (mode !== 'normal') {
-        // If it's a "CP" mode tab, enable CP mode first
-        if (mode === 'cp') {
-          console.log('Enabling CP mode');
-          sendCommand({ action: 'setConstantPowerMode', enable: true });
-        } else if (mode !== 'normal') {
-          // For CV/CC modes, ensure CP mode is disabled
-          console.log('Disabling CP mode for', mode, 'mode');
-          sendCommand({ action: 'setConstantPowerMode', enable: false });
-        }
-        
-        // Request an update after a short delay
-        setTimeout(() => {
-          requestPsuStatus();
-          requestOperatingMode();
-        }, 500);
+      // Show corresponding settings panel based on mode
+      modeSettings.forEach(panel => {
+        panel.classList.remove('active');
+      });
+      
+      // Find and activate the correct panel
+      const targetPanel = document.getElementById(`${mode}-settings`);
+      if (targetPanel) {
+        targetPanel.classList.add('active');
       }
+      
+      // Set the operating mode
+      if (mode === 'cp') {
+        console.log('Enabling CP mode');
+        sendCommand({ action: 'setConstantPowerMode', enable: true });
+      } else {
+        // For CV/CC modes, ensure CP mode is disabled
+        console.log('Disabling CP mode for', mode, 'mode');
+        sendCommand({ action: 'setConstantPowerMode', enable: false });
+      }
+      
+      // Request an update after a short delay
+      setTimeout(() => {
+        requestPsuStatus();
+        requestOperatingMode();
+      }, 500);
     });
   });
   
-  // Set up mode setting application buttons
+  // Setup operating mode setters
   setupOperatingModeSetters();
 }
 
