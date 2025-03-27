@@ -1,57 +1,60 @@
 import { elements } from './elements_registry.js';
 
-// Initialize theme based on saved preference
-function initTheme() {
-  const body = document.body;
-  const themeToggle = document.getElementById('theme-toggle');
+/**
+ * Theme management module
+ */
+
+// Initialize theme toggle
+function initThemeToggle() {
   const themeCheckbox = document.getElementById('theme-checkbox');
-  const moonIcon = document.querySelector('.moon-icon');
-  const sunIcon = document.querySelector('.sun-icon');
+  const themeSlider = document.getElementById('theme-slider');
   
-  // Function to set theme
-  function setTheme(theme) {
-    if (theme === 'dark') {
-      body.setAttribute('data-theme', 'dark');
-      if (moonIcon) moonIcon.style.display = 'none';
-      if (sunIcon) sunIcon.style.display = 'block';
-      if (themeCheckbox) themeCheckbox.checked = true;
+  if (!themeCheckbox || !themeSlider) {
+    console.error('Theme toggle elements not found');
+    return;
+  }
+  
+  // Apply saved theme on page load
+  const savedTheme = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeCheckbox.checked = true;
+    themeSlider.classList.add('active');
+    updateMetaThemeColor('#1a2530');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    themeCheckbox.checked = false;
+    themeSlider.classList.remove('active');
+    updateMetaThemeColor('#ecf0f1');
+  }
+  
+  // Toggle theme when slider is clicked
+  themeSlider.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    if (isDark) {
+      document.documentElement.setAttribute('data-theme', 'light');
+      localStorage.setItem('theme', 'light');
+      themeCheckbox.checked = false;
+      themeSlider.classList.remove('active');
+      updateMetaThemeColor('#ecf0f1');
     } else {
-      body.removeAttribute('data-theme');
-      if (moonIcon) moonIcon.style.display = 'block';
-      if (sunIcon) sunIcon.style.display = 'none';
-      if (themeCheckbox) themeCheckbox.checked = false;
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+      themeCheckbox.checked = true;
+      themeSlider.classList.add('active');
+      updateMetaThemeColor('#1a2530');
     }
-    
-    // Update theme-color meta tag for mobile browsers
-    const themeColorMeta = document.getElementById('theme-color');
-    if (themeColorMeta) {
-      themeColorMeta.content = theme === 'dark' ? '#121212' : '#2c3e50';
-    }
-    
-    // Save the theme preference
-    localStorage.setItem('theme', theme);
-  }
-  
-  // Get saved theme preference
-  const savedTheme = localStorage.getItem('theme') || 'light';
-  
-  // Apply saved theme
-  setTheme(savedTheme);
-  
-  // Add event listeners
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      const currentTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      setTheme(currentTheme);
-    });
-  }
-  
-  // Add event listener for checkbox
-  if (themeCheckbox) {
-    themeCheckbox.addEventListener('change', () => {
-      const currentTheme = themeCheckbox.checked ? 'dark' : 'light';
-      setTheme(currentTheme);
-    });
+  });
+}
+
+// Update meta theme color for mobile browser
+function updateMetaThemeColor(color) {
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', color);
   }
 }
 
@@ -101,4 +104,4 @@ function setTheme(theme) {
   updateLogoColor();
 }
 
-export { initTheme, toggleTheme, updateLogoColor, setTheme };
+export { initThemeToggle, toggleTheme, updateLogoColor, setTheme, updateMetaThemeColor };

@@ -157,3 +157,37 @@ button.danger {
   flex: 1;
   margin: 0;
 }
+
+/* Fix for power button in header */
+.header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.power-button-container {
+  margin-left: 10px;
+}
+
+/* Media query for mobile view */
+@media (max-width: 600px) {
+  .power-switch {
+    transform: scale(0.9);
+  }
+  
+  .key-switch .switch-container {
+    width: 50px;
+  }
+  
+  .key-switch .switch-slider.active:before {
+    transform: translateX(20px);
+  }
+  
+  .theme-switch .switch-container {
+    width: 50px;
+  }
+  
+  .theme-switch input:checked + .switch-slider:before {
+    transform: translateX(20px);
+  }
+}
