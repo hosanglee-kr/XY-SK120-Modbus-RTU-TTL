@@ -389,6 +389,63 @@
             border-bottom-color: #b73dff !important;
             color: #b73dff !important;
         }
+
+        /* Responsive scaling for readings display */
+        @media (max-width: 640px) {
+            .readings-row {
+                font-size: clamp(0.7rem, 2vw, 1rem);
+            }
+            
+            .readings-row .text-2xl {
+                font-size: clamp(1.2rem, 4vw, 1.5rem);
+            }
+            
+            .readings-row .text-sm {
+                font-size: clamp(0.7rem, 2vw, 0.875rem);
+            }
+            
+            .readings-row .sm\:text-4xl {
+                font-size: clamp(1.5rem, 5vw, 2.25rem);
+            }
+            
+            .readings-row .sm\:text-xl {
+                font-size: clamp(0.8rem, 2.5vw, 1.25rem);
+            }
+            
+            .readings-row p {
+                margin-bottom: 0;
+                line-height: 1.2;
+            }
+        }
+        
+        /* Compact readings display */
+        .readings-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            width: 100%;
+            gap: 4px;
+        }
+        
+        .reading-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.25rem;
+            text-align: center;
+        }
+        
+        .reading-item p:first-child {
+            margin-bottom: 0.25rem;
+        }
+        
+        /* Readings separators - more compact */
+        .readings-separator:not(:last-child)::after {
+            right: -2px;
+            top: 25%;
+            height: 50%;
+            width: 1px;
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 h-full transition-colors duration-200">
@@ -480,31 +537,31 @@
                 </div>
                 
                 <!-- Readings display -->
-                <div class="px-6 py-4">
-                    <!-- Readings Display -->
-                    <div class="grid grid-cols-4 gap-2 sm:gap-6 text-center">
-                        <div class="relative readings-separator">
-                            <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">Voltage</p>
-                            <p class="text-2xl sm:text-4xl font-bold voltage-value dark:dark:voltage-value">
-                                <span id="psu-voltage">--</span> <span class="text-sm sm:text-xl">V</span>
+                <div class="px-4 py-2 sm:px-6 sm:py-4">
+                    <!-- Readings Display - using grid for consistent layout -->
+                    <div class="readings-row">
+                        <div class="reading-item readings-separator">
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Voltage</p>
+                            <p class="text-xl sm:text-3xl font-bold voltage-value dark:dark:voltage-value">
+                                <span id="psu-voltage">--</span><span class="text-sm sm:text-base">V</span>
                             </p>
                         </div>
-                        <div class="relative readings-separator">
-                            <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">Current</p>
-                            <p class="text-2xl sm:text-4xl font-bold current-value dark:dark:current-value">
-                                <span id="psu-current">--</span> <span class="text-sm sm:text-xl">A</span>
+                        <div class="reading-item readings-separator">
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Current</p>
+                            <p class="text-xl sm:text-3xl font-bold current-value dark:dark:current-value">
+                                <span id="psu-current">--</span><span class="text-sm sm:text-base">A</span>
                             </p>
                         </div>
-                        <div class="relative readings-separator">
-                            <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">Power</p>
-                            <p class="text-2xl sm:text-4xl font-bold power-value dark:dark:power-value">
-                                <span id="psu-power">--</span> <span class="text-sm sm:text-xl">W</span>
+                        <div class="reading-item readings-separator">
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Power</p>
+                            <p class="text-xl sm:text-3xl font-bold power-value dark:dark:power-value">
+                                <span id="psu-power">--</span><span class="text-sm sm:text-base">W</span>
                             </p>
                         </div>
-                        <!-- New Mode display as a primary reading -->
-                        <div class="relative">
-                            <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">Mode</p>
-                            <p class="text-2xl sm:text-4xl font-bold">
+                        <!-- Mode display as a primary reading -->
+                        <div class="reading-item">
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Mode</p>
+                            <p class="text-xl sm:text-3xl font-bold">
                                 <span id="mode-display-value" class="text-gray-500">--</span>
                             </p>
                         </div>
