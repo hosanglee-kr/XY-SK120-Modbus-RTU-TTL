@@ -388,7 +388,7 @@ function useFallbackHttp(command) {
   }
 }
 
-// Direct UI update for operating mode - Simplified version
+// Direct UI update for operating mode - Enhanced with background color and fix for persistence
 function updateOperatingModeUI(mode, setValue) {
   // Get the operating mode display element
   const modeDisplay = document.getElementById('operatingModeDisplay');
@@ -410,13 +410,27 @@ function updateOperatingModeUI(mode, setValue) {
     }
   }
   
-  console.log("Setting operating mode display text to:", displayText);
+  // Remove existing mode classes first
+  modeDisplay.classList.remove('mode-cv-bg', 'mode-cc-bg', 'mode-cp-bg', 'text-gray-400', 'dark:text-gray-400');
+  
+  // Update the text before applying the new class to ensure it renders properly
   modeDisplay.textContent = displayText;
   
-  // Add visual feedback
-  modeDisplay.classList.add('bg-gray-200', 'dark:bg-gray-700');
+  // Now apply the appropriate mode class based on the mode
+  if (mode === 'CV') {
+    modeDisplay.classList.add('mode-cv-bg');
+  } else if (mode === 'CC') {
+    modeDisplay.classList.add('mode-cc-bg');
+  } else if (mode === 'CP') {
+    modeDisplay.classList.add('mode-cp-bg');
+  }
+  
+  // Add a pulse animation for visual feedback without changing the background color
+  modeDisplay.classList.add('mode-pulse');
+  
+  // Remove the pulse animation after it completes
   setTimeout(() => {
-    modeDisplay.classList.remove('bg-gray-200', 'dark:bg-gray-700');
+    modeDisplay.classList.remove('mode-pulse');
   }, 300);
 }
 

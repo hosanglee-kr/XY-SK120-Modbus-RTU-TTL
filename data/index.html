@@ -91,6 +91,77 @@
         .current-value { color: #fff500; }
         .power-value { color: #b73dff; }
         
+        /* Mode display backgrounds with consistent text colors - fixed to prevent overrides */
+        .mode-cv-bg {
+            background-color: #64ff00;
+            color: #000000 !important; /* Black text for bright background */
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        .mode-cc-bg {
+            background-color: #fff500;
+            color: #000000 !important; /* Black text for bright background */
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        .mode-cp-bg {
+            background-color: #b73dff;
+            color: #ffffff !important; /* White text for dark background */
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        /* Output status display styling to match mode display */
+        .output-on-bg {
+            background-color: #2ecc71; /* Success green */
+            color: #ffffff !important; /* White text */
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        .output-off-bg {
+            background-color: #e74c3c; /* Danger red */
+            color: #ffffff !important; /* White text */
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        /* Ensure no Tailwind override on our custom styles */
+        .mode-cv-bg, .mode-cc-bg, .mode-cp-bg, .output-on-bg, .output-off-bg {
+            --tw-text-opacity: 1 !important;
+            text-align: center;
+            display: inline-block;
+            min-width: 85px;
+        }
+        
+        /* Pulse animation for mode updates */
+        @keyframes mode-pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .mode-pulse {
+            animation: mode-pulse 0.3s ease-in-out;
+        }
+        
+        /* Status display row alignment */
+        .status-display-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .status-display-item p:first-child {
+            margin-bottom: 0.25rem;
+        }
+        
         /* Dark mode overrides */
         .dark .dark\:voltage-value { color: #64ff00; }
         .dark .dark\:current-value { color: #fff500; }
@@ -246,16 +317,16 @@
                         </div>
                     </div>
                     
-                    <!-- Status display -->
+                    <!-- Status display - Modified for consistent alignment -->
                     <div class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4 text-sm">
-                        <div class="flex items-center">
-                            <div class="mr-6">
+                        <div class="flex items-center space-x-6">
+                            <div class="status-display-item">
                                 <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Output</p>
-                                <p id="output-status" class="text-base sm:text-xl font-semibold status-value">--</p>
+                                <p id="output-status" class="text-base sm:text-xl inline-block">--</p>
                             </div>
-                            <div>
+                            <div class="status-display-item">
                                 <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Mode</p>
-                                <p id="operatingModeDisplay" class="text-base sm:text-xl font-semibold">--</p>
+                                <p id="operatingModeDisplay" class="text-base sm:text-xl inline-block">--</p>
                             </div>
                         </div>
                         <div>

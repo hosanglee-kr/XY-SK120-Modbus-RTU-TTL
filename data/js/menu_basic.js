@@ -68,10 +68,24 @@ function syncPowerToggleWithActualState() {
 function updateOutputStatusDisplay(isOn) {
     const outputStatus = document.getElementById('output-status');
     if (outputStatus) {
+        // Update text content
         outputStatus.textContent = isOn ? "ON" : "OFF";
-        outputStatus.className = isOn ? 
-            "text-base sm:text-xl font-semibold text-success" : 
-            "text-base sm:text-xl font-semibold text-danger";
+        
+        // Remove previous classes
+        outputStatus.classList.remove('output-on-bg', 'output-off-bg', 'text-success', 'text-danger');
+        
+        // Add appropriate background class for consistent styling with mode display
+        if (isOn) {
+            outputStatus.classList.add('output-on-bg');
+        } else {
+            outputStatus.classList.add('output-off-bg');
+        }
+        
+        // Add a pulse animation for visual feedback
+        outputStatus.classList.add('mode-pulse');
+        setTimeout(() => {
+            outputStatus.classList.remove('mode-pulse');
+        }, 300);
     }
 }
 
@@ -198,14 +212,12 @@ function handleBasicMessages(event) {
         setTimeout(() => requestOperatingMode(), 300);
     }
     
-    // Handle mode responses - SIMPLE VERSION
+    // Handle mode responses
     if (data.action === 'operatingModeResponse' && data.success === true) {
         const mode = data.modeCode || data.operatingMode;
         const setValue = data.setValue;
         
         if (mode) {
-            console.log("Received operating mode in menu_basic.js:", mode);
-            
             // Update the operating mode display directly
             const modeDisplay = document.getElementById('operatingModeDisplay');
             if (modeDisplay) {
@@ -221,7 +233,26 @@ function handleBasicMessages(event) {
                     }
                 }
                 
+                // Remove all mode classes first
+                modeDisplay.classList.remove('mode-cv-bg', 'mode-cc-bg', 'mode-cp-bg');
+                
+                // Update text content before applying the class
                 modeDisplay.textContent = displayText;
+                
+                // Add the appropriate mode class
+                if (mode === 'CV') {
+                    modeDisplay.classList.add('mode-cv-bg');
+                } else if (mode === 'CC') {
+                    modeDisplay.classList.add('mode-cc-bg');
+                } else if (mode === 'CP') {
+                    modeDisplay.classList.add('mode-cp-bg');
+                }
+                
+                // Add pulse animation for feedback
+                modeDisplay.classList.add('mode-pulse');
+                setTimeout(() => {
+                    modeDisplay.classList.remove('mode-pulse');
+                }, 300);
             }
             
             highlightActiveOperatingMode(mode);
@@ -483,20 +514,40 @@ export function toggleKeyLock(shouldLock) {
     }
 }
 
-// Call directly from HTML button for debugging - SIMPLIFIED version
+// Call directly from HTML button for debugging - ENHANCED with proper class handling
 export function debugOperatingMode() {
     console.log("Manual operating mode debug request");
     const modeDisplay = document.getElementById('operatingModeDisplay');
     if (modeDisplay) {
+        // Store original classes before changing
+        const originalClasses = [...modeDisplay.classList];
+        
+        // Remove only animation classes, preserve mode classes for consistency
+        modeDisplay.classList.remove('mode-pulse');
+        
+        // Show loading state without removing mode classes
+        const originalText = modeDisplay.textContent;
         modeDisplay.textContent = "Requesting...";
-        modeDisplay.classList.add('bg-gray-200', 'dark:bg-gray-700');
+        
+        // Add temporary loading style
+        modeDisplay.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-900', 'dark:text-gray-100');
+        
+        // Create timeout to restore original state if request fails
+        const timeoutId = setTimeout(() => {
+            // Restore original text and remove temporary styles
+            modeDisplay.textContent = originalText;
+            modeDisplay.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-900', 'dark:text-gray-100');
+        }, 3000);
+        
+        // Store data for potential cleanup
+        window._operatingModeRequestData = {
+            originalText: originalText,
+            timeoutId: timeoutId
+        };
     }
     
     // Send the request
-    const result = requestOperatingMode();
-    console.log("Operating mode request result:", result);
-    
-    return result;
+    return requestOperatingMode();
 }
 
 // Make functions available globally for direct HTML access
