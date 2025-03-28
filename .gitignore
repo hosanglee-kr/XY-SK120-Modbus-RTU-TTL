@@ -37,3 +37,6 @@ old/
 # For restore to working firmware v0.1
 !firmware_v0.1.bin
 !littlefs_webUI_v0.1.bin
+
+# temp paste file
+temp-paste-file

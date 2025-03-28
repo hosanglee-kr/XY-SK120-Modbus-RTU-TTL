@@ -110,104 +110,27 @@
             background-color: #4b5563;
         }
         
-        /* Card swipe transition styles */
-        @media (max-width: 640px) {
-            .card-container {
-                position: relative;
-                height: calc(100vh - 140px);
-                overflow: hidden;
-            }
-            
-            .swipeable-card {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                overflow-y: auto;
-                transform: translateX(100%);
-                opacity: 0;
-                transition: transform 0.3s ease, opacity 0.3s ease;
-                display: none;
-            }
-            
-            .swipeable-card.active {
-                transform: translateX(0);
-                opacity: 1;
-                display: block;
-            }
-            
-            .swipeable-card.previous {
-                transform: translateX(-100%);
-                opacity: 0;
-                display: block;
-            }
-            
-            .swipeable-card.next {
-                transform: translateX(100%);
-                opacity: 0;
-                display: block;
-            }
-            
-            /* Compact readings styles */
-            .compact-readings {
-                position: sticky;
-                top: 0;
-                z-index: 10;
-                background-color: #fff;
-                border-bottom: 1px solid #e5e7eb;
-                padding: 0.5rem;
-                margin: -1px;
-                border-radius: 0.5rem 0.5rem 0 0;
-            }
-            
-            .dark .compact-readings {
-                background-color: #1e293b;
-                border-color: #475569;
-            }
-            
-            .dot-indicators {
-                position: fixed;
-                bottom: 1rem;
-                left: 0;
-                right: 0;
-                display: flex;
-                justify-content: center;
-                z-index: 50;
-            }
-            
-            .dot {
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                background-color: #cbd5e1;
-                margin: 0 4px;
-                transition: all 0.3s ease;
-            }
-            
-            .dark .dot {
-                background-color: #64748b;
-            }
-            
-            .dot.active {
-                width: 24px;
-                border-radius: 4px;
-                background-color: #3498db;
-            }
+        /* Compact readings styles */
+        .compact-readings {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0.5rem;
+            margin: -1px;
+            border-radius: 0.5rem 0.5rem 0 0;
         }
         
-        @media (min-width: 641px) {
-            .card-container {
-                display: block;
-            }
-            
-            .swipeable-card {
-                margin-bottom: 1.5rem;
-            }
-            
-            .dot-indicators {
-                display: none;
-            }
+        .dark .compact-readings {
+            background-color: #1e293b;
+            border-color: #475569;
+        }
+        
+        /* Mode tab styling */
+        .tab-active {
+            border-bottom-color: #3498db;
+            color: #3498db;
         }
     </style>
 </head>
@@ -240,9 +163,15 @@
                         
                         <!-- Device Selector -->
                         <div class="relative mr-4">
-                            <select id="device-selector" class="block w-40 py-2 px-3 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-700 dark:text-gray-200">
+                            <select id="device-selector" class="appearance-none block w-40 py-2 px-3 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-700 dark:text-gray-200">
                                 <!-- Options will be populated by JavaScript -->
                             </select>
+                            <!-- Add custom dropdown arrow indicator -->
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
                         </div>
                         
                         <!-- Dark Mode Toggle -->
@@ -263,37 +192,39 @@
         
         <!-- Main Content -->
         <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <!-- Power Supply Readings Card - Always visible and compact on mobile -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md mb-6 overflow-hidden compact-readings">
-                <div class="px-4 py-3 sm:px-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                        <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                        <span class="hidden sm:inline">Power Supply</span> Readings
-                    </h2>
-                    
-                    <!-- Power toggle & refresh buttons - more compact on mobile -->
-                    <div class="flex items-center space-x-2">
-                        <div class="flex items-center">
-                            <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Output</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="power-toggle" onchange="togglePower(this.checked)">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <button id="refresh-psu" onclick="requestPsuStatus()" class="inline-flex items-center p-1 sm:px-3 sm:py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none" title="Refresh">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            <!-- Power Supply Readings Card -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden compact-readings">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
+                            <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                             </svg>
-                            <span class="hidden sm:inline ml-1">Refresh</span>
-                        </button>
+                            <span class="hidden sm:inline">Power Supply</span> Readings
+                        </h2>
+                        
+                        <!-- Power toggle & refresh buttons -->
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center">
+                                <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Output</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="power-toggle" onchange="togglePower(this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <button id="refresh-psu" onclick="requestPsuStatus()" class="flex items-center px-3 py-1.5 text-sm font-medium text-white transition-colors duration-300 bg-secondary rounded-md hover:bg-opacity-80 focus:outline-none" title="Refresh">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                <span class="hidden sm:inline ml-1">Refresh</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Compact readings display -->
-                <div class="px-4 py-3 sm:p-6">
-                    <!-- Readings Display - More compact for mobile -->
+                <!-- Readings display -->
+                <div class="px-6 py-4">
+                    <!-- Readings Display -->
                     <div class="grid grid-cols-3 gap-2 sm:gap-6 text-center">
                         <div class="relative readings-separator">
                             <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">Voltage</p>
@@ -315,8 +246,8 @@
                         </div>
                     </div>
                     
-                    <!-- Status display - Only mode & status, compact -->
-                    <div class="mt-2 sm:mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-2 sm:pt-4 text-sm">
+                    <!-- Status display -->
+                    <div class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4 text-sm">
                         <div class="flex items-center">
                             <div class="mr-6">
                                 <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Output</p>
@@ -327,14 +258,17 @@
                                 <p id="operatingModeDisplay" class="text-base sm:text-xl font-semibold">--</p>
                             </div>
                         </div>
+                        <div>
+                            <button onclick="debugOperatingMode()" class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600">Refresh Mode</button>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Card container for swipeable sections -->
-            <div class="card-container">
+            <!-- Main content sections - simple stacked layout instead of swiper -->
+            <div class="space-y-6">
                 <!-- Basic Controls Card -->
-                <div class="swipeable-card active bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
                     <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
                         <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
                             <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -347,7 +281,7 @@
                         <div>
                             <label for="set-voltage" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Set Voltage (V)</label>
                             <div class="mt-1 flex rounded-md shadow-sm">
-                                <input type="number" id="set-voltage" min="0" max="30" step="0.1" class="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-secondary focus:border-secondary">
+                                <input type="number" id="set-voltage" min="0" max="30" step="0.1" class="appearance-none flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-secondary focus:border-secondary">
                                 <button id="apply-voltage" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
                                     Set
                                 </button>
@@ -357,7 +291,7 @@
                         <div>
                             <label for="set-current" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Set Current (A)</label>
                             <div class="mt-1 flex rounded-md shadow-sm">
-                                <input type="number" id="set-current" min="0" max="5" step="0.01" class="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-secondary focus:border-secondary">
+                                <input type="number" id="set-current" min="0" max="5" step="0.01" class="appearance-none flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-secondary focus:border-secondary">
                                 <button id="apply-current" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
                                     Set
                                 </button>
@@ -375,7 +309,7 @@
                 </div>
 
                 <!-- Add Device Card -->
-                <div class="swipeable-card bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
                     <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
                         <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
                             <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -388,11 +322,11 @@
                         <form id="add-device-form" class="space-y-4">
                             <div>
                                 <label for="new-device-ip" class="block text-sm font-medium text-gray-700 dark:text-gray-300">IP Address</label>
-                                <input type="text" id="new-device-ip" placeholder="192.168.1.100" required class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
+                                <input type="text" id="new-device-ip" placeholder="192.168.1.100" required class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
                             </div>
                             <div>
                                 <label for="new-device-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name (optional)</label>
-                                <input type="text" id="new-device-name" placeholder="My Power Supply" class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
+                                <input type="text" id="new-device-name" placeholder="My Power Supply" class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
                             </div>
                             <div class="flex justify-end">
                                 <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
@@ -407,7 +341,7 @@
                 </div>
                 
                 <!-- Operating Mode Controls Card -->
-                <div class="swipeable-card bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
                     <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
                         <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
                             <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -419,7 +353,7 @@
                     <!-- Mode tabs -->
                     <div class="border-b border-gray-200 dark:border-gray-700">
                         <nav class="flex -mb-px">
-                            <button data-mode="cv" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-secondary text-secondary">
+                            <button data-mode="cv" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm tab-active">
                                 Constant Voltage (CV)
                             </button>
                             <button data-mode="cc" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
@@ -431,65 +365,68 @@
                         </nav>
                     </div>
                     
-                    <!-- CV Settings -->
-                    <div id="cv-settings" class="mode-settings px-4 py-5 sm:p-6 block">
-                        <div class="max-w-lg mx-auto">
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 dark:text-gray-400 sm:text-sm">V</span>
+                    <!-- Tab Content Container -->
+                    <div class="tab-content">
+                        <!-- CV Settings -->
+                        <div id="cv-settings" class="mode-settings px-4 py-5 sm:p-6 block">
+                            <div class="max-w-lg mx-auto">
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 dark:text-gray-400 sm:text-sm">V</span>
+                                    </div>
+                                    <input type="number" id="set-cv-voltage" min="0" max="30" step="0.1" class="appearance-none block w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-secondary focus:border-secondary">
+                                    <div class="absolute inset-y-0 right-0 flex items-center">
+                                        <button id="apply-cv" class="inline-flex items-center h-full px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                            Set CV Mode
+                                        </button>
+                                    </div>
                                 </div>
-                                <input type="number" id="set-cv-voltage" min="0" max="30" step="0.1" class="block w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-secondary focus:border-secondary">
-                                <div class="absolute inset-y-0 right-0 flex items-center">
-                                    <button id="apply-cv" class="inline-flex items-center h-full px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
-                                        Set CV Mode
-                                    </button>
-                                </div>
+                                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Set the constant voltage value between 0-30V</p>
                             </div>
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Set the constant voltage value between 0-30V</p>
                         </div>
-                    </div>
-                    
-                    <!-- CC Settings -->
-                    <div id="cc-settings" class="mode-settings px-4 py-5 sm:p-6 hidden">
-                        <div class="max-w-lg mx-auto">
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 dark:text-gray-400 sm:text-sm">A</span>
+                        
+                        <!-- CC Settings -->
+                        <div id="cc-settings" class="mode-settings px-4 py-5 sm:p-6 hidden">
+                            <div class="max-w-lg mx-auto">
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 dark:text-gray-400 sm:text-sm">A</span>
+                                    </div>
+                                    <input type="number" id="set-cc-current" min="0" max="5" step="0.01" class="appearance-none block w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-secondary focus:border-secondary">
+                                    <div class="absolute inset-y-0 right-0 flex items-center">
+                                        <button id="apply-cc" class="inline-flex items-center h-full px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                            Set CC Mode
+                                        </button>
+                                    </div>
                                 </div>
-                                <input type="number" id="set-cc-current" min="0" max="5" step="0.01" class="block w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-secondary focus:border-secondary">
-                                <div class="absolute inset-y-0 right-0 flex items-center">
-                                    <button id="apply-cc" class="inline-flex items-center h-full px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
-                                        Set CC Mode
-                                    </button>
-                                </div>
+                                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Set the constant current value between 0-5A</p>
                             </div>
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Set the constant current value between 0-5A</p>
                         </div>
-                    </div>
-                    
-                    <!-- CP Settings -->
-                    <div id="cp-settings" class="mode-settings px-4 py-5 sm:p-6 hidden">
-                        <div class="max-w-lg mx-auto space-y-6">
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 dark:text-gray-400 sm:text-sm">W</span>
+                        
+                        <!-- CP Settings -->
+                        <div id="cp-settings" class="mode-settings px-4 py-5 sm:p-6 hidden">
+                            <div class="max-w-lg mx-auto space-y-6">
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 dark:text-gray-400 sm:text-sm">W</span>
+                                    </div>
+                                    <input type="number" id="set-cp-power" min="0" max="120" step="0.1" class="appearance-none block w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-secondary focus:border-secondary">
+                                    <div class="absolute inset-y-0 right-0 flex items-center">
+                                        <button id="apply-cp" class="inline-flex items-center h-full px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                            Set CP Mode
+                                        </button>
+                                    </div>
                                 </div>
-                                <input type="number" id="set-cp-power" min="0" max="120" step="0.1" class="block w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-secondary focus:border-secondary">
-                                <div class="absolute inset-y-0 right-0 flex items-center">
-                                    <button id="apply-cp" class="inline-flex items-center h-full px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
-                                        Set CP Mode
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">CP Mode Control</span>
-                                <div class="space-x-2">
-                                    <button id="cp-mode-on" onclick="setConstantPowerMode(true)" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-success hover:bg-opacity-90 focus:outline-none">
-                                        Enable CP
-                                    </button>
-                                    <button id="cp-mode-off" onclick="setConstantPowerMode(false)" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-danger hover:bg-opacity-90 focus:outline-none">
-                                        Disable CP
-                                    </button>
+                                <div class="flex items-center justify-between">
+                                    <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">CP Mode Control</span>
+                                    <div class="space-x-2">
+                                        <button id="cp-mode-on" onclick="setConstantPowerMode(true)" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-success hover:bg-opacity-90 focus:outline-none">
+                                            Enable CP
+                                        </button>
+                                        <button id="cp-mode-off" onclick="setConstantPowerMode(false)" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-danger hover:bg-opacity-90 focus:outline-none">
+                                            Disable CP
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -497,7 +434,7 @@
                 </div>
                 
                 <!-- WiFi Settings Card -->
-                <div class="swipeable-card bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
                     <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
                         <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
                             <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -538,14 +475,6 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Dot indicators for mobile -->
-            <div class="dot-indicators">
-                <div class="dot active" data-index="0"></div>
-                <div class="dot" data-index="1"></div>
-                <div class="dot" data-index="2"></div>
-                <div class="dot" data-index="3"></div>
-            </div>
         </main>
         
         <!-- Footer -->
@@ -561,151 +490,33 @@
     <!-- Core JS -->
     <script src="js/core.js"></script>
     
-    <!-- Swipe functionality -->
+    <!-- Simple tab switcher -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Card swipe variables
-            let startX = 0;
-            let currentX = 0;
-            let currentCardIndex = 0;
-            let isDragging = false;
-            const cardContainer = document.querySelector('.card-container');
-            const cards = document.querySelectorAll('.swipeable-card');
-            const dots = document.querySelectorAll('.dot');
-            
-            // Only initialize on mobile
-            if (window.innerWidth <= 640) {
-                initializeSwipeCards();
-            }
-            
-            // Handle resize events
-            window.addEventListener('resize', function() {
-                if (window.innerWidth <= 640) {
-                    initializeSwipeCards();
-                } else {
-                    // On desktop, show all cards
-                    cards.forEach(card => {
-                        card.classList.remove('active', 'next', 'previous');
-                        card.style.display = 'block';
+            // Mode tab switcher
+            document.querySelectorAll('.mode-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Update active tab styling
+                    document.querySelectorAll('.mode-tab').forEach(t => {
+                        t.classList.remove('tab-active');
+                        t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
                     });
-                }
+                    
+                    this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                    this.classList.add('tab-active');
+                    
+                    // Show the corresponding settings panel
+                    const mode = this.getAttribute('data-mode');
+                    document.querySelectorAll('.mode-settings').forEach(panel => {
+                        panel.classList.add('hidden');
+                        panel.classList.remove('block');
+                    });
+                    
+                    document.getElementById(`${mode}-settings`).classList.remove('hidden');
+                    document.getElementById(`${mode}-settings`).classList.add('block');
+                });
             });
-            
-            function initializeSwipeCards() {
-                // Set initial states
-                cards.forEach((card, index) => {
-                    if (index === currentCardIndex) {
-                        card.classList.add('active');
-                        card.classList.remove('next', 'previous');
-                    } else if (index > currentCardIndex) {
-                        card.classList.add('next');
-                        card.classList.remove('active', 'previous');
-                    } else {
-                        card.classList.add('previous');
-                        card.classList.remove('active', 'next');
-                    }
-                });
-                
-                // Update dots
-                updateDots();
-                
-                // Add touch event listeners
-                cardContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
-                cardContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
-                cardContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
-                
-                // Add click event listeners to dots
-                dots.forEach((dot, index) => {
-                    dot.addEventListener('click', () => {
-                        currentCardIndex = index;
-                        updateCards();
-                        updateDots();
-                    });
-                });
-            }
-            
-            function handleTouchStart(e) {
-                startX = e.touches[0].clientX;
-                isDragging = true;
-            }
-            
-            function handleTouchMove(e) {
-                if (!isDragging) return;
-                currentX = e.touches[0].clientX;
-            }
-            
-            function handleTouchEnd(e) {
-                if (!isDragging) return;
-                
-                const diffX = startX - currentX;
-                const threshold = window.innerWidth * 0.15; // 15% of screen width
-                
-                if (Math.abs(diffX) > threshold) {
-                    if (diffX > 0 && currentCardIndex < cards.length - 1) {
-                        // Swipe left - next card
-                        currentCardIndex++;
-                    } else if (diffX < 0 && currentCardIndex > 0) {
-                        // Swipe right - previous card
-                        currentCardIndex--;
-                    }
-                }
-                
-                updateCards();
-                updateDots();
-                
-                isDragging = false;
-            }
-            
-            function updateCards() {
-                cards.forEach((card, index) => {
-                    if (index === currentCardIndex) {
-                        card.classList.add('active');
-                        card.classList.remove('next', 'previous');
-                    } else if (index > currentCardIndex) {
-                        card.classList.add('next');
-                        card.classList.remove('active', 'previous');
-                    } else {
-                        card.classList.add('previous');
-                        card.classList.remove('active', 'next');
-                    }
-                });
-            }
-            
-            function updateDots() {
-                dots.forEach((dot, index) => {
-                    if (index === currentCardIndex) {
-                        dot.classList.add('active');
-                    } else {
-                        dot.classList.remove('active');
-                    }
-                });
-            }
         });
-    </script>
-    
-    <!-- Existing scripts -->
-    <script>
-        // Direct power toggle function with console logging
-        function togglePower(isOn) {
-            console.log("Power toggle clicked, setting to:", isOn);
-            if (window.sendCommand) {
-                const result = window.sendCommand({
-                    action: 'setOutputState',
-                    enabled: isOn
-                });
-                console.log("Toggle command result:", result);
-                
-                // Update UI directly
-                const outputStatus = document.getElementById('output-status');
-                if (outputStatus) {
-                    outputStatus.textContent = isOn ? "ON" : "OFF";
-                    outputStatus.className = isOn ? "status-value text-success" : "status-value text-danger";
-                }
-            } else {
-                console.error("sendCommand function not available");
-                alert("Error: Connection to device not established");
-            }
-        }
         
         // Update WebSocket status with color indicator
         document.addEventListener('websocket-message', function(event) {
@@ -716,30 +527,6 @@
                 statusText.textContent = 'Connected';
                 statusIndicator.className = 'h-3 w-3 rounded-full bg-success mr-2';
             }
-        });
-        
-        // Mode tab switcher
-        document.querySelectorAll('.mode-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                // Update active tab styling
-                document.querySelectorAll('.mode-tab').forEach(t => {
-                    t.classList.remove('border-secondary', 'text-secondary');
-                    t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-                });
-                
-                this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-                this.classList.add('border-secondary', 'text-secondary');
-                
-                // Show the corresponding settings panel
-                const mode = this.getAttribute('data-mode');
-                document.querySelectorAll('.mode-settings').forEach(panel => {
-                    panel.classList.add('hidden');
-                    panel.classList.remove('block');
-                });
-                
-                document.getElementById(`${mode}-settings`).classList.remove('hidden');
-                document.getElementById(`${mode}-settings`).classList.add('block');
-            });
         });
         
         // Theme toggler

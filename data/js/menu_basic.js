@@ -25,37 +25,53 @@ export function initBasicControls() {
 function setupPowerToggle() {
     const powerToggle = document.getElementById('power-toggle');
     if (powerToggle) {
-        console.log("Found power toggle element, setting up event listener");
+        console.log("Found power toggle element, setting up event handler");
         
-        // Remove any existing event listeners to prevent duplicates
-        const newPowerToggle = powerToggle.cloneNode(true);
-        powerToggle.parentNode.replaceChild(newPowerToggle, powerToggle);
+        // IMPORTANT: Don't clone the element because it would remove the inline handler
+        // Just make sure our global function works correctly
         
-        // Add event listener with improved error handling
-        newPowerToggle.addEventListener('change', function() {
-            console.log("Power toggle changed:", this.checked);
-            
-            const success = sendCommand({ 
-                action: 'setOutputState', 
-                enabled: this.checked 
-            });
-            
-            if (!success) {
-                console.error("Failed to send power toggle command");
-                alert("Connection error. Couldn't toggle power.");
-                // Revert the checkbox to original state since command failed
-                this.checked = !this.checked;
-            } else {
-                // Update UI immediately for better user feedback
-                const outputStatus = document.getElementById('output-status');
-                if (outputStatus) {
-                    outputStatus.textContent = this.checked ? "ON" : "OFF";
-                    outputStatus.className = this.checked ? "status-value on" : "status-value off";
-                }
-            }
-        });
+        // Check if the toggle already has the latest state
+        setTimeout(syncPowerToggleWithActualState, 1000);
     } else {
         console.error("Power toggle element not found in the DOM");
+    }
+}
+
+// Function to sync the toggle with the actual device state
+function syncPowerToggleWithActualState() {
+    try {
+        console.log("Syncing power toggle with actual device state");
+        // Changed action from 'getOutputState' to 'powerOutput'
+        const status = sendCommand({ action: 'powerOutput' });
+        
+        if (status && typeof status.enabled !== 'undefined') {
+            console.log("Received output state from device:", status.enabled);
+            
+            // Update the toggle without triggering the change event
+            const powerToggle = document.getElementById('power-toggle');
+            if (powerToggle && powerToggle.checked !== status.enabled) {
+                console.log("Updating power toggle to match device state:", status.enabled);
+                powerToggle.checked = status.enabled;
+            }
+            
+            // Update status display
+            updateOutputStatusDisplay(status.enabled);
+        } else {
+            console.warn("Invalid status response received:", status);
+        }
+    } catch (error) {
+        console.error("Error syncing power toggle state:", error);
+    }
+}
+
+// Helper to update just the output status display
+function updateOutputStatusDisplay(isOn) {
+    const outputStatus = document.getElementById('output-status');
+    if (outputStatus) {
+        outputStatus.textContent = isOn ? "ON" : "OFF";
+        outputStatus.className = isOn ? 
+            "text-base sm:text-xl font-semibold text-success" : 
+            "text-base sm:text-xl font-semibold text-danger";
     }
 }
 
@@ -141,11 +157,19 @@ function setupOperatingModes() {
     }
 }
 
-// Set up key lock control
+// Set up key lock control - FIXED to prevent duplicate listeners
 function setupKeyLockControl() {
     const keyLock = document.getElementById('key-lock');
     if (keyLock) {
-        keyLock.addEventListener('change', function() {
+        console.log("Setting up key lock control listener");
+        
+        // Remove any existing listeners by cloning
+        const newKeyLock = keyLock.cloneNode(true);
+        keyLock.parentNode.replaceChild(newKeyLock, keyLock);
+        
+        // Add the event listener once
+        newKeyLock.addEventListener('change', function() {
+            console.log("Key lock changed to:", this.checked);
             toggleKeyLock(this.checked);
         });
     }
@@ -158,18 +182,94 @@ function handleBasicMessages(event) {
     // Handle basic status responses
     if (data.action === 'statusResponse') {
         updateBasicUI(data);
+        
+        // If status contains operating mode, highlight the appropriate mode tab
+        if (data.operatingMode || data.modeCode) {
+            highlightActiveOperatingMode(data.operatingMode || data.modeCode);
+        }
     }
     
     // Handle power state responses
     if (data.action === 'setOutputStateResponse' || 
         data.action === 'powerOutputResponse') {
-        updateOutputStatus(data.enabled);
+        updateOutputStatus(data.enabled !== undefined ? data.enabled : data.enable);
+        
+        // Request operating mode after power state changes
+        setTimeout(() => requestOperatingMode(), 300);
     }
     
-    // Handle mode responses
-    if (data.action === 'operatingModeResponse') {
-        updateOperatingModeDisplay(data);
+    // Handle mode responses - SIMPLE VERSION
+    if (data.action === 'operatingModeResponse' && data.success === true) {
+        const mode = data.modeCode || data.operatingMode;
+        const setValue = data.setValue;
+        
+        if (mode) {
+            console.log("Received operating mode in menu_basic.js:", mode);
+            
+            // Update the operating mode display directly
+            const modeDisplay = document.getElementById('operatingModeDisplay');
+            if (modeDisplay) {
+                let displayText = mode;
+                
+                if (setValue !== undefined) {
+                    if (mode === 'CV') {
+                        displayText += ' ' + parseFloat(setValue).toFixed(2) + 'V';
+                    } else if (mode === 'CC') {
+                        displayText += ' ' + parseFloat(setValue).toFixed(3) + 'A';
+                    } else if (mode === 'CP') {
+                        displayText += ' ' + parseFloat(setValue).toFixed(1) + 'W';
+                    }
+                }
+                
+                modeDisplay.textContent = displayText;
+            }
+            
+            highlightActiveOperatingMode(mode);
+        }
     }
+}
+
+// New function to highlight the active operating mode tab - Updated to handle both string and numeric modes
+function highlightActiveOperatingMode(mode) {
+    console.log("highlightActiveOperatingMode called with:", mode, typeof mode);
+    
+    if (mode === undefined || mode === null) return;
+    
+    // Convert numeric mode to tab mode string
+    let tabMode;
+    if (typeof mode === 'number') {
+        // Using numeric enum values
+        switch(mode) {
+            case 0: tabMode = 'cv'; break; // Constant Voltage 
+            case 1: tabMode = 'cc'; break; // Constant Current
+            case 2: tabMode = 'cp'; break; // Constant Power
+            default: tabMode = 'cv'; // Default to CV for unknown values
+        }
+        console.log("Converted numeric mode to tab mode:", tabMode);
+    } else {
+        // Using string mode (normalize to lowercase)
+        tabMode = String(mode).toLowerCase();
+    }
+    
+    console.log("Highlighting tab for mode:", tabMode);
+    
+    // Find the corresponding tab
+    const tabs = document.querySelectorAll('.mode-tab');
+    tabs.forEach(tab => {
+        const dataMode = tab.getAttribute('data-mode');
+        if (dataMode && (dataMode === tabMode || tabMode.startsWith(dataMode))) {
+            // This is the active tab, highlight it
+            tabs.forEach(t => {
+                t.classList.remove('tab-active');
+                t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            });
+            
+            tab.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            tab.classList.add('tab-active');
+            
+            console.log(`Highlighted ${dataMode} tab for mode ${mode}`);
+        }
+    });
 }
 
 // Update the basic UI elements
@@ -203,23 +303,23 @@ function updateOutputStatus(enabled) {
     console.log("Updating output status UI to:", enabled ? "ON" : "OFF");
     
     // Update output status text
-    const outputStatus = document.getElementById('output-status');
-    if (outputStatus) {
-        outputStatus.textContent = enabled ? "ON" : "OFF";
-        outputStatus.className = enabled ? "status-value on" : "status-value off";
-    }
+    updateOutputStatusDisplay(enabled);
     
     // Update power toggle with proper checked state
     const powerToggle = document.getElementById('power-toggle');
     if (powerToggle) {
         console.log("Setting power toggle checkbox to:", enabled);
-        powerToggle.checked = enabled;
+        // Only update if the state doesn't match to avoid triggering the change event
+        if (powerToggle.checked !== enabled) {
+            powerToggle.checked = enabled;
+        }
     } else {
         console.warn("Power toggle element not found when updating status");
     }
 }
 
-// Update operating mode display
+// Update operating mode display - This will be called from menu_basic.js
+// Keep this for reference but rely on the implementation in menu_connection.js
 function updateOperatingModeDisplay(data) {
     const modeDisplay = document.getElementById('operatingModeDisplay');
     
@@ -230,25 +330,68 @@ function updateOperatingModeDisplay(data) {
         return;
     }
     
-    // Use modeCode if available, otherwise fallback to operatingMode
-    const modeCode = data.modeCode || data.operatingMode;
-    let displayText = modeCode;
+    // Log that this function is being called for debugging
+    console.log("menu_basic.js: updateOperatingModeDisplay called with:", data);
     
-    // Add value information based on the mode
-    if (modeCode === 'CV' && data.setValue !== undefined) {
-        displayText += ' ' + data.setValue.toFixed(2) + 'V';
-    } else if (modeCode === 'CC' && data.setValue !== undefined) {
-        displayText += ' ' + data.setValue.toFixed(3) + 'A';
-    } else if (modeCode === 'CP' && data.setValue !== undefined) {
-        displayText += ' ' + data.setValue.toFixed(1) + 'W';
-    }
-    
-    modeDisplay.textContent = displayText;
+    // Defer to menu_connection.js implementation which is already being called
 }
 
 // Request PSU status
 export function requestPsuStatus() {
+    console.log("Requesting PSU status");
     return sendCommand({ action: 'getStatus' });
+}
+
+// IMPROVED - Toggle power with correct action name and parameter
+export function togglePower(isOn) {
+    console.log("togglePower called with:", isOn);
+    
+    // Make sure we have a valid connection and command function
+    if (typeof sendCommand !== 'function') {
+        console.error("sendCommand function is not available");
+        alert("Error: Connection to device not established");
+        return false;
+    }
+    
+    try {
+        // Use the CORRECT action and parameter names
+        const command = { 
+            action: 'powerOutput',  // Changed from 'setOutputState' to 'powerOutput'
+            enable: isOn            // Changed from 'enabled' to 'enable'
+        };
+        console.log("Sending power command:", JSON.stringify(command));
+        
+        // Send the command
+        const result = sendCommand(command);
+        console.log("Power command send result:", result);
+        
+        // Update the UI immediately for feedback
+        updateOutputStatusDisplay(isOn);
+        
+        // Request a status update after a delay to confirm the change
+        setTimeout(() => {
+            console.log("Requesting status update after power toggle");
+            requestPsuStatus();
+            
+            // ADDED: Also request operating mode after power toggle
+            setTimeout(() => requestOperatingMode(), 200);
+        }, 500);
+        
+        return result;
+    } catch (error) {
+        console.error("Error in togglePower:", error);
+        alert("Failed to toggle power: " + (error.message || "Unknown error"));
+        
+        // Sync with actual state after error
+        setTimeout(syncPowerToggleWithActualState, 1000);
+        return false;
+    }
+}
+
+// Request operating mode data
+export function requestOperatingMode() {
+    console.log("Requesting operating mode from menu_basic.js");
+    return sendCommand({ action: 'getOperatingMode' });
 }
 
 // Set Constant Voltage (CV) mode
@@ -258,10 +401,17 @@ export function setConstantVoltage(voltage) {
         return false;
     }
     
-    return sendCommand({ 
+    const result = sendCommand({ 
         action: "setConstantVoltage", 
         voltage: voltage 
     });
+    
+    // Request operating mode after setting CV mode
+    if (result) {
+        setTimeout(() => requestOperatingMode(), 300);
+    }
+    
+    return result;
 }
 
 // Set Constant Current (CC) mode
@@ -271,10 +421,17 @@ export function setConstantCurrent(current) {
         return false;
     }
     
-    return sendCommand({ 
+    const result = sendCommand({ 
         action: "setConstantCurrent", 
         current: current 
     });
+    
+    // Request operating mode after setting CC mode
+    if (result) {
+        setTimeout(() => requestOperatingMode(), 300);
+    }
+    
+    return result;
 }
 
 // Set Constant Power (CP) mode
@@ -308,25 +465,48 @@ export function setConstantPowerMode(enable) {
     });
 }
 
-// Lock or unlock front panel keys
+// Improved key lock toggle function with better logging
 export function toggleKeyLock(shouldLock) {
-    return sendCommand({ 
-        action: "setKeyLock", 
-        lock: shouldLock 
-    });
+    console.log("toggleKeyLock called with:", shouldLock);
+    
+    try {
+        const command = {
+            action: "setKeyLock", 
+            lock: shouldLock
+        };
+        console.log("Sending key lock command:", JSON.stringify(command));
+        
+        return sendCommand(command);
+    } catch (error) {
+        console.error("Error toggling key lock:", error);
+        return false;
+    }
+}
+
+// Call directly from HTML button for debugging - SIMPLIFIED version
+export function debugOperatingMode() {
+    console.log("Manual operating mode debug request");
+    const modeDisplay = document.getElementById('operatingModeDisplay');
+    if (modeDisplay) {
+        modeDisplay.textContent = "Requesting...";
+        modeDisplay.classList.add('bg-gray-200', 'dark:bg-gray-700');
+    }
+    
+    // Send the request
+    const result = requestOperatingMode();
+    console.log("Operating mode request result:", result);
+    
+    return result;
 }
 
 // Make functions available globally for direct HTML access
 window.requestPsuStatus = requestPsuStatus;
+window.requestOperatingMode = requestOperatingMode; // Add this export
+window.debugOperatingMode = debugOperatingMode; // New debug function
 window.setConstantVoltage = setConstantVoltage;
 window.setConstantCurrent = setConstantCurrent;
 window.setConstantPower = setConstantPower;
 window.setConstantPowerMode = setConstantPowerMode;
 window.toggleKeyLock = toggleKeyLock;
-window.togglePower = function(enable) {
-    console.log("Toggle power function called with:", enable);
-    return sendCommand({ 
-        action: 'setOutputState', 
-        enabled: enable 
-    });
-};
+window.togglePower = togglePower;  // Make sure this is properly exposed
+window.highlightActiveOperatingMode = highlightActiveOperatingMode;
