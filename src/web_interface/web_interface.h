@@ -2,7 +2,7 @@
 #define WEB_INTERFACE_H
 
 #include <ESPAsyncWebServer.h>
-#include "XY-SKxxx.h"  // Include the power supply header
+#include "XY-SKxxx.h"  // Keep this include to fix the compilation error
 
 void setupWebServer(AsyncWebServer* server);
 void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* client, 

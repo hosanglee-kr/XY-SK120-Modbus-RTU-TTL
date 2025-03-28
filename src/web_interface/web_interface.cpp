@@ -297,6 +297,13 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
     
     String action = doc["action"];
     
+    // Add ping response handler
+    if (action == "ping") {
+        // Simply respond with a pong message
+        client->text("{\"action\":\"pong\"}");
+        return;
+    }
+    
     if (action == "getData") {
       // Simply call the comprehensive status function instead of duplicating the logic
       sendCompletePSUStatus(client);
@@ -521,6 +528,20 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
     else if (action == "getStatus") {
       sendCompletePSUStatus(client);
     }
+    // Add a WebSocket handler for WiFi status
+    else if (action == "getWifiStatus") {
+      DynamicJsonDocument responseDoc(256);
+      responseDoc["action"] = "wifiStatusResponse"; 
+      responseDoc["status"] = isWiFiConnected() ? "connected" : "disconnected";
+      responseDoc["ssid"] = getWiFiSSID();
+      responseDoc["ip"] = getWiFiIP();
+      responseDoc["rssi"] = getWiFiRSSI();
+      responseDoc["mac"] = getWiFiMAC();
+      
+      String response;
+      serializeJson(responseDoc, response);
+      client->text(response);
+    }
   }
 }
 
@@ -640,15 +661,24 @@ void setupWebServer(AsyncWebServer* server) {
     // WiFi management API endpoints
     server->on("/api/wifi/status", HTTP_GET, [](AsyncWebServerRequest *request){
       DynamicJsonDocument doc(256);
+      
+      // More robust status response
       doc["status"] = isWiFiConnected() ? "connected" : "disconnected";
       doc["ssid"] = getWiFiSSID();
       doc["ip"] = getWiFiIP();
       doc["rssi"] = getWiFiRSSI();
       doc["mac"] = getWiFiMAC();
       
+      // Ensure the response is valid JSON with proper error handling
       String response;
       serializeJson(doc, response);
-      request->send(200, "application/json", response);
+      
+      // Add CORS headers for this specific endpoint
+      AsyncWebServerResponse *resp = request->beginResponse(200, "application/json", response);
+      resp->addHeader("Access-Control-Allow-Origin", "*");
+      resp->addHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+      resp->addHeader("Access-Control-Allow-Headers", "Content-Type");
+      request->send(resp);
     });
     
     server->on("/api/wifi/reset", HTTP_POST, [](AsyncWebServerRequest *request){

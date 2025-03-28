@@ -51,14 +51,75 @@ function updateWifiUI(data) {
 
 // Fetch WiFi status
 export function fetchWifiStatus() {
-    fetch('/api/wifi/status')
-        .then(response => response.json())
-        .then(data => {
-            updateWifiUI(data);
+    console.log("Fetching WiFi status...");
+    
+    // Check if we have an active WebSocket connection first
+    if (window.websocketConnected && window.websocket && window.websocket.readyState === WebSocket.OPEN) {
+        console.log("Using WebSocket to fetch WiFi status");
+        // Use WebSocket command if available
+        window.sendCommand({ action: 'getWifiStatus' });
+        return;
+    }
+    
+    // Fallback to HTTP API if WebSocket not available
+    console.log("Using HTTP API to fetch WiFi status");
+    
+    // Get correct base URL
+    const baseUrl = getAPIBaseUrl();
+    const url = `${baseUrl}/api/wifi/status`;
+    
+    // Properly handle the fetch with error handling
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
         })
-        .catch(error => {
-            console.error('Error fetching WiFi status:', error);
+        .then(data => {
+            console.log("WiFi status received:", data);
+            updateWifiStatusDisplay(data);
+        })
+        .catch(err => {
+            console.error("Error fetching WiFi status:", err);
+            // Show error in UI
+            document.getElementById('wifi-status').textContent = 'Error';
+            document.getElementById('wifi-ssid').textContent = 'Connection failed';
+            document.getElementById('wifi-ip').textContent = '--';
         });
+}
+
+/**
+ * Helper function to get the correct API base URL
+ */
+function getAPIBaseUrl() {
+    // Get base URL from the current window location
+    const deviceIP = localStorage.getItem('selectedDeviceIP') || window.location.hostname;
+    
+    // Default to current location if deviceIP is 'localhost' and we're not on localhost
+    if (deviceIP === 'localhost' && 
+        window.location.hostname !== 'localhost' && 
+        window.location.hostname !== '127.0.0.1') {
+        return `${window.location.protocol}//${window.location.host}`;
+    }
+    
+    // Otherwise use the protocol from current window + deviceIP
+    return `${window.location.protocol}//${deviceIP}`;
+}
+
+/**
+ * Update the WiFi status UI
+ */
+function updateWifiStatusDisplay(data) {
+    if (!data) return;
+    
+    const wifiStatus = document.getElementById('wifi-status');
+    const wifiSsid = document.getElementById('wifi-ssid');
+    const wifiIp = document.getElementById('wifi-ip');
+    
+    if (wifiStatus) wifiStatus.textContent = data.status || 'Unknown';
+    if (wifiSsid) wifiSsid.textContent = data.ssid || 'Unknown';
+    if (wifiIp) wifiIp.textContent = data.ip || '--';
 }
 
 // Reset WiFi settings

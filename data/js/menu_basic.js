@@ -17,7 +17,147 @@ export function initBasicControls() {
     
     // Request status when connected
     document.addEventListener('websocket-connected', () => {
+        console.log("✅ WebSocket connected event received, starting auto-refresh");
         requestPsuStatus();
+        // Start auto-refresh when connected
+        setTimeout(() => startAutoRefresh(), 500);
+    });
+    
+    // Stop auto-refresh when disconnected
+    document.addEventListener('websocket-disconnected', () => {
+        console.log("❌ WebSocket disconnected event received, stopping auto-refresh");
+        stopAutoRefresh();
+    });
+    
+    // Initialize auto-refresh if already connected - with a delay
+    setTimeout(() => {
+        if (window.websocketConnected) {
+            console.log("WebSocket already connected on init, starting auto-refresh");
+            startAutoRefresh();
+        } else {
+            console.log("WebSocket not connected on init, waiting for connection event");
+        }
+    }, 1000);
+    
+    // Fallback: force auto-refresh after 5 seconds regardless of connection status
+    setTimeout(() => {
+        if (!autoRefreshTimer) {
+            console.log("⚠️ Auto-refresh not started after 5 seconds, starting as fallback");
+            startAutoRefresh();
+        }
+    }, 5000);
+}
+
+// Auto-refresh timer variable
+let autoRefreshTimer = null;
+
+// Make autoRefreshTimer globally accessible for debugging
+window.autoRefreshTimer = null;
+
+// Start auto-refresh timer to update status every second
+function startAutoRefresh() {
+    console.log("🔄 Starting auto-refresh (5-second interval)");
+    
+    // Clear any existing timer first
+    stopAutoRefresh();
+    
+    // First make sure we're really connected
+    if (!window.websocketConnected) {
+        console.log("⚠️ Can't start auto-refresh - WebSocket not connected");
+        
+        // Show manual refresh buttons since auto-refresh won't work
+        showManualRefreshButtons();
+        
+        // Try reconnecting
+        if (typeof window.initWebSocket === 'function') {
+            console.log("Attempting to reconnect WebSocket");
+            window.initWebSocket();
+        }
+        
+        return;
+    }
+    
+    // First do an immediate status update
+    updateAllStatus();
+    
+    // Set up new timer for auto-refresh - Use window to make it accessible
+    window.autoRefreshTimer = setInterval(() => {
+        // Debug in case the timer is running but updates aren't happening
+        console.log("⏱️ Auto-refresh tick - checking connection status:", window.websocketConnected);
+        
+        // Double-check that websocket is defined and connected
+        if (typeof window.websocket !== 'undefined' && window.websocket && window.websocket.readyState === 1) {
+            console.log("Sending status update via auto-refresh");
+            try {
+                updateAllStatus();
+            } catch (err) {
+                console.error("Error in auto-refresh status update:", err);
+            }
+        } else if (window.websocketConnected) {
+            // If flag says connected but socket doesn't exist or isn't open
+            console.log("⚠️ websocketConnected flag is true but socket is not ready");
+            window.websocketConnected = false;
+            stopAutoRefresh();
+            
+            // Try to re-initialize websocket
+            if (typeof window.initWebSocket === 'function') {
+                console.log("Attempting to reconnect WebSocket");
+                window.initWebSocket();
+            }
+        } else {
+            console.log("❌ WebSocket disconnected, pausing auto-refresh");
+            stopAutoRefresh();
+        }
+    }, 5000); // Update every 5 seconds
+    
+    // Hide manual refresh buttons since we don't need them anymore
+    hideManualRefreshButtons();
+    
+    // Show the auto-refresh indicator
+    const indicator = document.querySelector('.auto-refresh-indicator');
+    if (indicator) {
+        console.log("Making auto-refresh indicator visible");
+        indicator.style.display = 'flex';
+    } else {
+        console.error("Auto-refresh indicator element not found");
+    }
+}
+
+// Stop auto-refresh timer
+function stopAutoRefresh() {
+    if (autoRefreshTimer) {
+        console.log("⏹️ Stopping auto-refresh");
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+        
+        // Show manual refresh buttons again
+        showManualRefreshButtons();
+        
+        // Hide the auto-refresh indicator
+        const indicator = document.querySelector('.auto-refresh-indicator');
+        if (indicator) {
+            indicator.style.display = 'none';
+        }
+    }
+}
+
+// Hide manual refresh buttons when auto-refresh is active
+function hideManualRefreshButtons() {
+    const refreshButtons = document.querySelectorAll('#refresh-psu, #refresh-mode-btn');
+    refreshButtons.forEach(btn => {
+        if (btn) {
+            btn.style.display = 'none';
+        }
+    });
+}
+
+// Show manual refresh buttons when auto-refresh is inactive
+function showManualRefreshButtons() {
+    const refreshButtons = document.querySelectorAll('#refresh-psu, #refresh-mode-btn');
+    refreshButtons.forEach(btn => {
+        if (btn) {
+            btn.style.display = '';
+        }
     });
 }
 
@@ -54,7 +194,7 @@ function syncPowerToggleWithActualState() {
     }
 }
 
-// Helper to update output status display with simplified class-based approach
+// Revert back to original helper function for updating output status display - REMOVE ANIMATION
 function updateOutputStatusDisplay(isOn) {
     const outputStatus = document.getElementById('output-status');
     if (!outputStatus) return;
@@ -74,11 +214,8 @@ function updateOutputStatusDisplay(isOn) {
         outputStatus.classList.add('status-unknown');
     }
     
-    // Add pulse animation for visual feedback
-    outputStatus.classList.add('pulse-update');
-    setTimeout(() => {
-        outputStatus.classList.remove('pulse-update');
-    }, 300);
+    // Remove the animation effect
+    // No more pulse animation
 }
 
 // Single function to refresh all PSU status
@@ -322,7 +459,7 @@ function highlightActiveOperatingMode(mode) {
     });
 }
 
-// New function to cleanly update the operating mode display
+// Update operating mode display - REMOVE ANIMATION
 function updateOperatingMode(mode, setValue) {
     const modeDisplay = document.getElementById('operatingModeDisplay');
     if (!modeDisplay) return;
@@ -358,11 +495,8 @@ function updateOperatingMode(mode, setValue) {
         modeDisplay.classList.add('mode-unknown');
     }
     
-    // Add pulse animation for visual feedback
-    modeDisplay.classList.add('pulse-update');
-    setTimeout(() => {
-        modeDisplay.classList.remove('pulse-update');
-    }, 300);
+    // Remove the animation effect
+    // No more pulse animation
 }
 
 // Update the basic UI elements with improved output state handling
@@ -470,9 +604,9 @@ export function requestOperatingMode() {
     return sendCommand({ action: 'getOperatingMode' });
 }
 
-// Unified status update function - Now the primary method for all status updates
+// Simplified updateAllStatus function
 export function updateAllStatus() {
-    console.log("Updating all PSU status");
+    console.log("📊 Updating all PSU status");
     
     // Show loading state for indicators
     const outputStatus = document.getElementById('output-status');
@@ -482,37 +616,61 @@ export function updateAllStatus() {
         outputStatus.classList.remove('status-on', 'status-off', 'status-unknown');
         outputStatus.classList.add('status-loading');
         outputStatus.textContent = "...";
+    } else {
+        console.warn("Output status element not found");
     }
     
     if (modeDisplay) {
         modeDisplay.classList.remove('mode-cv', 'mode-cc', 'mode-cp', 'mode-unknown');
         modeDisplay.classList.add('status-loading');
         modeDisplay.textContent = "...";
+    } else {
+        console.warn("Operating mode display element not found");
     }
     
-    // Request complete status update
-    const result = sendCommand({ action: 'getStatus' });
-    
-    // Handle failed status request
-    if (!result) {
-        console.error("Failed to send status request");
-        setTimeout(() => {
-            if (outputStatus && outputStatus.classList.contains('status-loading')) {
-                outputStatus.classList.remove('status-loading');
-                outputStatus.classList.add('status-unknown');
-                outputStatus.textContent = "--";
-            }
-            
-            if (modeDisplay && modeDisplay.classList.contains('status-loading')) {
-                modeDisplay.classList.remove('status-loading');
-                modeDisplay.classList.add('mode-unknown');
-                modeDisplay.textContent = "--";
-            }
-        }, 1500);
+    try {
+        // Ensure sendCommand is available
+        if (typeof window.sendCommand !== 'function') {
+            console.error("❌ sendCommand function is not available on window");
+            handleFailedStatusRequest(outputStatus, modeDisplay);
+            return false;
+        }
+        
+        // Request complete status update
+        const result = window.sendCommand({ action: 'getStatus' });
+        
+        // Handle failed status request
+        if (!result) {
+            console.error("Failed to send status request - sendCommand returned false");
+            handleFailedStatusRequest(outputStatus, modeDisplay);
+            return false;
+        }
+        
+        console.log("Status request sent successfully");
+        return true;
+    } catch (err) {
+        console.error("Exception in updateAllStatus:", err);
+        handleFailedStatusRequest(outputStatus, modeDisplay);
         return false;
     }
-    
-    return result;
+}
+
+// Helper function to handle failed status requests
+function handleFailedStatusRequest(outputStatus, modeDisplay) {
+    console.error("Failed to send status request");
+    setTimeout(() => {
+        if (outputStatus && outputStatus.classList.contains('status-loading')) {
+            outputStatus.classList.remove('status-loading');
+            outputStatus.classList.add('status-unknown');
+            outputStatus.textContent = "--";
+        }
+        
+        if (modeDisplay && modeDisplay.classList.contains('status-loading')) {
+            modeDisplay.classList.remove('status-loading');
+            modeDisplay.classList.add('mode-unknown');
+            modeDisplay.textContent = "--";
+        }
+    }, 1500);
 }
 
 // Set Constant Voltage (CV) mode - Simplified to use only updateAllStatus
@@ -658,3 +816,5 @@ window.togglePower = togglePower;  // Make sure this is properly exposed
 window.highlightActiveOperatingMode = highlightActiveOperatingMode;
 window.refreshPsuStatus = updateAllStatus; // Redirect to the new function
 window.updateAllStatus = updateAllStatus; // Make the unified status update function available globally
+window.startAutoRefresh = startAutoRefresh;
+window.stopAutoRefresh = stopAutoRefresh;

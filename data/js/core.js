@@ -14,6 +14,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup base WebSocket connection
     setTimeout(initWebSocket, 500);
+    
+    // Add a ping mechanism to keep the connection alive
+    setInterval(() => {
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+            // Send a lightweight ping message
+            sendCommand({ action: 'ping' });
+        }
+    }, 30000); // Send a ping every 30 seconds
 });
 
 // Initialize all modules
@@ -39,8 +47,15 @@ function initializeModules() {
 
 // WebSocket connection functions
 function initWebSocket() {
-    // Get device IP
-    const deviceIP = localStorage.getItem('selectedDeviceIP') || 'localhost';
+    // Get device IP - with fallback to current hostname
+    let deviceIP = localStorage.getItem('selectedDeviceIP') || window.location.hostname;
+    
+    // If device IP is localhost but we're accessing from a remote host, use the current hostname
+    if (deviceIP === 'localhost' && 
+        window.location.hostname !== 'localhost' && 
+        window.location.hostname !== '127.0.0.1') {
+        deviceIP = window.location.hostname;
+    }
     
     // Close existing connection if any
     if (websocket) {
@@ -52,7 +67,7 @@ function initWebSocket() {
         }
     }
     
-    // Build WebSocket URL
+    // Build WebSocket URL - ensure it has the correct protocol
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${wsProtocol}//${deviceIP}/ws`;
     
@@ -67,15 +82,24 @@ function initWebSocket() {
         websocket.onopen = function() {
             console.log('WebSocket connected');
             websocketConnected = true;
+            window.websocketConnected = true; // Make sure global flag is set
+            window.websocket = websocket; // Make the websocket globally available
+            
             updateStatus('connected', deviceIP);
             
             // Broadcast connection event to modules
             document.dispatchEvent(new CustomEvent('websocket-connected'));
+            
+            // Request initial status
+            if (typeof window.updateAllStatus === 'function') {
+                setTimeout(() => window.updateAllStatus(), 500);
+            }
         };
         
         websocket.onclose = function() {
             console.log('WebSocket disconnected');
             websocketConnected = false;
+            window.websocketConnected = false;
             updateStatus('disconnected', deviceIP);
             
             // Broadcast disconnection event
@@ -85,6 +109,7 @@ function initWebSocket() {
         websocket.onerror = function(error) {
             console.error('WebSocket error:', error);
             websocketConnected = false;
+            window.websocketConnected = false;
             updateStatus('error', deviceIP);
         };
         
@@ -97,30 +122,51 @@ function initWebSocket() {
     }
 }
 
-// Update connection status
+// Enhanced update status function
 function updateStatus(status, deviceIP) {
     const statusElement = document.getElementById('websocket-status');
-    const deviceElement = document.getElementById('connected-device');
+    const statusIndicator = document.getElementById('websocket-status-indicator');
     
     if (statusElement) {
         switch(status) {
             case 'connected':
                 statusElement.textContent = 'Connected';
+                statusElement.className = 'text-sm text-success font-bold';
                 break;
             case 'connecting':
                 statusElement.textContent = 'Connecting...';
+                statusElement.className = 'text-sm text-secondary font-bold';
                 break;
             case 'disconnected':
                 statusElement.textContent = 'Disconnected';
+                statusElement.className = 'text-sm text-danger font-bold';
                 break;
             case 'error':
                 statusElement.textContent = 'Connection Error';
+                statusElement.className = 'text-sm text-danger font-bold';
                 break;
         }
     }
     
-    if (deviceElement) {
-        deviceElement.textContent = deviceIP;
+    // Update the status indicator dot
+    if (statusIndicator) {
+        switch(status) {
+            case 'connected':
+                statusIndicator.className = 'h-3 w-3 rounded-full bg-success mr-2';
+                break;
+            case 'connecting':
+                statusIndicator.className = 'h-3 w-3 rounded-full bg-secondary mr-2';
+                break;
+            case 'disconnected':
+            case 'error':
+                statusIndicator.className = 'h-3 w-3 rounded-full bg-danger mr-2';
+                break;
+        }
+    }
+    
+    // Store the selected device for reconnection
+    if (deviceIP) {
+        localStorage.setItem('selectedDeviceIP', deviceIP);
     }
 }
 
@@ -207,3 +253,29 @@ window.sendCommand = function(command) {
 
 // Expose key functions globally
 window.initWebSocket = initWebSocket;
+
+// Add this check at the end of the file to ensure auto-refresh starts
+
+// Fallback initialization for auto-refresh - simplified
+document.addEventListener('DOMContentLoaded', function() {
+    // Check for auto-refresh after 3 seconds
+    setTimeout(() => {
+        if (typeof window.startAutoRefresh === 'function') {
+            if (window.websocketConnected) {
+                window.startAutoRefresh();
+            }
+        } else {
+            // Try to manually import the menu_basic.js module
+            import('./menu_basic.js')
+                .then(module => {
+                    if (typeof module.startAutoRefresh === 'function') {
+                        window.startAutoRefresh = module.startAutoRefresh;
+                        if (window.websocketConnected) {
+                            window.startAutoRefresh();
+                        }
+                    }
+                })
+                .catch(err => console.error("Failed to import menu_basic.js"));
+        }
+    }, 3000);
+});

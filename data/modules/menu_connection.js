@@ -101,16 +101,31 @@ function initWebSocket() {
       reconnectAttempts = 0;
       websocketConnected = true;
       window.websocketConnected = true; // Global flag for debugging
+      window.websocket = websocket; // Make sure it's globally available
       
       // Update connection status display
       updateConnectionStatusDisplay('connected', deviceIP);
+      
+      // Dispatch connected event
+      try {
+        const wsEvent = new CustomEvent('websocket-connected');
+        document.dispatchEvent(wsEvent);
+        console.log("Dispatched websocket-connected event");
+      } catch (err) {
+        console.error("Error dispatching connect event:", err);
+      }
       
       // Request initial data
       requestPsuStatus();
       setTimeout(requestOperatingMode, 500);
       
-      // Show success notification
-      alert(`Successfully connected to ${deviceIP}`);
+      // Also explicitly start the auto-refresh as a backup
+      if (typeof window.startAutoRefresh === 'function') {
+        console.log("Calling startAutoRefresh from onopen event");
+        setTimeout(() => window.startAutoRefresh(), 1000);
+      } else {
+        console.error("window.startAutoRefresh function not available");
+      }
     };
     
     websocket.onclose = function(event) {
@@ -143,6 +158,21 @@ function handleDisconnect() {
   console.log('WebSocket disconnected');
   isConnecting = false;
   websocketConnected = false;
+  window.websocketConnected = false;
+  
+  // Make sure websocket object is also nulled in the window
+  if (window.websocket === websocket) {
+    window.websocket = null;
+  }
+  
+  // Dispatch disconnect event for other modules
+  try {
+    const wsEvent = new CustomEvent('websocket-disconnected');
+    document.dispatchEvent(wsEvent);
+    console.log("Dispatched websocket-disconnected event");
+  } catch (err) {
+    console.error("Error dispatching disconnect event:", err);
+  }
   
   // Try to reconnect if under max attempts
   if (reconnectAttempts < maxReconnectAttempts) {
@@ -278,6 +308,10 @@ function sendCommand(command) {
   
   if (!websocket) {
     console.error("❌ WebSocket not initialized");
+    // Set the connected flag to false since there's no websocket
+    websocketConnected = false;
+    window.websocketConnected = false;
+    
     // Try to connect
     initWebSocket();
     return false;
@@ -289,16 +323,30 @@ function sendCommand(command) {
       const commandStr = JSON.stringify(command); // Don't send the ID to the server
       websocket.send(commandStr);
       
+      // Ensure the connected flag is set correctly
+      websocketConnected = true;
+      window.websocketConnected = true;
+      
       // Log success
       console.log(`✅ Command #${commandId} sent successfully`);
       return true;
     } catch (e) {
       console.error(`❌ Error sending command #${commandId}:`, e);
       websocketConnected = false;
+      window.websocketConnected = false;
       return false;
     }
   } else {
     console.log(`⚠️ WebSocket not ready (state: ${websocket.readyState}) for command #${commandId}`);
+    
+    // Update the connection status
+    websocketConnected = false;
+    window.websocketConnected = false;
+    
+    // Also show manual refresh buttons since auto-refresh won't work
+    if (typeof window.showManualRefreshButtons === 'function') {
+      window.showManualRefreshButtons();
+    }
     
     // Try HTTP fallback for important commands
     if (command.action !== 'getStatus' && command.action !== 'getOperatingMode') {
@@ -388,7 +436,7 @@ function useFallbackHttp(command) {
   }
 }
 
-// Direct UI update for operating mode using data-attributes for styling
+// Direct UI update for operating mode using data-attributes for styling - REMOVE ANIMATION
 function updateOperatingModeUI(mode, setValue) {
   // Get the operating mode display element
   const modeDisplay = document.getElementById('operatingModeDisplay');
@@ -416,13 +464,8 @@ function updateOperatingModeUI(mode, setValue) {
   // Set data-mode attribute for styling (more direct than class manipulation)
   modeDisplay.setAttribute('data-mode', mode || 'unknown');
   
-  // Add a pulse animation for visual feedback
-  modeDisplay.classList.add('mode-pulse');
-  
-  // Remove the pulse animation after it completes
-  setTimeout(() => {
-    modeDisplay.classList.remove('mode-pulse');
-  }, 300);
+  // Remove the pulse animation
+  // No more animation effect
 }
 
 // Update mode settings display - ENHANCED to use all available data
@@ -492,7 +535,7 @@ function startPeriodicUpdates() {
                     .catch(err => console.error("❌ HTTP fallback error:", err));
             }
         }
-    }, 5000);
+    }, 5000); // Already at 5 seconds, which is good
 }
 
 // Simplified - Use only updateAllStatus without fallbacks
@@ -591,6 +634,9 @@ function requestPsuStatus() {
     console.log("requestPsuStatus called - Using updateAllStatus instead");
     return window.updateAllStatus();
 }
+
+// Make sure window.sendCommand is available
+window.sendCommand = sendCommand;
 
 // Export the essential functions
 export { 
