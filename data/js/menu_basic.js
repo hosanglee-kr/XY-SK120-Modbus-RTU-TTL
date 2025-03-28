@@ -1,6 +1,6 @@
 /**
  * Basic control functionality for XY-SK120
- * Handles power, voltage, current and operating mode controls
+ * Mirrors firmware's menu_basic functionality
  */
 
 // Initialize basic controls
@@ -167,12 +167,8 @@ function setupPowerToggle() {
     if (powerToggle) {
         console.log("Found power toggle element, setting up event handler");
         
-        // Fix: Explicitly add the change event listener
-        powerToggle.addEventListener('change', function() {
-            // Only call togglePower when the user actually interacts with the switch
-            console.log("Power toggle changed by user to:", this.checked);
-            togglePower(this.checked);
-        });
+        // IMPORTANT: Don't clone the element because it would remove the inline handler
+        // Just make sure our global function works correctly
         
         // Check if the toggle already has the latest state
         setTimeout(syncPowerToggleWithActualState, 1000);
@@ -330,12 +326,19 @@ function setupOperatingModes() {
         });
     }
     
-    // CP mode toggle
-    const cpModeToggle = document.getElementById('cp-mode-toggle');
-    if (cpModeToggle) {
-        cpModeToggle.addEventListener('change', function() {
-            console.log("CP mode toggle changed to:", this.checked);
-            setConstantPowerMode(this.checked);
+    // CP mode toggles
+    const cpModeOnBtn = document.getElementById('cp-mode-on');
+    const cpModeOffBtn = document.getElementById('cp-mode-off');
+    
+    if (cpModeOnBtn) {
+        cpModeOnBtn.addEventListener('click', () => {
+            setConstantPowerMode(true);
+        });
+    }
+    
+    if (cpModeOffBtn) {
+        cpModeOffBtn.addEventListener('click', () => {
+            setConstantPowerMode(false);
         });
     }
 }
@@ -376,6 +379,7 @@ function handleBasicMessages(event) {
             const powerToggle = document.getElementById('power-toggle');
             if (powerToggle && powerToggle.checked !== data.outputEnabled) {
                 console.log("Updating power toggle to match device state:", data.outputEnabled);
+                // Use this technique to avoid triggering onchange
                 powerToggle.checked = data.outputEnabled;
             }
         }
@@ -383,18 +387,11 @@ function handleBasicMessages(event) {
         // Update operation mode if included in status
         if (data.operatingMode) {
             updateOperatingMode(data.operatingMode, data.operatingModeSetValue);
-            
-            // REMOVED: Do not highlight the active mode tab based on status updates
-            // highlightActiveOperatingMode(data.operatingMode);
         }
         
-        // Update CP mode toggle state if included in status
-        if (data.cpModeEnabled !== undefined) {
-            const cpModeToggle = document.getElementById('cp-mode-toggle');
-            if (cpModeToggle && cpModeToggle.checked !== data.cpModeEnabled) {
-                console.log("Updating CP mode toggle to match device state:", data.cpModeEnabled);
-                cpModeToggle.checked = data.cpModeEnabled;
-            }
+        // Highlight appropriate mode tab if needed
+        if (data.operatingMode) {
+            highlightActiveOperatingMode(data.operatingMode);
         }
     }
     
@@ -414,13 +411,12 @@ function handleBasicMessages(event) {
         
         if (mode) {
             updateOperatingMode(mode, setValue);
-            // REMOVED: Do not highlight the active tab based on mode responses
-            // highlightActiveOperatingMode(mode);
+            highlightActiveOperatingMode(mode);
         }
     }
 }
 
-// New function to highlight the active operating mode tab with mode-specific colors
+// New function to highlight the active operating mode tab - Updated to handle both string and numeric modes
 function highlightActiveOperatingMode(mode) {
     console.log("highlightActiveOperatingMode called with:", mode, typeof mode);
     
@@ -446,47 +442,21 @@ function highlightActiveOperatingMode(mode) {
     
     // Find the corresponding tab
     const tabs = document.querySelectorAll('.mode-tab');
-    
-    // First remove all possible active classes from all tabs
-    tabs.forEach(t => {
-        t.classList.remove('tab-active', 'tab-active-cv', 'tab-active-cc', 'tab-active-cp');
-        t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-    });
-    
-    // Find and highlight the correct tab with MODE-SPECIFIC STYLES
-    let foundTab = false;
     tabs.forEach(tab => {
         const dataMode = tab.getAttribute('data-mode');
-        
-        // Match exact mode or mode name that starts with the data-mode value
         if (dataMode && (dataMode === tabMode || tabMode.startsWith(dataMode))) {
-            tab.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            // This is the active tab, highlight it
+            tabs.forEach(t => {
+                t.classList.remove('tab-active');
+                t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            });
             
-            // Apply the mode-specific active class
-            if (dataMode === 'cv') {
-                tab.classList.add('tab-active-cv');
-            } else if (dataMode === 'cc') {
-                tab.classList.add('tab-active-cc');
-            } else if (dataMode === 'cp') {
-                tab.classList.add('tab-active-cp');
-            } else {
-                tab.classList.add('tab-active'); // fallback
-            }
+            tab.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            tab.classList.add('tab-active');
             
             console.log(`Highlighted ${dataMode} tab for mode ${mode}`);
-            foundTab = true;
         }
     });
-    
-    // If no tab was found, default to CV tab as fallback
-    if (!foundTab && tabs.length > 0) {
-        const defaultTab = Array.from(tabs).find(tab => tab.getAttribute('data-mode') === 'cv');
-        if (defaultTab) {
-            defaultTab.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-            defaultTab.classList.add('tab-active-cv');
-            console.log("No matching tab found, defaulted to CV tab");
-        }
-    }
 }
 
 // Update operating mode display - REMOVE ANIMATION
@@ -573,9 +543,18 @@ function updateOutputStatus(enabled) {
     }
 }
 
-// SIMPLIFIED - Fix togglePower function to correctly send commands
+// SIMPLIFIED - Remove backward compatibility code
 export function togglePower(isOn) {
     console.log("togglePower called with:", isOn);
+    
+    // Check if this is triggered by user or initial load
+    const eventType = window.event ? window.event.type : null;
+    
+    // If this is triggered programmatically during initialization, don't send command
+    if (!eventType && document.readyState !== 'complete') {
+        console.log("Skipping automatic power toggle during page load");
+        return false;
+    }
     
     // Make sure we have a valid connection and command function
     if (typeof sendCommand !== 'function') {
@@ -834,62 +813,8 @@ window.setConstantPower = setConstantPower;
 window.setConstantPowerMode = setConstantPowerMode;
 window.toggleKeyLock = toggleKeyLock;
 window.togglePower = togglePower;  // Make sure this is properly exposed
+window.highlightActiveOperatingMode = highlightActiveOperatingMode;
 window.refreshPsuStatus = updateAllStatus; // Redirect to the new function
 window.updateAllStatus = updateAllStatus; // Make the unified status update function available globally
 window.startAutoRefresh = startAutoRefresh;
 window.stopAutoRefresh = stopAutoRefresh;
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Mode tab switcher - updated to use mode-specific active classes
-    document.querySelectorAll('.mode-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            // Update active tab styling - remove all possible classes first
-            document.querySelectorAll('.mode-tab').forEach(t => {
-                t.classList.remove('tab-active', 'tab-active-cv', 'tab-active-cc', 'tab-active-cp');
-                t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-            });
-            
-            // Get the mode from data attribute
-            const mode = this.getAttribute('data-mode');
-            this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-            
-            // Apply the mode-specific active class with specific colors
-            if (mode === 'cv') {
-                this.classList.add('tab-active-cv');
-            } else if (mode === 'cc') {
-                this.classList.add('tab-active-cc');
-            } else if (mode === 'cp') {
-                this.classList.add('tab-active-cp');
-            } else {
-                this.classList.add('tab-active'); // fallback
-            }
-            
-            // Show the corresponding settings panel
-            document.querySelectorAll('.mode-settings').forEach(panel => {
-                panel.classList.add('hidden');
-                panel.classList.remove('block');
-            });
-            
-            document.getElementById(`${mode}-settings`).classList.remove('hidden');
-            document.getElementById(`${mode}-settings`).classList.add('block');
-            
-            // Store the last active tab in local storage so it persists
-            localStorage.setItem('lastActiveTab', mode);
-        });
-    });
-
-    // Restore the last active tab from local storage when page loads
-    const lastActiveTab = localStorage.getItem('lastActiveTab') || 'cv'; // Default to CV if none stored
-    const tabToActivate = document.querySelector(`.mode-tab[data-mode="${lastActiveTab}"]`);
-    
-    if (tabToActivate) {
-        // Simulate a click on the tab to restore its state
-        console.log("Activating tab for mode:", lastActiveTab);
-        tabToActivate.click();
-    } else {
-        console.warn("No tab found for mode:", lastActiveTab);
-        // Default to first tab as fallback
-        const firstTab = document.querySelector('.mode-tab');
-        if (firstTab) firstTab.click();
-    }
-});

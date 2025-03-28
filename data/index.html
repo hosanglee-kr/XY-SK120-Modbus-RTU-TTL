@@ -29,6 +29,21 @@
         }
     </script>
     
+    <!-- Add this script to apply the theme immediately before page renders -->
+    <script>
+        // Apply theme immediately to prevent flash of wrong theme
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+    
     <style>
         @keyframes pulse {
             0%, 100% {
@@ -294,6 +309,56 @@
             50% { opacity: 1; }
             100% { opacity: 0.4; }
         }
+
+        /* Settings tab styling - enhanced to ensure proper blue color */
+        .settings-tab.border-secondary {
+            border-bottom-color: #3498db !important;
+            border-bottom-width: 2px !important;
+        }
+        
+        .settings-tab.text-secondary {
+            color: #3498db !important;
+        }
+        
+        /* Override Tailwind for dark mode tab styles */
+        .dark .settings-tab.text-secondary {
+            color: #3498db !important;
+        }
+
+        /* Ensure mode tab colors are strongly defined (add these at the end of your style section) */
+        .mode-tab.tab-active-cv {
+            border-bottom-color: #64ff00 !important;
+            color: #64ff00 !important;
+            border-bottom-width: 2px !important;
+        }
+        
+        .mode-tab.tab-active-cc {
+            border-bottom-color: #fff500 !important;
+            color: #fff500 !important;
+            border-bottom-width: 2px !important;
+        }
+        
+        .mode-tab.tab-active-cp {
+            border-bottom-color: #b73dff !important;
+            color: #b73dff !important;
+            border-bottom-width: 2px !important;
+        }
+        
+        /* Fix for dark mode */
+        .dark .mode-tab.tab-active-cv {
+            border-bottom-color: #64ff00 !important;
+            color: #64ff00 !important;
+        }
+        
+        .dark .mode-tab.tab-active-cc {
+            border-bottom-color: #fff500 !important;
+            color: #fff500 !important;
+        }
+        
+        .dark .mode-tab.tab-active-cp {
+            border-bottom-color: #b73dff !important;
+            color: #b73dff !important;
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 h-full transition-colors duration-200">
@@ -336,17 +401,8 @@
                             </div>
                         </div>
                         
-                        <!-- Dark Mode Toggle -->
-                        <button id="theme-toggle" class="p-1 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">
-                            <!-- Sun icon for dark mode -->
-                            <svg id="sun-icon" class="hidden h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
-                            </svg>
-                            <!-- Moon icon for light mode -->
-                            <svg id="moon-icon" class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-                            </svg>
-                        </button>
+                        <!-- Dark Mode Toggle - REMOVED -->
+                        <!-- Removed theme-toggle button here -->
                     </div>
                 </div>
             </div>
@@ -370,7 +426,7 @@
                             <div class="flex items-center">
                                 <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Output</span>
                                 <label class="toggle-switch">
-                                    <!-- Change to bind event handler directly in JS instead of inline handler -->
+                                    <!-- Add the input with ID -->
                                     <input type="checkbox" id="power-toggle">
                                     <span class="slider"></span>
                                 </label>
@@ -477,39 +533,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Add Device Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                            <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                            Device Manager
-                        </h2>
-                    </div>
-                    <div class="px-4 py-5 sm:p-6">
-                        <form id="add-device-form" class="space-y-4">
-                            <div>
-                                <label for="new-device-ip" class="block text-sm font-medium text-gray-700 dark:text-gray-300">IP Address</label>
-                                <input type="text" id="new-device-ip" placeholder="192.168.1.100" required class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
-                            </div>
-                            <div>
-                                <label for="new-device-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name (optional)</label>
-                                <input type="text" id="new-device-name" placeholder="My Power Supply" class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
-                            </div>
-                            <div class="flex justify-end">
-                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
-                                    Add Device
-                                </button>
-                                <button id="reconnect-btn" onclick="initWebSocket()" type="button" class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none">
-                                    Reconnect
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                
                 <!-- Operating Mode Controls Card -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
                     <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
@@ -520,7 +543,7 @@
                             Operating Mode
                         </h2>
                     </div>
-                    <!-- Mode tabs -->
+                    <!-- Mode tabs - ensure they have proper data-mode attributes -->
                     <div class="border-b border-gray-200 dark:border-gray-700">
                         <nav class="flex -mb-px">
                             <button data-mode="cv" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
@@ -599,44 +622,179 @@
                     </div>
                 </div>
                 
-                <!-- WiFi Settings Card -->
+                <!-- Settings Card - New unified settings interface -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
                     <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
                         <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
                             <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             </svg>
-                            WiFi Settings
+                            Settings
                         </h2>
                     </div>
-                    <div class="px-4 py-5 sm:p-6">
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Status</p>
-                                <p id="wifi-status" class="text-lg font-semibold text-gray-800 dark:text-gray-200">--</p>
+                    <!-- Settings tabs -->
+                    <div class="border-b border-gray-200 dark:border-gray-700">
+                        <nav class="flex -mb-px">
+                            <button data-settings-tab="wifi" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
+                                WiFi
+                            </button>
+                            <button data-settings-tab="device" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
+                                Device
+                            </button>
+                            <button data-settings-tab="ui" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
+                                Web UI
+                            </button>
+                            <button data-settings-tab="manager" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
+                                Devices
+                            </button>
+                        </nav>
+                    </div>
+                    
+                    <!-- Tab Content Container -->
+                    <div class="settings-tab-content">
+                        <!-- WiFi Settings Tab Content -->
+                        <div id="wifi-settings-tab" class="settings-panel px-4 py-5 sm:p-6 block">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Status</p>
+                                    <p id="wifi-status" class="text-lg font-semibold text-gray-800 dark:text-gray-200">--</p>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">SSID</p>
+                                    <p id="wifi-ssid" class="text-lg font-semibold text-gray-800 dark:text-gray-200 truncate">--</p>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">IP</p>
+                                    <p id="wifi-ip" class="text-lg font-semibold text-gray-800 dark:text-gray-200">--</p>
+                                </div>
                             </div>
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">SSID</p>
-                                <p id="wifi-ssid" class="text-lg font-semibold text-gray-800 dark:text-gray-200 truncate">--</p>
-                            </div>
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">IP</p>
-                                <p id="wifi-ip" class="text-lg font-semibold text-gray-800 dark:text-gray-200">--</p>
+                            <div class="mt-6 flex justify-end">
+                                <button id="wifi-refresh-btn" onclick="fetchWifiStatus()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none">
+                                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                    Refresh WiFi Status
+                                </button>
+                                <button id="wifi-reset-btn" onclick="resetWifiSettings()" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-danger hover:bg-opacity-90 focus:outline-none">
+                                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9-5m0 0l9-5-9 5-9 5 9 5m0 0v8"></path>
+                                    </svg>
+                                    Reset WiFi
+                                </button>
                             </div>
                         </div>
-                        <div class="mt-6 flex justify-end">
-                            <button id="wifi-refresh-btn" onclick="fetchWifiStatus()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none">
-                                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                </svg>
-                                Refresh WiFi Status
-                            </button>
-                            <button id="wifi-reset-btn" onclick="resetWifiSettings()" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-danger hover:bg-opacity-90 focus:outline-none">
-                                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9-5m0 0l9-5-9 5-9 5 9 5m0 0v8"></path>
-                                </svg>
-                                Reset WiFi
-                            </button>
+                        
+                        <!-- Device Settings Tab Content -->
+                        <div id="device-settings-tab" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                            <div class="max-w-lg mx-auto space-y-6">
+                                <div>
+                                    <label for="device-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Name</label>
+                                    <input type="text" id="device-name" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary">
+                                </div>
+                                
+                                <div>
+                                    <label for="modbus-id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Modbus ID</label>
+                                    <select id="modbus-id" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary">
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="baudrate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Baud Rate</label>
+                                    <select id="baudrate" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary">
+                                        <option value="9600">9600</option>
+                                        <option value="19200">19200</option>
+                                        <option value="38400">38400</option>
+                                        <option value="57600">57600</option>
+                                        <option value="115200">115200</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="update-interval" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Update Interval (ms)</label>
+                                    <input type="number" id="update-interval" min="500" max="10000" step="100" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary">
+                                </div>
+                                
+                                <div class="flex justify-end pt-4">
+                                    <button id="save-device-settings" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                        Save Device Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Web UI Settings Tab Content -->
+                        <div id="ui-settings-tab" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                            <div class="max-w-lg mx-auto space-y-6">
+                                <div class="flex items-center justify-between">
+                                    <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">Dark Mode</span>
+                                    <label class="toggle-switch">
+                                        <!-- Make sure this is a complete toggle switch with ID -->
+                                        <input type="checkbox" id="dark-mode-toggle">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">Auto-refresh Status</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="auto-refresh-toggle" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div>
+                                    <label for="refresh-interval" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Refresh Interval (seconds)</label>
+                                    <select id="refresh-interval" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary">
+                                        <option value="1">1 second</option>
+                                        <option value="2">2 seconds</option>
+                                        <option value="5" selected>5 seconds</option>
+                                        <option value="10">10 seconds</option>
+                                        <option value="30">30 seconds</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="flex justify-end pt-4">
+                                    <button id="save-ui-settings" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                        Save UI Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Device Manager Tab Content -->
+                        <div id="manager-settings-tab" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                            <form id="add-device-form" class="space-y-4">
+                                <div>
+                                    <label for="new-device-ip" class="block text-sm font-medium text-gray-700 dark:text-gray-300">IP Address</label>
+                                    <input type="text" id="new-device-ip" placeholder="192.168.1.100" required class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
+                                </div>
+                                <div>
+                                    <label for="new-device-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name (optional)</label>
+                                    <input type="text" id="new-device-name" placeholder="My Power Supply" class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
+                                </div>
+                                <div class="flex justify-end">
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                        Add Device
+                                    </button>
+                                    <button id="reconnect-btn" onclick="initWebSocket()" type="button" class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none">
+                                        Reconnect
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Saved Devices</h3>
+                                    <div id="saved-devices-list" class="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
+                                        <!-- Saved devices will be listed here dynamically -->
+                                        <div class="p-4 text-sm text-gray-500 dark:text-gray-400">Loading saved devices...</div>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -661,6 +819,9 @@
     
     <!-- Add Web Interface (renamed from menu_interface.js) -->
     <script src="js/web_interface.js"></script>
+    
+    <!-- Add Settings Tabs -->
+    <script src="js/settings_tabs.js"></script>
     
     <!-- Simple tab switcher -->
     <script>
@@ -774,11 +935,9 @@
             }
         });
         
-        // Theme toggler
-        const themeToggle = document.getElementById('theme-toggle');
+        // REMOVE all the old theme toggler code referring to the nav bar button
+        // Keep just the code that initializes the theme from localStorage
         const htmlElement = document.documentElement;
-        const sunIcon = document.getElementById('sun-icon');
-        const moonIcon = document.getElementById('moon-icon');
         
         // Check for saved theme preference or use device preference
         const savedTheme = localStorage.getItem('theme');
@@ -786,28 +945,232 @@
         
         if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
             htmlElement.classList.add('dark');
-            sunIcon.classList.remove('hidden');
-            moonIcon.classList.add('hidden');
         } else {
             htmlElement.classList.remove('dark');
-            sunIcon.classList.add('hidden');
-            moonIcon.classList.remove('hidden');
         }
         
-        // Toggle theme when button is clicked
-        themeToggle.addEventListener('click', function() {
-            if (htmlElement.classList.contains('dark')) {
-                htmlElement.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-                sunIcon.classList.add('hidden');
-                moonIcon.classList.remove('hidden');
-            } else {
-                htmlElement.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-                sunIcon.classList.remove('hidden');
-                moonIcon.classList.add('hidden');
-            }
+        // Settings tab switcher
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Update active tab styling
+                document.querySelectorAll('.settings-tab').forEach(t => {
+                    t.classList.remove('border-secondary', 'text-secondary');
+                    t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                });
+                
+                // Get the settings tab from data attribute
+                const tabName = this.getAttribute('data-settings-tab');
+                this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                this.classList.add('border-secondary', 'text-secondary');
+                
+                // Show the corresponding settings panel
+                document.querySelectorAll('.settings-panel').forEach(panel => {
+                    panel.classList.add('hidden');
+                    panel.classList.remove('block');
+                });
+                
+                document.getElementById(`${tabName}-settings-tab`).classList.remove('hidden');
+                document.getElementById(`${tabName}-settings-tab`).classList.add('block');
+                
+                // Store the last active settings tab
+                localStorage.setItem('lastActiveSettingsTab', tabName);
+            });
         });
-    </script>
+        
+        // Restore the last active settings tab
+        const lastActiveSettingsTab = localStorage.getItem('lastActiveSettingsTab') || 'wifi';
+        const settingsTabToActivate = document.querySelector(`.settings-tab[data-settings-tab="${lastActiveSettingsTab}"]`);
+        
+        if (settingsTabToActivate) {
+            // Simulate a click on the tab to restore its state
+            settingsTabToActivate.click();
+        }
+        
+        // Setup dark mode toggle in UI settings
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            // Set initial state based on current theme
+            darkModeToggle.checked = document.documentElement.classList.contains('dark');
+            
+            // Add change listener
+            darkModeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                    if (sunIcon && moonIcon) {
+                        sunIcon.classList.remove('hidden');
+                        moonIcon.classList.add('hidden');
+                    }
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                    if (sunIcon && moonIcon) {
+                        sunIcon.classList.add('hidden');
+                        moonIcon.classList.remove('hidden');
+                    }
+                }
+            });
+        }
+        
+        // Setup auto-refresh toggle
+        const autoRefreshToggle = document.getElementById('auto-refresh-toggle');
+        if (autoRefreshToggle) {
+            autoRefreshToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    if (typeof window.startAutoRefresh === 'function') {
+                        window.startAutoRefresh();
+                    }
+                } else {
+                    if (typeof window.stopAutoRefresh === 'function') {
+                        window.stopAutoRefresh();
+                    }
+                }
+            });
+        }
+        
+        // Setup refresh interval selector
+        const refreshIntervalSelector = document.getElementById('refresh-interval');
+        if (refreshIntervalSelector) {
+            refreshIntervalSelector.addEventListener('change', function() {
+                const interval = parseInt(this.value) * 1000;
+                // Store the selected interval
+                localStorage.setItem('refreshInterval', interval);
+                
+                // Restart auto-refresh with new interval if it's running
+                if (typeof window.autoRefreshTimer !== 'undefined' && window.autoRefreshTimer) {
+                    if (typeof window.stopAutoRefresh === 'function' && 
+                        typeof window.startAutoRefresh === 'function') {
+                        window.stopAutoRefresh();
+                        window.startAutoRefresh();
+                    }
+                }
+            });
+        }
+        
+        // Setup saved devices list
+        function updateSavedDevicesList() {
+            const savedDevicesList = document.getElementById('saved-devices-list');
+            if (!savedDevicesList) return;
+            
+            const devices = window.loadSavedDevices ? window.loadSavedDevices() : [];
+            
+            if (devices.length === 0) {
+                savedDevicesList.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">No saved devices</div>';
+                return;
+            }
+            
+            let html = '';
+            devices.forEach((device, index) => {
+                html += `
+                <div class="border-b border-gray-200 dark:border-gray-700 last:border-b-0 p-3 flex justify-between items-center">
+                    <div>
+                        <span class="font-medium">${device.name || 'Unnamed Device'}</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">${device.ip}</span>
+                    </div>
+                    <div>
+                        <button 
+                            onclick="connectToDevice('${device.ip}')" 
+                            class="text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-opacity-90">
+                            Connect
+                        </button>
+                        <button 
+                            onclick="removeSavedDevice(${index})" 
+                            class="text-xs px-2 py-1 bg-danger text-white rounded hover:bg-opacity-90 ml-1">
+                            Remove
+                        </button>
+                    </div>
+                </div>`;
+            });
+            
+            savedDevicesList.innerHTML = html;
+        }
+        
+        // Function to remove a saved device
+        window.removeSavedDevice = function(index) {
+            if (!window.loadSavedDevices) return;
+            
+            const devices = window.loadSavedDevices();
+            devices.splice(index, 1);
+            localStorage.setItem('savedDevices', JSON.stringify(devices));
+            
+            // Update the list display
+            updateSavedDevicesList();
+            
+            // Also update the device selector
+            if (typeof setupDeviceSelector === 'function') {
+                setupDeviceSelector();
+            }
+        };
+        
+        // Initialize the saved devices list
+        updateSavedDevicesList();
+        
+        // Save device settings button
+        const saveDeviceSettingsBtn = document.getElementById('save-device-settings');
+        if (saveDeviceSettingsBtn) {
+            saveDeviceSettingsBtn.addEventListener('click', function() {
+                const deviceName = document.getElementById('device-name').value;
+                const modbusId = document.getElementById('modbus-id').value;
+                const baudrate = document.getElementById('baudrate').value;
+                const updateInterval = document.getElementById('update-interval').value;
+                
+                const config = {
+                    deviceName: deviceName,
+                    modbusId: modbusId,
+                    baudRate: baudrate,
+                    updateInterval: updateInterval
+                };
+                
+                // Save using the global function if available
+                if (typeof window.saveDeviceConfig === 'function') {
+                    window.saveDeviceConfig(config);
+                } else {
+                    alert('Device settings saved locally');
+                    localStorage.setItem('deviceConfig', JSON.stringify(config));
+                }
+            });
+        }
+        
+        // Save UI settings button
+        const saveUiSettingsBtn = document.getElementById('save-ui-settings');
+        if (saveUiSettingsBtn) {
+            saveUiSettingsBtn.addEventListener('click', function() {
+                const theme = document.getElementById('dark-mode-toggle').checked ? 'dark' : 'light';
+                const autoRefresh = document.getElementById('auto-refresh-toggle').checked;
+                const refreshInterval = document.getElementById('refresh-interval').value;
+                
+                const uiConfig = {
+                    theme: theme,
+                    autoRefresh: autoRefresh,
+                    refreshInterval: refreshInterval
+                };
+                
+                // Save to localStorage
+                localStorage.setItem('uiConfig', JSON.stringify(uiConfig));
+                alert('UI settings saved');
+                
+                // Apply theme immediately
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            });
+        }
+    });
+    
+    // Improved theme initialization - runs immediately, not in DOMContentLoaded
+    // This ensures the theme is applied before page renders to prevent flashing
+    (function() {
+        const savedTheme = localStorage.getItem('theme');
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    })();
+</script>
 </body>
 </html>
