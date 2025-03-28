@@ -1,0 +1,16 @@
+/* Add custom heartbeat styles to override the animation in the HTML */
+.auto-refresh-indicator .dot {
+    transition: opacity 0.4s ease-in-out, background-color 0.5s ease;
+    opacity: 0.4;
+    animation: none; /* Disable the automatic animation */
+}
+
+/* When the connection is slow, add a slow pulse instead */
+.auto-refresh-indicator.slow .dot {
+    animation: slowPulse 3s infinite;
+}
+
+@keyframes slowPulse {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.6; }
+}

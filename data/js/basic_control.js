@@ -123,12 +123,20 @@ function startAutoRefresh() {
     }
 }
 
-// Stop auto-refresh timer
+// Stop auto-refresh timer - updated to handle both timers
 function stopAutoRefresh() {
-    if (autoRefreshTimer) {
-        console.log("⏹️ Stopping auto-refresh");
-        clearInterval(autoRefreshTimer);
-        autoRefreshTimer = null;
+    if (window.autoRefreshTimer) {
+        console.log("⏹️ Stopping all auto-refresh timers");
+        
+        if (window.autoRefreshTimer.fast) {
+            clearInterval(window.autoRefreshTimer.fast);
+        }
+        
+        if (window.autoRefreshTimer.slow) {
+            clearInterval(window.autoRefreshTimer.slow);
+        }
+        
+        window.autoRefreshTimer = null;
         
         // Show manual refresh buttons again
         showManualRefreshButtons();
@@ -362,8 +370,16 @@ function setupKeyLockControl() {
 function handleBasicMessages(event) {
     const data = event.detail;
     
-    // Handle basic status responses
+    // Trigger heartbeat pulse on status response
     if (data.action === 'statusResponse') {
+        // Trigger heartbeat pulse using status module
+        import('./status.js').then(module => {
+            if (typeof module.pulseHeartbeat === 'function') {
+                module.pulseHeartbeat(data);
+            }
+        }).catch(err => console.error('Error importing status.js:', err));
+        
+        // Continue with normal status response handling
         console.log("Received status response:", data);
         updateBasicUI(data);
         
@@ -391,6 +407,15 @@ function handleBasicMessages(event) {
         }
     }
     
+    // Handle readings-only responses (faster updates for V/I/P)
+    if (data.action === 'readingsResponse') {
+        console.log("Received readings update:", data);
+        
+        // Update only the voltage, current, power readings
+        updatePsuReadings(data);
+        return;
+    }
+    
     // Handle power state responses
     if (data.action === 'setOutputStateResponse' || 
         data.action === 'powerOutputResponse') {
@@ -403,16 +428,36 @@ function handleBasicMessages(event) {
     if (data.action === 'operatingModeResponse' && data.success === true) {
         console.log("Received operating mode response:", data);
         const mode = data.modeCode || data.operatingMode;
-        const setValue = data.setValue;
         
         if (mode) {
-            // Call the function from status.js instead of the local one
+            // For mode changes, immediately update UI since it's user-initiated
             import('./status.js').then(module => {
                 if (typeof module.updateOperatingMode === 'function') {
                     module.updateOperatingMode(mode, data);
                 }
             }).catch(err => console.error('Error importing status.js:', err));
         }
+    }
+}
+
+// New function to handle readings-only updates
+function updatePsuReadings(data) {
+    // Update voltage
+    const voltageEl = document.getElementById('psu-voltage');
+    if (voltageEl && data.voltage !== undefined) {
+        voltageEl.textContent = parseFloat(data.voltage).toFixed(2);
+    }
+    
+    // Update current
+    const currentEl = document.getElementById('psu-current');
+    if (currentEl && data.current !== undefined) {
+        currentEl.textContent = parseFloat(data.current).toFixed(3);
+    }
+    
+    // Update power
+    const powerEl = document.getElementById('psu-power');
+    if (powerEl && data.power !== undefined) {
+        powerEl.textContent = parseFloat(data.power).toFixed(1);
     }
 }
 

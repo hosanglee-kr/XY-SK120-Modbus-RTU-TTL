@@ -3,8 +3,33 @@
  * Interfaces with web_interface.cpp backend firmware
  */
 
-// Fix the import syntax - using proper string format
-import { updateHeartbeatSpeed, toggleHeartbeatIndicator } from "./status.js";
+// Define placeholder functions that will be replaced when the module is loaded
+let updateHeartbeatSpeed = function(interval) {
+    console.log("Placeholder updateHeartbeatSpeed called with interval:", interval);
+};
+
+let toggleHeartbeatIndicator = function(visible) {
+    console.log("Placeholder toggleHeartbeatIndicator called with visible:", visible);
+};
+
+// Use dynamic import to get the actual implementations
+document.addEventListener('DOMContentLoaded', function() {
+    import('./status.js')
+        .then(module => {
+            // Replace placeholder functions with actual implementations
+            updateHeartbeatSpeed = module.updateHeartbeatSpeed;
+            toggleHeartbeatIndicator = module.toggleHeartbeatIndicator;
+            
+            // Initialize the heartbeat with the current refresh interval
+            const currentInterval = parseInt(localStorage.getItem('refreshInterval')) || 5000;
+            if (typeof updateHeartbeatSpeed === 'function') {
+                updateHeartbeatSpeed(currentInterval);
+            }
+            
+            console.log("Successfully imported status.js functions");
+        })
+        .catch(err => console.error('Error importing status.js:', err));
+});
 
 document.addEventListener('DOMContentLoaded', function() {
     // Card swipe variables
@@ -309,7 +334,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const interval = parseInt(this.value) * 1000;
             
             // Update the heartbeat animation speed immediately
-            updateHeartbeatSpeed(interval);
+            if (typeof updateHeartbeatSpeed === 'function') {
+                updateHeartbeatSpeed(interval);
+            }
             
             // The rest of the interval change handling is likely already in your code
         });
@@ -317,7 +344,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize the heartbeat with the current refresh interval
     const currentInterval = parseInt(localStorage.getItem('refreshInterval')) || 5000;
-    updateHeartbeatSpeed(currentInterval);
+    if (typeof updateHeartbeatSpeed === 'function') {
+        updateHeartbeatSpeed(currentInterval);
+    }
 });
 
 /**
@@ -331,11 +360,15 @@ function startAutoRefresh() {
     // Get the refresh interval from settings, or use default (5000ms)
     const interval = parseInt(localStorage.getItem('refreshInterval')) || 5000;
     
-    // Update the heartbeat animation speed
-    updateHeartbeatSpeed(interval);
+    // Update the heartbeat animation speed - check if function is available
+    if (typeof updateHeartbeatSpeed === 'function') {
+        updateHeartbeatSpeed(interval);
+    }
     
-    // Show the heartbeat indicator
-    toggleHeartbeatIndicator(true);
+    // Show the heartbeat indicator - check if function is available
+    if (typeof toggleHeartbeatIndicator === 'function') {
+        toggleHeartbeatIndicator(true);
+    }
     
     // Start the auto-refresh timer
     autoRefreshTimer = setInterval(() => {
@@ -353,8 +386,10 @@ function stopAutoRefresh() {
         clearInterval(autoRefreshTimer);
         autoRefreshTimer = null;
         
-        // Hide the heartbeat indicator
-        toggleHeartbeatIndicator(false);
+        // Hide the heartbeat indicator - check if function is available
+        if (typeof toggleHeartbeatIndicator === 'function') {
+            toggleHeartbeatIndicator(false);
+        }
         
         console.log('Auto-refresh stopped');
     }

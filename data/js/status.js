@@ -3,6 +3,10 @@
  * Handles updating UI with power supply readings and states
  */
 
+// Track the last time we received a status update
+let lastStatusUpdateTime = 0;
+let heartbeatMonitorActive = false;
+
 // Update the UI with power supply data
 export function updateUI(data) {
     // Update basic PSU readings
@@ -70,11 +74,11 @@ export function updateOutputStatus(isOn) {
     }
 }
 
-// Update operating mode display - Fixed to correctly show the mode
+// Update operating mode display - Modified to put mode in primary section
 export function updateOperatingMode(mode, data) {
     console.log("Updating operating mode:", mode, data);
     
-    // First handle old operatingModeDisplay for backward compatibility
+    // Handle the old operatingModeDisplay for backward compatibility if it exists
     const modeDisplay = document.getElementById('operatingModeDisplay');
     if (modeDisplay) {
         // Clear all mode classes first
@@ -105,8 +109,28 @@ export function updateOperatingMode(mode, data) {
         }
     }
 
-    // Handle the mode display in the status area
-    // This is a simple approach that doesn't use the conditional spans
+    // Update the mode display in the main readings section
+    const modeDisplayValue = document.getElementById('mode-display-value');
+    if (modeDisplayValue) {
+        // Remove all existing classes
+        modeDisplayValue.className = '';
+        
+        if (mode === 'CV') {
+            modeDisplayValue.textContent = 'CV';
+            modeDisplayValue.classList.add('text-volt');
+        } else if (mode === 'CC') {
+            modeDisplayValue.textContent = 'CC';
+            modeDisplayValue.classList.add('text-amp');
+        } else if (mode === 'CP') {
+            modeDisplayValue.textContent = 'CP';
+            modeDisplayValue.classList.add('text-watt');
+        } else {
+            modeDisplayValue.textContent = '--';
+            modeDisplayValue.classList.add('text-gray-500');
+        }
+    }
+
+    // Update the detailed mode display in the status area
     const modeDisplayElement = document.getElementById('mode-display');
     if (modeDisplayElement) {
         let displayHtml = '';
@@ -190,6 +214,83 @@ export function updateHeartbeatSpeed(refreshInterval) {
 }
 
 /**
+ * Handles the heartbeat pulse on actual message received
+ * @param {Object} data - The status data received
+ */
+export function pulseHeartbeat(data) {
+    if (!data || data.action !== 'statusResponse') return;
+    
+    lastStatusUpdateTime = Date.now();
+    
+    const heartbeatIndicator = document.getElementById('heartbeat-indicator');
+    if (!heartbeatIndicator) return;
+    
+    const dot = heartbeatIndicator.querySelector('.dot');
+    if (!dot) return;
+    
+    // Briefly increase opacity to show a "pulse" effect
+    dot.style.opacity = '1';
+    
+    // Start fading after a brief delay
+    setTimeout(() => {
+        dot.style.opacity = '0.4';
+    }, 200);
+    
+    // Make sure the indicator is visible
+    heartbeatIndicator.style.display = 'flex';
+    
+    // Start monitoring the health of the heartbeat if not already running
+    if (!heartbeatMonitorActive) {
+        startHeartbeatMonitor();
+    }
+}
+
+/**
+ * Start monitoring the heartbeat to detect if updates stop
+ */
+function startHeartbeatMonitor() {
+    heartbeatMonitorActive = true;
+    
+    // Check every 2 seconds if we're still getting updates
+    const monitorInterval = setInterval(() => {
+        const timeSinceLastUpdate = Date.now() - lastStatusUpdateTime;
+        const heartbeatIndicator = document.getElementById('heartbeat-indicator');
+        if (!heartbeatIndicator) return;
+        
+        // If it's been more than 10 seconds since last update, show a warning state
+        if (timeSinceLastUpdate > 10000) {
+            const span = heartbeatIndicator.querySelector('span');
+            if (span) {
+                span.textContent = 'Connection slow';
+                span.style.color = '#e74c3c'; // Red to indicate issue
+            }
+            
+            const dot = heartbeatIndicator.querySelector('.dot');
+            if (dot) {
+                dot.style.backgroundColor = '#e74c3c'; // Red dot
+            }
+        } else {
+            const span = heartbeatIndicator.querySelector('span');
+            if (span) {
+                span.textContent = 'Auto-updating';
+                span.style.color = '#3498db'; // Blue for normal state
+            }
+            
+            const dot = heartbeatIndicator.querySelector('.dot');
+            if (dot) {
+                dot.style.backgroundColor = '#3498db'; // Blue dot
+            }
+        }
+        
+        // If indicator is gone, stop monitoring
+        if (!document.getElementById('heartbeat-indicator')) {
+            clearInterval(monitorInterval);
+            heartbeatMonitorActive = false;
+        }
+    }, 2000);
+}
+
+/**
  * Shows or hides the heartbeat indicator
  * @param {boolean} visible - Whether the indicator should be visible
  */
@@ -197,5 +298,24 @@ export function toggleHeartbeatIndicator(visible) {
     const heartbeatIndicator = document.getElementById('heartbeat-indicator');
     if (heartbeatIndicator) {
         heartbeatIndicator.style.display = visible ? 'flex' : 'none';
+        
+        // Reset indicator appearance
+        const dot = heartbeatIndicator.querySelector('.dot');
+        if (dot) {
+            dot.style.animation = 'none';
+            dot.style.backgroundColor = '#3498db';
+            dot.style.opacity = '0.4';
+        }
+        
+        const span = heartbeatIndicator.querySelector('span');
+        if (span) {
+            span.textContent = 'Auto-updating';
+            span.style.color = '#3498db';
+        }
+    }
+    
+    // If turning off, stop any active monitoring
+    if (!visible) {
+        heartbeatMonitorActive = false;
     }
 }
