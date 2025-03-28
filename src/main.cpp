@@ -11,6 +11,7 @@
 #include "serial_monitor_interface.h"
 #include "serial_interface/serial_core.h"
 #include "wifi_interface/wifi_manager_wrapper.h" // Include wrapper instead of WiFiManager directly
+#include "web_interface/log_utils.h" // Use the web_interface version of the logging utilities
 
 // Define WiFi reset button pin
 #define WIFI_RESET_PIN 0  // Using GPIO0 as reset button (customize as needed)
@@ -24,12 +25,15 @@ XY_SKxxx* powerSupply = nullptr;
 AsyncWebServer server(80);
 ModbusMaster modbus;
 
+// Remove the local getLogTimestamp implementation
+// Now using the one from log_utils.h
+
 void setup() {
   Serial.begin(115200);
   delay(1000); // Give more time for serial to initialize
   
-  Serial.println("Starting XY-SK120 Modbus RTU System");
-  Serial.println("WiFi Setup Process Starting...");
+  LOG_INFO("Starting XY-SK120 Modbus RTU System");
+  LOG_INFO("WiFi Setup Process Starting...");
   
   // Initialize WiFi reset button
   pinMode(WIFI_RESET_PIN, INPUT_PULLUP);
@@ -45,7 +49,9 @@ void setup() {
   
   // Initialize LittleFS (correct naming for ESP32)
   if(!LittleFS.begin(true)) {
-    Serial.println("LittleFS Mount Failed");
+    LOG_ERROR("LittleFS Mount Failed");
+  } else {
+    LOG_INFO("LittleFS initialized successfully");
   }
   
   // For initial setup, force the AP mode to appear temporarily
@@ -107,6 +113,11 @@ void setup() {
     Serial.println(WiFi.localIP());
   }
   
+  // After WiFi is connected, configure NTP for accurate timestamps
+  if (WiFi.status() == WL_CONNECTED) {
+    configureNTP();
+  }
+  
   // Try an alternative approach with server initialization
   try {
     // Setup web server routes first
@@ -117,6 +128,7 @@ void setup() {
     
     // Start server
     server.begin();
+    Serial.print(getLogTimestamp());
     Serial.println("HTTP server started successfully");
   } 
   catch (const std::exception& e) {

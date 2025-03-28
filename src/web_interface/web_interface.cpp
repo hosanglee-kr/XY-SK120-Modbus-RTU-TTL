@@ -21,6 +21,7 @@
 #include "wifi_interface/wifi_manager_wrapper.h"
 #include "modbus_handler.h"
 #include "config_manager.h"
+#include "web_interface/log_utils.h" // Update to use the web_interface-specific log utils
 
 // Include XY-SKxxx header to access power supply functions
 #include "XY-SKxxx.h"
@@ -356,15 +357,16 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
     data[len] = 0;
     String message = String((char*)data);
     
-    Serial.print("WebSocket received: ");
-    Serial.println(message);
+    // Enhanced logging with IP address information
+    IPAddress clientIP = client->remoteIP();
+    IPAddress serverIP = WiFi.localIP();
+    LOG_WS(clientIP, serverIP, "WebSocket received: " + message);
     
     DynamicJsonDocument doc(1024);
     DeserializationError error = deserializeJson(doc, message);
     
     if (error) {
-      Serial.print("deserializeJson() failed: ");
-      Serial.println(error.c_str());
+      LOG_ERROR("deserializeJson() failed: " + String(error.c_str()));
       return;
     }
     
@@ -374,6 +376,7 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
     if (action == "ping") {
         // Simply respond with a pong message
         client->text("{\"action\":\"pong\"}");
+        LOG_WS(serverIP, clientIP, "WebSocket sent: {\"action\":\"pong\"}");
         return;
     }
     
@@ -390,8 +393,7 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
       // Toggle power output on/off - ensure we get the correct current state first
       if (powerSupply && powerSupply->testConnection()) {
         bool enable = doc["enable"];
-        Serial.print("Power output command received. Setting output to: ");
-        Serial.println(enable ? "ON" : "OFF");
+        LOG_INFO("Power output command received. Setting output to: " + String(enable ? "ON" : "OFF"));
         
         bool success = setPSUOutput(powerSupply, enable);
         
@@ -401,8 +403,7 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         // Get current status after change
         bool outputEnabled = isPSUOutputEnabled(powerSupply);
         
-        Serial.print("Output status after command: ");
-        Serial.println(outputEnabled ? "ON" : "OFF");
+        LOG_INFO("Output status after command: " + String(outputEnabled ? "ON" : "OFF"));
         
         // Send response
         DynamicJsonDocument responseDoc(256);
@@ -413,8 +414,11 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
       } else {
-        client->text("{\"action\":\"powerOutputResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"powerOutputResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     else if (action == "setVoltage") {
@@ -435,8 +439,11 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
       } else {
-        client->text("{\"action\":\"setVoltageResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"setVoltageResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     else if (action == "setCurrent") {
@@ -457,8 +464,11 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
       } else {
-        client->text("{\"action\":\"setCurrentResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"setCurrentResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     else if (action == "getStatus") {
@@ -469,8 +479,7 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
     else if (action == "setKeyLock") {
       if (powerSupply && powerSupply->testConnection()) {
         bool lock = doc["lock"];
-        Serial.print("Key lock command received. Setting keys to: ");
-        Serial.println(lock ? "LOCKED" : "UNLOCKED");
+        LOG_INFO("Key lock command received. Setting keys to: " + String(lock ? "LOCKED" : "UNLOCKED"));
         
         bool success = powerSupply->setKeyLock(lock);
         
@@ -486,8 +495,11 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
       } else {
-        client->text("{\"action\":\"keyLockResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"keyLockResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     // Constant Voltage mode
@@ -505,6 +517,7 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
         
         // Wait a moment for the changes to take effect
         delay(100);
@@ -512,7 +525,9 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         // Send updated status and operating mode
         sendCompletePSUStatus(client);
       } else {
-        client->text("{\"action\":\"constantVoltageResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"constantVoltageResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     // Constant Current mode
@@ -530,6 +545,7 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
         
         // Wait a moment for the changes to take effect
         delay(100);
@@ -537,7 +553,9 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         // Send updated status and operating mode
         sendCompletePSUStatus(client);
       } else {
-        client->text("{\"action\":\"constantCurrentResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"constantCurrentResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     // Constant Power mode
@@ -555,6 +573,7 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
         
         // Wait a moment for the changes to take effect
         delay(100);
@@ -562,7 +581,9 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         // Send updated status and operating mode
         sendCompletePSUStatus(client);
       } else {
-        client->text("{\"action\":\"constantPowerResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"constantPowerResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     // Constant Power mode toggle
@@ -583,6 +604,7 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
         
         // Wait a moment for the changes to take effect
         delay(100);
@@ -590,7 +612,9 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         // Send updated status and operating mode
         sendCompletePSUStatus(client);
       } else {
-        client->text("{\"action\":\"constantPowerModeResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"constantPowerModeResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     // Add a specific action to get operating mode details
@@ -614,6 +638,7 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
       String response;
       serializeJson(responseDoc, response);
       client->text(response);
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
     }
     // Handle incoming message...
     if (action == "getKeyLockStatus") {
@@ -634,10 +659,10 @@ void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
               AwsEventType type, void* arg, uint8_t* data, size_t len) {
   switch (type) {
     case WS_EVT_CONNECT:
-      Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+      LOG_INFO("WebSocket client #" + String(client->id()) + " connected from " + client->remoteIP().toString());
       break;
     case WS_EVT_DISCONNECT:
-      Serial.printf("WebSocket client #%u disconnected\n", client->id());
+      LOG_INFO("WebSocket client #" + String(client->id()) + " disconnected");
       break;
     case WS_EVT_DATA:
       handleWebSocketMessage(server, client, (AwsFrameInfo*)arg, data, len);
@@ -649,6 +674,11 @@ void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
 }
 
 void setupWebServer(AsyncWebServer* server) {
+  // Try to configure NTP for better logging timestamps
+  if (WiFi.status() == WL_CONNECTED) {
+    configureNTP();
+  }
+  
   // Wrap in try-catch to handle possible initialization errors
   try {
     // Initialize WebSocket
@@ -789,10 +819,10 @@ void setupWebServer(AsyncWebServer* server) {
       request->send(200, "text/plain", "pong");
     });
     
-    Serial.println("Web server routes configured successfully");
+    LOG_INFO("Web server routes configured successfully");
   } 
   catch (const std::exception& e) {
-    Serial.println("Error setting up web server routes");
+    LOG_ERROR("Error setting up web server routes");
   }
   
   // Handle file reads
