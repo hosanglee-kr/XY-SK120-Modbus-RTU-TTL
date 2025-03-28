@@ -26,8 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize all modules
 function initializeModules() {
-    // Import basic functionality
-    import('./menu_basic.js').then(module => {
+    // Import basic functionality - updated name
+    import('./basic_control.js').then(module => {
         if(module.initBasicControls) module.initBasicControls();
     }).catch(err => console.error('Failed to load basic controls:', err));
     
@@ -36,7 +36,7 @@ function initializeModules() {
         if(module.initSettings) module.initSettings();
     }).catch(err => console.error('Failed to load settings:', err));
     
-    // Import device manager (web-specific)
+    // Import device manager - name remains the same
     import('./device_manager.js').then(module => {
         if(module.initDeviceManager) module.initDeviceManager();
     }).catch(err => console.error('Failed to load device manager:', err));
@@ -256,7 +256,7 @@ window.initWebSocket = initWebSocket;
 
 // Add this check at the end of the file to ensure auto-refresh starts
 
-// Fallback initialization for auto-refresh - simplified
+// Fallback initialization for auto-refresh - updated import path
 document.addEventListener('DOMContentLoaded', function() {
     // Check for auto-refresh after 3 seconds
     setTimeout(() => {
@@ -265,8 +265,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.startAutoRefresh();
             }
         } else {
-            // Try to manually import the menu_basic.js module
-            import('./menu_basic.js')
+            // Try to manually import the basic_control.js module (renamed)
+            import('./basic_control.js')
                 .then(module => {
                     if (typeof module.startAutoRefresh === 'function') {
                         window.startAutoRefresh = module.startAutoRefresh;
@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 })
-                .catch(err => console.error("Failed to import menu_basic.js"));
+                .catch(err => console.error("Failed to import basic_control.js"));
         }
     }, 3000);
 });

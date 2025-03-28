@@ -1,57 +1,96 @@
 /**
- * Device manager - Web UI specific functionality
- * Allows controlling multiple XY-SK120 devices
+ * Device management functionality for XY-SK120
  */
 
 // Initialize device manager
 export function initDeviceManager() {
-    // Load saved devices
-    const devices = getSavedDevices();
+    // Setup device selector
+    setupDeviceSelector();
     
-    // Add localhost if not already present
-    if (!devices.find(d => d.ip === 'localhost')) {
-        devices.push({
-            ip: 'localhost',
-            name: 'This Device',
-            isDefault: true,
-            dateAdded: new Date().toISOString()
-        });
-        saveDevices(devices);
-    }
-    
-    // Update device selector
-    updateDeviceSelector();
-    
-    // Setup event listeners
-    setupDeviceManagerEvents();
+    // Setup add device form
+    setupAddDeviceForm();
 }
 
-// Set up device manager event listeners
-function setupDeviceManagerEvents() {
-    // Set up device selector change event
+// Set up device selector
+function setupDeviceSelector() {
     const deviceSelector = document.getElementById('device-selector');
-    if (deviceSelector) {
-        deviceSelector.addEventListener('change', function() {
-            connectToDevice(this.value);
-        });
+    if (!deviceSelector) return;
+    
+    // Load saved devices
+    const savedDevices = loadSavedDevices();
+    
+    // Clear existing options
+    deviceSelector.innerHTML = '';
+    
+    // Add default option for current device
+    const currentHostname = window.location.hostname;
+    const defaultOption = document.createElement('option');
+    defaultOption.value = currentHostname;
+    defaultOption.textContent = `Current (${currentHostname})`;
+    deviceSelector.appendChild(defaultOption);
+    
+    // Add saved devices
+    savedDevices.forEach(device => {
+        const option = document.createElement('option');
+        option.value = device.ip;
+        option.textContent = device.name || device.ip;
+        deviceSelector.appendChild(option);
+    });
+    
+    // Select the currently connected device
+    const connectedDevice = localStorage.getItem('selectedDeviceIP');
+    if (connectedDevice) {
+        deviceSelector.value = connectedDevice;
     }
     
-    // Set up add device form
-    const addDeviceForm = document.getElementById('add-device-form');
-    if (addDeviceForm) {
-        addDeviceForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const ip = document.getElementById('new-device-ip').value;
-            const name = document.getElementById('new-device-name').value;
-            addDevice(ip, name);
-        });
-    }
+    // Add change event listener
+    deviceSelector.addEventListener('change', function() {
+        const selectedIP = this.value;
+        if (selectedIP) {
+            connectToDevice(selectedIP);
+        }
+    });
 }
 
-// Get saved devices from localStorage
-export function getSavedDevices() {
+// Set up add device form
+function setupAddDeviceForm() {
+    const addDeviceForm = document.getElementById('add-device-form');
+    if (!addDeviceForm) return;
+    
+    addDeviceForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const ipInput = document.getElementById('new-device-ip');
+        const nameInput = document.getElementById('new-device-name');
+        
+        if (!ipInput || !ipInput.value) {
+            alert('Please enter a valid IP address');
+            return;
+        }
+        
+        const ip = ipInput.value.trim();
+        const name = nameInput ? nameInput.value.trim() : '';
+        
+        // Add the device
+        addDevice(ip, name);
+        
+        // Clear the form
+        ipInput.value = '';
+        if (nameInput) nameInput.value = '';
+        
+        // Update the device selector
+        setupDeviceSelector();
+        
+        // Connect to the new device
+        connectToDevice(ip);
+    });
+}
+
+// Load saved devices from localStorage
+function loadSavedDevices() {
     try {
-        return JSON.parse(localStorage.getItem('savedDevices')) || [];
+        const devicesJson = localStorage.getItem('savedDevices');
+        return devicesJson ? JSON.parse(devicesJson) : [];
     } catch (e) {
         console.error('Error loading saved devices:', e);
         return [];
@@ -59,88 +98,43 @@ export function getSavedDevices() {
 }
 
 // Save devices to localStorage
-export function saveDevices(devices) {
-    try {
-        localStorage.setItem('savedDevices', JSON.stringify(devices));
-        return true;
-    } catch (e) {
-        console.error('Error saving devices:', e);
-        return false;
-    }
-}
-
-// Update device selector dropdown
-export function updateDeviceSelector() {
-    const deviceSelector = document.getElementById('device-selector');
-    if (!deviceSelector) return;
-    
-    // Clear existing options
-    deviceSelector.innerHTML = '';
-    
-    // Get devices and current selection
-    const devices = getSavedDevices();
-    const currentDevice = localStorage.getItem('selectedDeviceIP') || 'localhost';
-    
-    // Add options to the selector
-    devices.forEach(device => {
-        const option = document.createElement('option');
-        option.value = device.ip;
-        option.textContent = device.name || device.ip;
-        if (device.ip === currentDevice) {
-            option.selected = true;
-        }
-        deviceSelector.appendChild(option);
-    });
+function saveDevices(devices) {
+    localStorage.setItem('savedDevices', JSON.stringify(devices));
 }
 
 // Add a new device
-export function addDevice(ip, name) {
-    if (!ip) return false;
-    
-    const devices = getSavedDevices();
+function addDevice(ip, name) {
+    const devices = loadSavedDevices();
     
     // Check if device already exists
-    if (devices.find(d => d.ip === ip)) {
-        // Just connect to it
-        connectToDevice(ip);
-        return true;
+    const existingDeviceIndex = devices.findIndex(d => d.ip === ip);
+    
+    if (existingDeviceIndex >= 0) {
+        // Update existing device name if provided
+        if (name) {
+            devices[existingDeviceIndex].name = name;
+        }
+    } else {
+        // Add new device
+        devices.push({ ip, name });
     }
     
-    // Add the new device
-    devices.push({
-        ip: ip,
-        name: name || ip,
-        isDefault: false,
-        dateAdded: new Date().toISOString()
-    });
-    
-    // Save the updated list
     saveDevices(devices);
-    
-    // Update the UI
-    updateDeviceSelector();
-    
-    // Connect to the new device
-    connectToDevice(ip);
-    
-    return true;
 }
 
-// Connect to a specific device
-export function connectToDevice(deviceIP) {
-    if (!deviceIP) return false;
-    
-    // Save the selected device
-    localStorage.setItem('selectedDeviceIP', deviceIP);
-    
-    // Initialize WebSocket connection to the device
-    if (window.initWebSocket) {
-        window.initWebSocket();
+// Connect to a device
+function connectToDevice(ip) {
+    if (typeof window.connectToDevice === 'function') {
+        window.connectToDevice(ip);
+    } else {
+        console.error('connectToDevice function not available');
+        
+        // Fallback: set the IP and reload
+        localStorage.setItem('selectedDeviceIP', ip);
+        window.location.reload();
     }
-    
-    return true;
 }
 
 // Make functions available globally
 window.addDevice = addDevice;
-window.connectToDevice = connectToDevice;
+window.loadSavedDevices = loadSavedDevices;

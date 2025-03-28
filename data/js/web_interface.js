@@ -1,6 +1,6 @@
 /**
- * Card swiper functionality for mobile view
- * Handles touch gestures and card navigation
+ * Web interface functionality for XY-SK120
+ * Interfaces with web_interface.cpp backend firmware
  */
 
 document.addEventListener('DOMContentLoaded', function() {
