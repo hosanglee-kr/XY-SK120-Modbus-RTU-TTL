@@ -1,11 +1,73 @@
 /**
- * Core WebSocket functionality for XY-SK120 control
- * Minimal version that initializes modules and handles connections
+ * Core functionality for XY-SK120
+ * Handles WebSocket communication and module loading
  */
 
-// Global WebSocket object
+// WebSocket connection variables
 let websocket = null;
 let websocketConnected = false;
+
+// Global for tracking auto-refresh timer
+let autoRefreshTimer = null;
+
+// Default control settings
+const DEFAULT_CONTROL_SETTINGS = {
+    voltage: 0,
+    current: 0,
+    power: 0
+};
+
+// Store control settings
+let controlSettings = { ...DEFAULT_CONTROL_SETTINGS };
+
+// Add error handling for importing modules
+window.moduleImportErrors = {};
+
+// Load basic controls with better error handling - make key functions available early
+function loadBasicControls() {
+    try {
+        // Define default versions of key functions to prevent errors until modules load
+        window.togglePower = window.togglePower || function(isOn) {
+            console.log("Placeholder togglePower called with:", isOn);
+            // Will be replaced when module loads
+        };
+        
+        window.updateAllStatus = window.updateAllStatus || function() {
+            console.log("Placeholder updateAllStatus called");
+            // Will be replaced when module loads
+        };
+        
+        window.requestPsuStatus = window.requestPsuStatus || function() {
+            console.log("Placeholder requestPsuStatus called");
+            // Will be replaced when module loads
+        };
+        
+        // Load the actual module
+        import('./basic_control.js')
+            .then(module => {
+                console.log("Basic controls module loaded");
+                window.initBasicControls = module.initBasicControls;
+                window.togglePower = module.togglePower;
+                window.updateAllStatus = module.updateAllStatus;
+                window.requestPsuStatus = module.requestPsuStatus;
+                window.requestOperatingMode = module.requestOperatingMode;
+                window.startAutoRefresh = module.startAutoRefresh;
+                window.stopAutoRefresh = module.stopAutoRefresh;
+                
+                // Initialize basic controls if ready
+                if (typeof window.initBasicControls === 'function') {
+                    window.initBasicControls();
+                }
+            })
+            .catch(error => {
+                console.error("Failed to load basic controls:", error);
+                window.moduleImportErrors.basicControl = error.message;
+            });
+    } catch (error) {
+        console.error("Failed to import basic_control.js", error);
+        window.moduleImportErrors.basicControl = error.message;
+    }
+}
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -24,11 +86,49 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 30000); // Send a ping every 30 seconds
 });
 
-// Initialize all modules
+// Improved initializeModules function - provide default implementations
 function initializeModules() {
-    // Import basic functionality - updated name
+    // Define placeholders for critical functions
+    window.togglePower = function(isOn) {
+        console.log("Default togglePower called, waiting for module to load");
+        setTimeout(() => initWebSocket(), 500);
+    };
+    
+    window.updateAllStatus = function() {
+        console.log("Default updateAllStatus called, waiting for module to load");
+    };
+    
+    window.requestPsuStatus = function() {
+        console.log("Default requestPsuStatus called, waiting for module to load");
+    };
+    
+    // Import status module first
+    import('./status.js').then(module => {
+        window.updateOperatingMode = module.updateOperatingMode;
+        window.updateOutputStatus = module.updateOutputStatus;
+        window.updatePsuUI = module.updatePsuUI;
+        window.updateUI = module.updateUI;
+        window.updateHeartbeatSpeed = module.updateHeartbeatSpeed;
+        window.toggleHeartbeatIndicator = module.toggleHeartbeatIndicator;
+        console.log("Status module loaded successfully");
+    }).catch(err => console.error('Failed to load status module:', err));
+    
+    // Then import basic functionality
     import('./basic_control.js').then(module => {
+        window.initBasicControls = module.initBasicControls;
+        window.togglePower = module.togglePower;
+        window.updateAllStatus = module.updateAllStatus;
+        window.requestPsuStatus = module.requestPsuStatus;
+        window.requestOperatingMode = module.requestOperatingMode;
+        window.setConstantVoltage = module.setConstantVoltage;
+        window.setConstantCurrent = module.setConstantCurrent;
+        window.setConstantPower = module.setConstantPower;
+        window.setConstantPowerMode = module.setConstantPowerMode;
+        window.startAutoRefresh = module.startAutoRefresh;
+        window.stopAutoRefresh = module.stopAutoRefresh;
+        
         if(module.initBasicControls) module.initBasicControls();
+        console.log("Basic controls module loaded successfully");
     }).catch(err => console.error('Failed to load basic controls:', err));
     
     // Import settings

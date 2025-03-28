@@ -3,6 +3,9 @@
  * Interfaces with web_interface.cpp backend firmware
  */
 
+// Fix the import syntax - using proper string format
+import { updateHeartbeatSpeed, toggleHeartbeatIndicator } from "./status.js";
+
 document.addEventListener('DOMContentLoaded', function() {
     // Card swipe variables
     const cardContainer = document.querySelector('.card-container');
@@ -210,7 +213,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // REMOVE the mode tab event listeners from web_interface.js which is causing conflicts
     // Mode tab switcher - special handling to prevent swipe
+    /*
     document.querySelectorAll('.mode-tab').forEach(tab => {
         tab.addEventListener('click', function(e) {
             // Ensure click doesn't trigger swipe
@@ -247,7 +252,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    
+    */
+
     // Expose API for other modules
     window.CardSwiper = {
         goToCard: function(index) {
@@ -288,4 +294,68 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
     };
+
+    // Add method to disable conflicting tab handlers
+    window.CardSwiper.disableTabHandlers = function() {
+        // This is a placeholder function that can be called from index.html
+        // to ensure no conflicting handlers are running
+        console.log("Disabling conflicting tab handlers");
+    };
+
+    // Update the heartbeat speed when the refresh interval changes
+    const refreshIntervalSelector = document.getElementById('refresh-interval');
+    if (refreshIntervalSelector) {
+        refreshIntervalSelector.addEventListener('change', function() {
+            const interval = parseInt(this.value) * 1000;
+            
+            // Update the heartbeat animation speed immediately
+            updateHeartbeatSpeed(interval);
+            
+            // The rest of the interval change handling is likely already in your code
+        });
+    }
+    
+    // Initialize the heartbeat with the current refresh interval
+    const currentInterval = parseInt(localStorage.getItem('refreshInterval')) || 5000;
+    updateHeartbeatSpeed(currentInterval);
 });
+
+/**
+ * Start auto-refresh
+ */
+function startAutoRefresh() {
+    if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+    }
+    
+    // Get the refresh interval from settings, or use default (5000ms)
+    const interval = parseInt(localStorage.getItem('refreshInterval')) || 5000;
+    
+    // Update the heartbeat animation speed
+    updateHeartbeatSpeed(interval);
+    
+    // Show the heartbeat indicator
+    toggleHeartbeatIndicator(true);
+    
+    // Start the auto-refresh timer
+    autoRefreshTimer = setInterval(() => {
+        updateAllStatus();
+    }, interval);
+    
+    console.log(`Auto-refresh started with interval ${interval}ms`);
+}
+
+/**
+ * Stop auto-refresh
+ */
+function stopAutoRefresh() {
+    if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+        
+        // Hide the heartbeat indicator
+        toggleHeartbeatIndicator(false);
+        
+        console.log('Auto-refresh stopped');
+    }
+}

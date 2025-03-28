@@ -271,7 +271,7 @@
         
         /* Status display layout - ensure consistent layout and alignment */
         .status-grid {
-            @apply grid grid-cols-2 gap-4 md:gap-6;
+            @apply grid grid-cols-3 gap-x-4 gap-y-2 md:grid-cols-6;
         }
         
         .status-item {
@@ -283,7 +283,34 @@
         }
         
         .status-value {
-            @apply text-base sm:text-xl;
+            @apply text-base;
+        }
+
+        /* Color coding for status values */
+        .text-volt {
+            color: #64ff00;
+        }
+        .text-amp {
+            color: #fff500;
+        }
+        .text-watt {
+            color: #b73dff;
+        }
+        .text-temp {
+            color: #00c8ff;
+        }
+        
+        .dark .text-volt {
+            color: #64ff00;
+        }
+        .dark .text-amp {
+            color: #fff500;
+        }
+        .dark .text-watt {
+            color: #b73dff;
+        }
+        .dark .text-temp {
+            color: #00c8ff;
         }
 
         /* Auto-refresh indicator */
@@ -414,12 +441,19 @@
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden compact-readings">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
-                            <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                            </svg>
-                            <span class="hidden sm:inline">Power Supply</span> Status
-                        </h2>
+                        <div class="flex items-center">
+                            <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
+                                <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                                <span class="hidden sm:inline">Power Supply </span>Status
+                            </h2>
+                            <!-- Auto-refresh indicator moved here -->
+                            <div id="heartbeat-indicator" class="auto-refresh-indicator ml-3" style="display:flex;">
+                                <div class="dot"></div>
+                                <span class="hidden sm:inline">Auto-updating</span>
+                            </div>
+                        </div>
                         
                         <!-- Power toggle & refresh buttons -->
                         <div class="flex items-center space-x-3">
@@ -466,21 +500,63 @@
                         </div>
                     </div>
                     
-                    <!-- Status display - MODIFIED to remove redundant Output status -->
+                    <!-- Status display - MODIFIED to show all protection values in a single 6-column grid -->
                     <div class="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                        <div class="status-grid">
-                            <!-- Removed output status indicator since the power toggle already shows this -->
-                            <div class="status-item col-span-2">
-                                <p class="status-label">Mode</p>
-                                <div id="operatingModeDisplay" class="status-pill mode-unknown">--</div>
+                        <div class="grid grid-cols-6 gap-1 sm:gap-4 text-center text-xs sm:text-sm">
+                            <!-- Mode status - will be conditionally displayed based on active mode -->
+                            <div class="relative">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">Mode</p>
+                                <p id="mode-display">
+                                    <!-- Each mode indicator will be shown/hidden via JavaScript based on active mode -->
+                                    <span id="mode-cv-display" class="inline-block" style="display: none;">CV <span class="text-volt">00.00</span><span class="text-volt">V</span></span>
+                                    <span id="mode-cc-display" class="inline-block" style="display: none;">CC <span class="text-amp">0.000</span><span class="text-amp">A</span></span>
+                                    <span id="mode-cp-display" class="inline-block" style="display: none;">CP <span class="text-watt">000.0</span><span class="text-watt">W</span></span>
+                                </p>
+                            </div>
+                            
+                            <!-- Protection values - Overvoltage -->
+                            <div class="relative">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OVP</p>
+                                <p>
+                                    <span id="ovp-value" class="text-volt">00.00</span><span class="text-volt">V</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Protection values - Overcurrent -->
+                            <div class="relative">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OCP</p>
+                                <p>
+                                    <span id="ocp-value" class="text-amp">0.000</span><span class="text-amp">A</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Protection values - Overpower -->
+                            <div class="relative">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OPP</p>
+                                <p>
+                                    <span id="opp-value" class="text-watt">000.0</span><span class="text-watt">W</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Protection values - Low voltage -->
+                            <div class="relative">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">LVP</p>
+                                <p>
+                                    <span id="lvp-value" class="text-volt">00.00</span><span class="text-volt">V</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Protection values - Over temperature -->
+                            <div class="relative">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OTP</p>
+                                <p>
+                                    <span id="otp-value" class="text-temp">000.0</span><span class="text-temp">°C</span>
+                                </p>
                             </div>
                         </div>
+
                         <div class="mt-3 flex justify-between">
-                            <!-- Auto-refresh indicator initially visible -->
-                            <div class="auto-refresh-indicator" style="display:flex;">
-                                <div class="dot"></div>
-                                <span>Auto-updating</span>
-                            </div>
+                            <!-- Remove the auto-refresh indicator from here as it's now in the header -->
                             
                             <!-- Keep the refresh button but initially hidden - it will show if auto-refresh fails -->
                             <button id="refresh-mode-btn" onclick="updateAllStatus()" class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600" style="display: none;">
@@ -636,17 +712,17 @@
                     <!-- Settings tabs -->
                     <div class="border-b border-gray-200 dark:border-gray-700">
                         <nav class="flex -mb-px">
-                            <button data-settings-tab="wifi" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                WiFi
-                            </button>
                             <button data-settings-tab="device" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
                                 Device
                             </button>
                             <button data-settings-tab="ui" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
                                 Web UI
                             </button>
+                            <button data-settings-tab="wifi" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
+                                WiFi
+                            </button>
                             <button data-settings-tab="manager" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                Devices
+                                Links
                             </button>
                         </nav>
                     </div>
@@ -823,6 +899,9 @@
     <!-- Add Settings Tabs -->
     <script src="js/settings_tabs.js"></script>
     
+    <!-- Add Debug Script -->
+    <script src="js/debug.js"></script>
+    
     <!-- Simple tab switcher -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -856,9 +935,11 @@
                 });
             }
             
-            // Mode tab switcher - updated to use mode-specific active classes and NOT respond to device state
+            // Mode tab switcher - completely fixed to work properly
             document.querySelectorAll('.mode-tab').forEach(tab => {
                 tab.addEventListener('click', function() {
+                    console.log("Mode tab clicked:", this.getAttribute('data-mode'));
+                    
                     // Update active tab styling
                     document.querySelectorAll('.mode-tab').forEach(t => {
                         t.classList.remove('tab-active', 'tab-active-cv', 'tab-active-cc', 'tab-active-cp');
@@ -883,11 +964,15 @@
                     // Show the corresponding settings panel
                     document.querySelectorAll('.mode-settings').forEach(panel => {
                         panel.classList.add('hidden');
-                        panel.classList.remove('block');
                     });
                     
-                    document.getElementById(`${mode}-settings`).classList.remove('hidden');
-                    document.getElementById(`${mode}-settings`).classList.add('block');
+                    const targetPanel = document.getElementById(`${mode}-settings`);
+                    if (targetPanel) {
+                        targetPanel.classList.remove('hidden');
+                        targetPanel.classList.add('block');
+                    } else {
+                        console.error("Could not find panel with ID:", `${mode}-settings`);
+                    }
                     
                     // Store the last active tab in local storage so it persists
                     localStorage.setItem('lastActiveTab', mode);
@@ -922,255 +1007,244 @@
                     setConstantPowerMode(this.checked);
                 });
             }
-        });
         
-        // Update WebSocket status with color indicator
-        document.addEventListener('websocket-message', function(event) {
-            const statusIndicator = document.getElementById('websocket-status-indicator');
-            const statusText = document.getElementById('websocket-status');
+            // Update WebSocket status with color indicator
+            document.addEventListener('websocket-message', function(event) {
+                const statusIndicator = document.getElementById('websocket-status-indicator');
+                const statusText = document.getElementById('websocket-status');
+                
+                if (statusIndicator && statusText) {
+                    statusText.textContent = 'Connected';
+                    statusIndicator.className = 'h-3 w-3 rounded-full bg-success mr-2';
+                }
+            });
+        
+            // REMOVE all the old theme toggler code referring to the nav bar button
+            // Keep just the code that initializes the theme from localStorage
+            const htmlElement = document.documentElement;
             
-            if (statusIndicator && statusText) {
-                statusText.textContent = 'Connected';
-                statusIndicator.className = 'h-3 w-3 rounded-full bg-success mr-2';
+            // Check for saved theme preference or use device preference
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                htmlElement.classList.add('dark');
+            } else {
+                htmlElement.classList.remove('dark');
             }
-        });
         
-        // REMOVE all the old theme toggler code referring to the nav bar button
-        // Keep just the code that initializes the theme from localStorage
-        const htmlElement = document.documentElement;
+            // Settings tab switcher
+            document.querySelectorAll('.settings-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Update active tab styling
+                    document.querySelectorAll('.settings-tab').forEach(t => {
+                        t.classList.remove('border-secondary', 'text-secondary');
+                        t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                    });
+                    
+                    // Get the settings tab from data attribute
+                    const tabName = this.getAttribute('data-settings-tab');
+                    this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                    this.classList.add('border-secondary', 'text-secondary');
+                    
+                    // Show the corresponding settings panel
+                    document.querySelectorAll('.settings-panel').forEach(panel => {
+                        panel.classList.add('hidden');
+                        panel.classList.remove('block');
+                    });
+                    document.getElementById(`${tabName}-settings-tab`).classList.remove('hidden');
+                    document.getElementById(`${tabName}-settings-tab`).classList.add('block');
+                    
+                    // Store the last active settings tab
+                    localStorage.setItem('lastActiveSettingsTab', tabName);
+                });
+            });
+            
+            // Restore the last active settings tab
+            const lastActiveSettingsTab = localStorage.getItem('lastActiveSettingsTab') || 'wifi';
+            const settingsTabToActivate = document.querySelector(`.settings-tab[data-settings-tab="${lastActiveSettingsTab}"]`);
+            
+            if (settingsTabToActivate) {
+                // Simulate a click on the tab to restore its state
+                settingsTabToActivate.click();
+            }
         
-        // Check for saved theme preference or use device preference
-        const savedTheme = localStorage.getItem('theme');
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            // Setup dark mode toggle in UI settings
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            if (darkModeToggle) {
+                // Set initial state based on current theme
+                darkModeToggle.checked = document.documentElement.classList.contains('dark');
+                
+                // Add change listener
+                darkModeToggle.addEventListener('change', function() {
+                    if (this.checked) {
+                        document.documentElement.classList.add('dark');
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.setItem('theme', 'light');
+                    }
+                });
+            }
         
-        if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-            htmlElement.classList.add('dark');
-        } else {
-            htmlElement.classList.remove('dark');
-        }
+            // Setup auto-refresh toggle
+            const autoRefreshToggle = document.getElementById('auto-refresh-toggle');
+            if (autoRefreshToggle) {
+                autoRefreshToggle.addEventListener('change', function() {
+                    if (this.checked) {
+                        if (typeof window.startAutoRefresh === 'function') {
+                            window.startAutoRefresh();
+                        }
+                    } else {
+                        if (typeof window.stopAutoRefresh === 'function') {
+                            window.stopAutoRefresh();
+                        }
+                    }
+                });
+            }
         
-        // Settings tab switcher
-        document.querySelectorAll('.settings-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                // Update active tab styling
-                document.querySelectorAll('.settings-tab').forEach(t => {
-                    t.classList.remove('border-secondary', 'text-secondary');
-                    t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            // Setup refresh interval selector
+            const refreshIntervalSelector = document.getElementById('refresh-interval');
+            if (refreshIntervalSelector) {
+                refreshIntervalSelector.addEventListener('change', function() {
+                    const interval = parseInt(this.value) * 1000;
+                    // Store the selected interval
+                    localStorage.setItem('refreshInterval', interval);
+                    
+                    // Restart auto-refresh with new interval if it's running
+                    if (typeof window.autoRefreshTimer !== 'undefined' && window.autoRefreshTimer) {
+                        if (typeof window.stopAutoRefresh === 'function' && 
+                            typeof window.startAutoRefresh === 'function') {
+                            window.stopAutoRefresh();
+                            window.startAutoRefresh();
+                        }
+                    }
+                });
+            }
+        
+            // Setup saved devices list
+            function updateSavedDevicesList() {
+                const savedDevicesList = document.getElementById('saved-devices-list');
+                if (!savedDevicesList) return;
+                
+                const devices = window.loadSavedDevices ? window.loadSavedDevices() : [];
+                if (devices.length === 0) {
+                    savedDevicesList.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">No saved devices</div>';
+                    return;
+                }
+                
+                let html = '';
+                devices.forEach((device, index) => {
+                    html += `
+                    <div class="border-b border-gray-200 dark:border-gray-700 last:border-b-0 p-3 flex justify-between items-center">
+                        <div>
+                            <span class="font-medium">${device.name || 'Unnamed Device'}</span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">${device.ip}</span>
+                        </div>
+                        <div>
+                            <button 
+                                onclick="connectToDevice('${device.ip}')"
+                                class="text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-opacity-90">
+                                Connect
+                            </button>
+                            <button 
+                                onclick="removeSavedDevice(${index})"
+                                class="text-xs px-2 py-1 bg-danger text-white rounded hover:bg-opacity-90 ml-1">
+                                Remove
+                            </button>
+                        </div>
+                    </div>`;
                 });
                 
-                // Get the settings tab from data attribute
-                const tabName = this.getAttribute('data-settings-tab');
-                this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-                this.classList.add('border-secondary', 'text-secondary');
-                
-                // Show the corresponding settings panel
-                document.querySelectorAll('.settings-panel').forEach(panel => {
-                    panel.classList.add('hidden');
-                    panel.classList.remove('block');
-                });
-                
-                document.getElementById(`${tabName}-settings-tab`).classList.remove('hidden');
-                document.getElementById(`${tabName}-settings-tab`).classList.add('block');
-                
-                // Store the last active settings tab
-                localStorage.setItem('lastActiveSettingsTab', tabName);
-            });
-        });
-        
-        // Restore the last active settings tab
-        const lastActiveSettingsTab = localStorage.getItem('lastActiveSettingsTab') || 'wifi';
-        const settingsTabToActivate = document.querySelector(`.settings-tab[data-settings-tab="${lastActiveSettingsTab}"]`);
-        
-        if (settingsTabToActivate) {
-            // Simulate a click on the tab to restore its state
-            settingsTabToActivate.click();
-        }
-        
-        // Setup dark mode toggle in UI settings
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        if (darkModeToggle) {
-            // Set initial state based on current theme
-            darkModeToggle.checked = document.documentElement.classList.contains('dark');
-            
-            // Add change listener
-            darkModeToggle.addEventListener('change', function() {
-                if (this.checked) {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('theme', 'dark');
-                    if (sunIcon && moonIcon) {
-                        sunIcon.classList.remove('hidden');
-                        moonIcon.classList.add('hidden');
-                    }
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('theme', 'light');
-                    if (sunIcon && moonIcon) {
-                        sunIcon.classList.add('hidden');
-                        moonIcon.classList.remove('hidden');
-                    }
-                }
-            });
-        }
-        
-        // Setup auto-refresh toggle
-        const autoRefreshToggle = document.getElementById('auto-refresh-toggle');
-        if (autoRefreshToggle) {
-            autoRefreshToggle.addEventListener('change', function() {
-                if (this.checked) {
-                    if (typeof window.startAutoRefresh === 'function') {
-                        window.startAutoRefresh();
-                    }
-                } else {
-                    if (typeof window.stopAutoRefresh === 'function') {
-                        window.stopAutoRefresh();
-                    }
-                }
-            });
-        }
-        
-        // Setup refresh interval selector
-        const refreshIntervalSelector = document.getElementById('refresh-interval');
-        if (refreshIntervalSelector) {
-            refreshIntervalSelector.addEventListener('change', function() {
-                const interval = parseInt(this.value) * 1000;
-                // Store the selected interval
-                localStorage.setItem('refreshInterval', interval);
-                
-                // Restart auto-refresh with new interval if it's running
-                if (typeof window.autoRefreshTimer !== 'undefined' && window.autoRefreshTimer) {
-                    if (typeof window.stopAutoRefresh === 'function' && 
-                        typeof window.startAutoRefresh === 'function') {
-                        window.stopAutoRefresh();
-                        window.startAutoRefresh();
-                    }
-                }
-            });
-        }
-        
-        // Setup saved devices list
-        function updateSavedDevicesList() {
-            const savedDevicesList = document.getElementById('saved-devices-list');
-            if (!savedDevicesList) return;
-            
-            const devices = window.loadSavedDevices ? window.loadSavedDevices() : [];
-            
-            if (devices.length === 0) {
-                savedDevicesList.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">No saved devices</div>';
-                return;
+                savedDevicesList.innerHTML = html;
             }
-            
-            let html = '';
-            devices.forEach((device, index) => {
-                html += `
-                <div class="border-b border-gray-200 dark:border-gray-700 last:border-b-0 p-3 flex justify-between items-center">
-                    <div>
-                        <span class="font-medium">${device.name || 'Unnamed Device'}</span>
-                        <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">${device.ip}</span>
-                    </div>
-                    <div>
-                        <button 
-                            onclick="connectToDevice('${device.ip}')" 
-                            class="text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-opacity-90">
-                            Connect
-                        </button>
-                        <button 
-                            onclick="removeSavedDevice(${index})" 
-                            class="text-xs px-2 py-1 bg-danger text-white rounded hover:bg-opacity-90 ml-1">
-                            Remove
-                        </button>
-                    </div>
-                </div>`;
-            });
-            
-            savedDevicesList.innerHTML = html;
-        }
         
-        // Function to remove a saved device
-        window.removeSavedDevice = function(index) {
-            if (!window.loadSavedDevices) return;
-            
-            const devices = window.loadSavedDevices();
-            devices.splice(index, 1);
-            localStorage.setItem('savedDevices', JSON.stringify(devices));
-            
-            // Update the list display
+            // Function to remove a saved device
+            window.removeSavedDevice = function(index) {
+                if (!window.loadSavedDevices) return;
+                
+                const devices = window.loadSavedDevices();
+                devices.splice(index, 1);
+                localStorage.setItem('savedDevices', JSON.stringify(devices));
+                
+                // Update the list display
+                updateSavedDevicesList();
+                
+                // Also update the device selector
+                if (typeof setupDeviceSelector === 'function') {
+                    setupDeviceSelector();
+                }
+            };
+        
+            // Initialize the saved devices list
             updateSavedDevicesList();
-            
-            // Also update the device selector
-            if (typeof setupDeviceSelector === 'function') {
-                setupDeviceSelector();
+        
+            // Save device settings button
+            const saveDeviceSettingsBtn = document.getElementById('save-device-settings');
+            if (saveDeviceSettingsBtn) {
+                saveDeviceSettingsBtn.addEventListener('click', function() {
+                    const deviceName = document.getElementById('device-name').value;
+                    const modbusId = document.getElementById('modbus-id').value;
+                    const baudrate = document.getElementById('baudrate').value;
+                    const updateInterval = document.getElementById('update-interval').value;
+                    
+                    const config = {
+                        deviceName: deviceName,
+                        modbusId: modbusId,
+                        baudRate: baudrate,
+                        updateInterval: updateInterval
+                    };
+                    
+                    // Save using the global function if available
+                    if (typeof window.saveDeviceConfig === 'function') {
+                        window.saveDeviceConfig(config);
+                    } else {
+                        alert('Device settings saved locally');
+                        localStorage.setItem('deviceConfig', JSON.stringify(config));
+                    }
+                });
             }
-        };
         
-        // Initialize the saved devices list
-        updateSavedDevicesList();
-        
-        // Save device settings button
-        const saveDeviceSettingsBtn = document.getElementById('save-device-settings');
-        if (saveDeviceSettingsBtn) {
-            saveDeviceSettingsBtn.addEventListener('click', function() {
-                const deviceName = document.getElementById('device-name').value;
-                const modbusId = document.getElementById('modbus-id').value;
-                const baudrate = document.getElementById('baudrate').value;
-                const updateInterval = document.getElementById('update-interval').value;
-                
-                const config = {
-                    deviceName: deviceName,
-                    modbusId: modbusId,
-                    baudRate: baudrate,
-                    updateInterval: updateInterval
-                };
-                
-                // Save using the global function if available
-                if (typeof window.saveDeviceConfig === 'function') {
-                    window.saveDeviceConfig(config);
-                } else {
-                    alert('Device settings saved locally');
-                    localStorage.setItem('deviceConfig', JSON.stringify(config));
-                }
-            });
-        }
-        
-        // Save UI settings button
-        const saveUiSettingsBtn = document.getElementById('save-ui-settings');
-        if (saveUiSettingsBtn) {
-            saveUiSettingsBtn.addEventListener('click', function() {
-                const theme = document.getElementById('dark-mode-toggle').checked ? 'dark' : 'light';
-                const autoRefresh = document.getElementById('auto-refresh-toggle').checked;
-                const refreshInterval = document.getElementById('refresh-interval').value;
-                
-                const uiConfig = {
-                    theme: theme,
-                    autoRefresh: autoRefresh,
-                    refreshInterval: refreshInterval
-                };
-                
-                // Save to localStorage
-                localStorage.setItem('uiConfig', JSON.stringify(uiConfig));
-                alert('UI settings saved');
-                
-                // Apply theme immediately
-                if (theme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
-            });
-        }
-    });
+            // Save UI settings button
+            const saveUiSettingsBtn = document.getElementById('save-ui-settings');
+            if (saveUiSettingsBtn) {
+                saveUiSettingsBtn.addEventListener('click', function() {
+                    const theme = document.getElementById('dark-mode-toggle').checked ? 'dark' : 'light';
+                    const autoRefresh = document.getElementById('auto-refresh-toggle').checked;
+                    const refreshInterval = document.getElementById('refresh-interval').value;
+                    
+                    const uiConfig = {
+                        theme: theme,
+                        autoRefresh: autoRefresh,
+                        refreshInterval: refreshInterval
+                    };
+                    
+                    // Save to localStorage
+                    localStorage.setItem('uiConfig', JSON.stringify(uiConfig));
+                    alert('UI settings saved');
+                    
+                    // Apply theme immediately
+                    if (theme === 'dark') {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                });
+            }
+        });
     
-    // Improved theme initialization - runs immediately, not in DOMContentLoaded
-    // This ensures the theme is applied before page renders to prevent flashing
-    (function() {
-        const savedTheme = localStorage.getItem('theme');
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        
-        if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    })();
-</script>
+        // Improved theme initialization - runs immediately, not in DOMContentLoaded
+        // This ensures the theme is applied before page renders to prevent flashing
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
 </body>
 </html>
