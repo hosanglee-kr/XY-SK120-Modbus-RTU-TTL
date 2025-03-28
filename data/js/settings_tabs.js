@@ -5,70 +5,163 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Settings tabs module loaded");
     
-    // Settings tab switcher - independent implementation
-    const settingTabs = document.querySelectorAll('.settings-tab');
-    console.log("Found settings tabs:", settingTabs.length);
-    
-    // Fix empty settings tab content by populating them
+    // Fix empty settings tab content by populating them first
     populateSettingsTabs();
     
     // Initialize dark mode toggle right away
     initDarkModeToggle();
     
+    // Set up logs toggle
+    setupLogsToggle();
+    
+    // Properly initialize the settings tabs after a short delay to ensure DOM is ready
+    setTimeout(initSettingsTabs, 100);
+});
+
+// Update setupLogsToggle function to create a better WebSocket logs UI
+function setupLogsToggle() {
+    // Check if the UI settings tab exists
+    const uiSettingsTab = document.getElementById('ui-settings-tab');
+    if (uiSettingsTab) {
+        const settingsContainer = uiSettingsTab.querySelector('.max-w-lg');
+        if (settingsContainer) {
+            // Look for the auto-refresh toggle item
+            const autoRefreshToggle = settingsContainer.querySelector('.flex:nth-child(2)');
+            if (autoRefreshToggle) {
+                // Create a more descriptive WebSocket logs section
+                const logsSection = document.createElement('div');
+                logsSection.className = 'mt-6 border-t border-gray-200 dark:border-gray-700 pt-4';
+                logsSection.innerHTML = `
+                    <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">WebSocket Communication Logs</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                        View real-time communication between the browser and device. Helpful for troubleshooting.
+                    </p>
+                    <button id="open-logs-btn" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        Open WebSocket Logs
+                    </button>
+                `;
+                
+                // Insert after the save button container
+                const saveButtonContainer = settingsContainer.querySelector('.flex.justify-end');
+                if (saveButtonContainer) {
+                    saveButtonContainer.after(logsSection);
+                } else {
+                    // As fallback, append to the end of settings container
+                    settingsContainer.appendChild(logsSection);
+                }
+                
+                // Add event listener for the open logs button
+                setTimeout(() => {
+                    const openLogsBtn = document.getElementById('open-logs-btn');
+                    if (openLogsBtn) {
+                        openLogsBtn.addEventListener('click', function() {
+                            if (typeof window.toggleLogViewer === 'function') {
+                                window.toggleLogViewer(true);
+                                console.log("Log viewer opened from settings");
+                            } else {
+                                console.error("toggleLogViewer function not available");
+                            }
+                        });
+                    }
+                }, 100);
+            }
+        }
+    }
+    
+    // Make sure log viewer is initialized
+    if (typeof window.setupLogViewer === 'function') {
+        window.setupLogViewer();
+    }
+}
+
+// New function that handles tab initialization and switching with better styling
+function initSettingsTabs() {
+    const settingTabs = document.querySelectorAll('.settings-tab');
+    console.log("Found settings tabs:", settingTabs.length);
+    
+    if (settingTabs.length === 0) {
+        console.error("No settings tabs found in the DOM");
+        return;
+    }
+    
+    // First remove all existing click handlers to avoid duplicates
     settingTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            console.log("Settings tab clicked:", this.getAttribute('data-settings-tab'));
+        const newTab = tab.cloneNode(true);
+        tab.parentNode.replaceChild(newTab, tab);
+    });
+    
+    // Re-query tabs after replacement
+    const updatedTabs = document.querySelectorAll('.settings-tab');
+    
+    // Add new event handlers
+    updatedTabs.forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.stopPropagation();
             
-            // Remove active class from all tabs
-            settingTabs.forEach(t => {
+            const tabName = this.getAttribute('data-settings-tab');
+            console.log("Settings tab clicked:", tabName);
+            
+            // Clear all active tab styling
+            updatedTabs.forEach(t => {
                 t.classList.remove('border-secondary', 'text-secondary');
                 t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
             });
             
-            // Add active class to clicked tab - use blue color consistently
+            // Add active styling to clicked tab - IMPORTANT: ensure this happens!
             this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
             this.classList.add('border-secondary', 'text-secondary');
             
-            // Get the tab name from data attribute
-            const tabName = this.getAttribute('data-settings-tab');
+            // Get the target panel ID from the tab's data attribute
+            const targetPanelId = `${tabName}-settings-tab`;
             
-            // Hide all tab content
-            const tabContents = document.querySelectorAll('.settings-panel');
-            tabContents.forEach(content => {
-                content.classList.add('hidden');
-                content.classList.remove('block');
+            // Hide all panels
+            const panels = document.querySelectorAll('.settings-panel');
+            panels.forEach(panel => {
+                panel.classList.add('hidden');
             });
             
-            // Show the selected tab content
-            const selectedTab = document.getElementById(`${tabName}-settings-tab`);
-            if (selectedTab) {
-                selectedTab.classList.remove('hidden');
-                selectedTab.classList.add('block');
-                console.log(`Displayed ${tabName} settings tab`);
+            // Show the target panel
+            const targetPanel = document.getElementById(targetPanelId);
+            if (targetPanel) {
+                targetPanel.classList.remove('hidden');
+                console.log(`Displayed ${tabName} settings tab content`);
             } else {
-                console.error(`Tab content for ${tabName} not found`);
+                console.error(`Target panel ${targetPanelId} not found in the DOM`);
             }
             
-            // Store the last active settings tab
+            // Store the selection in localStorage
             localStorage.setItem('lastActiveSettingsTab', tabName);
         });
     });
     
-    // Restore the last active settings tab when page loads
+    // Activate the last selected tab or default to 'wifi'
     const lastActiveTab = localStorage.getItem('lastActiveSettingsTab') || 'wifi';
     console.log("Restoring last active settings tab:", lastActiveTab);
     
     const tabToActivate = document.querySelector(`.settings-tab[data-settings-tab="${lastActiveTab}"]`);
     if (tabToActivate) {
-        // Simulate a click to restore state
-        tabToActivate.click();
+        // Use a timeout to ensure all initialization is complete
+        setTimeout(() => {
+            tabToActivate.click();
+            console.log("Activated tab:", lastActiveTab);
+        }, 50);
     } else {
-        console.warn(`Last active settings tab ${lastActiveTab} not found`);
+        console.warn(`Last active settings tab '${lastActiveTab}' not found, defaulting to first tab`);
         // Activate the first tab as fallback
         const firstTab = document.querySelector('.settings-tab');
-        if (firstTab) firstTab.click();
+        if (firstTab) {
+            setTimeout(() => {
+                firstTab.click();
+                console.log("Activated first available tab");
+            }, 50);
+        } else {
+            console.error("No tabs found to activate!");
+        }
     }
-});
+}
 
 // Function to initialize dark mode toggle with the proper event listener
 function initDarkModeToggle() {
@@ -241,3 +334,46 @@ function populateSettingsTabs() {
 
 // Export the function to allow calling it from console for debugging
 window.initDarkModeToggle = initDarkModeToggle;
+window.initSettingsTabs = initSettingsTabs;
+
+// Add a global diagnostic function to debug tab issues
+window.debugSettingsTabs = function() {
+    console.log("=== Settings Tabs Debug ===");
+    
+    // Check tab elements
+    const tabs = document.querySelectorAll('.settings-tab');
+    console.log(`Found ${tabs.length} tab elements:`);
+    tabs.forEach((tab, i) => {
+        const tabName = tab.getAttribute('data-settings-tab');
+        const isActive = tab.classList.contains('border-secondary');
+        console.log(`Tab ${i}: ${tabName} (${isActive ? 'active' : 'inactive'})`);
+    });
+    
+    // Check panel elements
+    const panels = document.querySelectorAll('.settings-panel');
+    console.log(`Found ${panels.length} panel elements:`);
+    panels.forEach((panel, i) => {
+        const id = panel.id;
+        const isVisible = !panel.classList.contains('hidden');
+        console.log(`Panel ${i}: ${id} (${isVisible ? 'visible' : 'hidden'})`);
+    });
+    
+    // Check localStorage
+    const lastTab = localStorage.getItem('lastActiveSettingsTab');
+    console.log(`Last active tab in localStorage: ${lastTab || 'none'}`);
+    
+    console.log("=== End Debug ===");
+    
+    // Try to fix any issues found
+    if (tabs.length > 0 && panels.length > 0) {
+        console.log("Attempting automatic fix...");
+        // Force reinitialization
+        initSettingsTabs();
+    }
+    
+    return { 
+        tabs: tabs.length, 
+        panels: panels.length, 
+        lastTab: lastTab
+    };
+};

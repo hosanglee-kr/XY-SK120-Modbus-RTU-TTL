@@ -652,6 +652,45 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
       handleSetKeyLock(client, doc.as<JsonObject>());
       return;
     }
+    
+    // Add a handler for time zone settings requests
+    if (action == "getTimeZones") {
+      String timeZones = getAvailableTimeZones();
+      String currentTZ = getCurrentTimeZone();
+      
+      DynamicJsonDocument responseDoc(1024);
+      responseDoc["action"] = "timeZonesResponse";
+      responseDoc["timeZones"] = serialized(timeZones);
+      responseDoc["current"] = serialized(currentTZ);
+      
+      String response;
+      serializeJson(responseDoc, response);
+      client->text(response);
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+      return;
+    }
+    
+    // Handle time zone setting changes
+    if (action == "setTimeZone") {
+      int tzIndex = doc["index"];
+      
+      bool success = setTimeZoneByIndex(tzIndex);
+      
+      DynamicJsonDocument responseDoc(256);
+      responseDoc["action"] = "setTimeZoneResponse";
+      responseDoc["success"] = success;
+      
+      // If successful, include the new time zone info
+      if (success) {
+        responseDoc["timeZone"] = serialized(getCurrentTimeZone());
+      }
+      
+      String response;
+      serializeJson(responseDoc, response);
+      client->text(response);
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+      return;
+    }
   }
 }
 
@@ -809,6 +848,46 @@ void setupWebServer(AsyncWebServer* server) {
       ESP.restart();
     });
     
+    // Add an API endpoint for time zone settings
+    server->on("/api/timezone", HTTP_GET, [](AsyncWebServerRequest *request){
+      String timeZones = getAvailableTimeZones();
+      String currentTZ = getCurrentTimeZone();
+      
+      DynamicJsonDocument doc(1024);
+      doc["timeZones"] = serialized(timeZones);
+      doc["current"] = serialized(currentTZ);
+      
+      String jsonString;
+      serializeJson(doc, jsonString);
+      
+      // Add CORS headers
+      AsyncWebServerResponse *resp = request->beginResponse(200, "application/json", jsonString);
+      resp->addHeader("Access-Control-Allow-Origin", "*");
+      resp->addHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+      resp->addHeader("Access-Control-Allow-Headers", "Content-Type");
+      request->send(resp);
+    });
+    
+    server->on("/api/timezone", HTTP_POST, [](AsyncWebServerRequest *request){
+      request->send(200, "application/json", "{\"success\":true}");
+    }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+      if (len > 0) {
+        DynamicJsonDocument doc(256);
+        DeserializationError error = deserializeJson(doc, data, len);
+        
+        if (!error && doc.containsKey("index")) {
+          int tzIndex = doc["index"];
+          bool success = setTimeZoneByIndex(tzIndex);
+          
+          // Respond with success status
+          String response = "{\"success\":" + String(success ? "true" : "false") + "}";
+          AsyncWebServerResponse *resp = request->beginResponse(200, "application/json", response);
+          resp->addHeader("Access-Control-Allow-Origin", "*");
+          request->send(resp);
+        }
+      }
+    });
+
     // Add a simple health check endpoint
     server->on("/health", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send(200, "text/plain", "OK");

@@ -354,6 +354,11 @@ window.sendCommand = function(command) {
         websocket.send(commandStr);
         console.log('Successfully sent command:', command);
         
+        // Dispatch a custom event for logging in the log viewer
+        document.dispatchEvent(new CustomEvent('websocket-sent', { 
+            detail: command 
+        }));
+        
         // For power commands, log additional info
         if (command.action === 'setOutputState') {
             console.log('Sent power state change to:', command.enabled ? 'ON' : 'OFF');
