@@ -396,6 +396,11 @@ function handleBasicMessages(event) {
             }
         }
         
+        // Update CP mode toggle state if available in the status response
+        if (data.cpModeEnabled !== undefined) {
+            updateCpModeToggle(data.cpModeEnabled);
+        }
+        
         // Update operation mode if included in status - now using the imported function from status.js
         if (data.operatingMode) {
             // Call the function from status.js instead of the local one
@@ -438,6 +443,14 @@ function handleBasicMessages(event) {
             }).catch(err => console.error('Error importing status.js:', err));
         }
     }
+    
+    // Handle CP mode toggle responses
+    if (data.action === 'setConstantPowerModeResponse' && data.success === true) {
+        console.log("Received CP mode toggle response:", data);
+        if (data.enabled !== undefined) {
+            updateCpModeToggle(data.enabled);
+        }
+    }
 }
 
 // New function to handle readings-only updates
@@ -458,6 +471,16 @@ function updatePsuReadings(data) {
     const powerEl = document.getElementById('psu-power');
     if (powerEl && data.power !== undefined) {
         powerEl.textContent = parseFloat(data.power).toFixed(1);
+    }
+}
+
+// New function to update CP mode toggle without triggering events
+function updateCpModeToggle(isEnabled) {
+    console.log("Updating CP mode toggle to:", isEnabled);
+    const cpModeToggle = document.getElementById('cp-mode-toggle');
+    if (cpModeToggle && cpModeToggle.checked !== isEnabled) {
+        // Update the toggle without triggering the change event
+        cpModeToggle.checked = isEnabled;
     }
 }
 

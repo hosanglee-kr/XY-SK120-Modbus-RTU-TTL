@@ -17,6 +17,11 @@ export function updateUI(data) {
         updateOutputStatus(data.outputEnabled);
     }
     
+    // Update CP mode toggle if included
+    if (data.cpModeEnabled !== undefined) {
+        updateCpModeToggle(data.cpModeEnabled);
+    }
+    
     // Update operating mode if included
     if (data.operatingMode) {
         updateOperatingMode(data.operatingMode, data);
@@ -71,6 +76,18 @@ export function updateOutputStatus(isOn) {
     const powerToggle = document.getElementById('power-toggle');
     if (powerToggle && powerToggle.checked !== isOn) {
         powerToggle.checked = isOn;
+    }
+}
+
+/**
+ * Update CP mode toggle state
+ * @param {boolean} isEnabled - Whether CP mode is enabled
+ */
+export function updateCpModeToggle(isEnabled) {
+    const cpModeToggle = document.getElementById('cp-mode-toggle');
+    if (cpModeToggle && cpModeToggle.checked !== isEnabled) {
+        console.log("Status update: CP mode is", isEnabled ? "enabled" : "disabled");
+        cpModeToggle.checked = isEnabled;
     }
 }
 
