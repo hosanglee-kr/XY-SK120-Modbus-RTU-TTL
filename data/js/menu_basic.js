@@ -37,56 +37,91 @@ function setupPowerToggle() {
     }
 }
 
-// Function to sync the toggle with the actual device state
+// Function to sync the toggle with the actual device state WITHOUT changing it
 function syncPowerToggleWithActualState() {
     try {
-        console.log("Syncing power toggle with actual device state");
-        // Changed action from 'getOutputState' to 'powerOutput'
-        const status = sendCommand({ action: 'powerOutput' });
+        console.log("Syncing power toggle with actual device state (read-only)");
         
-        if (status && typeof status.enabled !== 'undefined') {
-            console.log("Received output state from device:", status.enabled);
-            
-            // Update the toggle without triggering the change event
-            const powerToggle = document.getElementById('power-toggle');
-            if (powerToggle && powerToggle.checked !== status.enabled) {
-                console.log("Updating power toggle to match device state:", status.enabled);
-                powerToggle.checked = status.enabled;
-            }
-            
-            // Update status display
-            updateOutputStatusDisplay(status.enabled);
-        } else {
-            console.warn("Invalid status response received:", status);
-        }
+        // Use getStatus instead of powerOutput to prevent sending command
+        const result = sendCommand({ action: 'getStatus' });
+        
+        console.log("Status request sent for initializing power toggle");
+        
+        // The actual update will happen when the response is received via the WebSocket event
+        // No need to do anything else here - the handler will update the UI
     } catch (error) {
         console.error("Error syncing power toggle state:", error);
     }
 }
 
-// Helper to update just the output status display
+// Helper to update output status display with simplified class-based approach
 function updateOutputStatusDisplay(isOn) {
     const outputStatus = document.getElementById('output-status');
-    if (outputStatus) {
-        // Update text content
-        outputStatus.textContent = isOn ? "ON" : "OFF";
-        
-        // Remove previous classes
-        outputStatus.classList.remove('output-on-bg', 'output-off-bg', 'text-success', 'text-danger');
-        
-        // Add appropriate background class for consistent styling with mode display
-        if (isOn) {
-            outputStatus.classList.add('output-on-bg');
-        } else {
-            outputStatus.classList.add('output-off-bg');
-        }
-        
-        // Add a pulse animation for visual feedback
-        outputStatus.classList.add('mode-pulse');
-        setTimeout(() => {
-            outputStatus.classList.remove('mode-pulse');
-        }, 300);
+    if (!outputStatus) return;
+    
+    // Clear all state classes first
+    outputStatus.classList.remove('status-on', 'status-off', 'status-unknown', 'status-loading');
+    
+    // Add appropriate class for current state
+    if (isOn === true) {
+        outputStatus.textContent = "ON";
+        outputStatus.classList.add('status-on');
+    } else if (isOn === false) {
+        outputStatus.textContent = "OFF";
+        outputStatus.classList.add('status-off');
+    } else {
+        outputStatus.textContent = "--";
+        outputStatus.classList.add('status-unknown');
     }
+    
+    // Add pulse animation for visual feedback
+    outputStatus.classList.add('pulse-update');
+    setTimeout(() => {
+        outputStatus.classList.remove('pulse-update');
+    }, 300);
+}
+
+// Single function to refresh all PSU status
+export function refreshPsuStatus() {
+    console.log("Refreshing PSU status");
+    
+    // Show loading state for both indicators
+    const outputStatus = document.getElementById('output-status');
+    const modeDisplay = document.getElementById('operatingModeDisplay');
+    
+    if (outputStatus) {
+        outputStatus.classList.remove('status-on', 'status-off', 'status-unknown');
+        outputStatus.classList.add('status-loading');
+        outputStatus.textContent = "...";
+    }
+    
+    if (modeDisplay) {
+        modeDisplay.classList.remove('mode-cv', 'mode-cc', 'mode-cp', 'mode-unknown');
+        modeDisplay.classList.add('status-loading');
+        modeDisplay.textContent = "...";
+    }
+    
+    // Request status update - both output state and mode will be handled by response
+    const result = sendCommand({ action: 'getStatus' });
+    
+    // If request failed, restore previous state after timeout
+    if (!result) {
+        setTimeout(() => {
+            if (outputStatus) {
+                outputStatus.classList.remove('status-loading');
+                outputStatus.classList.add('status-unknown');
+                outputStatus.textContent = "--";
+            }
+            
+            if (modeDisplay) {
+                modeDisplay.classList.remove('status-loading');
+                modeDisplay.classList.add('mode-unknown');
+                modeDisplay.textContent = "--";
+            }
+        }, 1500);
+    }
+    
+    return result;
 }
 
 // Set up voltage control
@@ -189,72 +224,56 @@ function setupKeyLockControl() {
     }
 }
 
-// Handle WebSocket messages related to basic controls
+// Handle WebSocket messages related to basic controls - simplified for consistent classes
 function handleBasicMessages(event) {
     const data = event.detail;
     
     // Handle basic status responses
     if (data.action === 'statusResponse') {
+        console.log("Received status response:", data);
         updateBasicUI(data);
         
-        // If status contains operating mode, highlight the appropriate mode tab
-        if (data.operatingMode || data.modeCode) {
-            highlightActiveOperatingMode(data.operatingMode || data.modeCode);
+        // Update power toggle state without sending commands
+        if (data.outputEnabled !== undefined) {
+            // ONLY update the UI, do not send commands
+            updateOutputStatusDisplay(data.outputEnabled);
+            
+            // Update checkbox without triggering change event
+            const powerToggle = document.getElementById('power-toggle');
+            if (powerToggle && powerToggle.checked !== data.outputEnabled) {
+                console.log("Updating power toggle to match device state:", data.outputEnabled);
+                // Use this technique to avoid triggering onchange
+                powerToggle.checked = data.outputEnabled;
+            }
+        }
+        
+        // Update operation mode if included in status
+        if (data.operatingMode) {
+            updateOperatingMode(data.operatingMode, data.operatingModeSetValue);
+        }
+        
+        // Highlight appropriate mode tab if needed
+        if (data.operatingMode) {
+            highlightActiveOperatingMode(data.operatingMode);
         }
     }
     
     // Handle power state responses
     if (data.action === 'setOutputStateResponse' || 
         data.action === 'powerOutputResponse') {
-        updateOutputStatus(data.enabled !== undefined ? data.enabled : data.enable);
-        
-        // Request operating mode after power state changes
-        setTimeout(() => requestOperatingMode(), 300);
+        console.log("Received power response:", data);
+        const enabled = data.enabled !== undefined ? data.enabled : data.enable;
+        updateOutputStatus(enabled);
     }
     
     // Handle mode responses
     if (data.action === 'operatingModeResponse' && data.success === true) {
+        console.log("Received operating mode response:", data);
         const mode = data.modeCode || data.operatingMode;
         const setValue = data.setValue;
         
         if (mode) {
-            // Update the operating mode display directly
-            const modeDisplay = document.getElementById('operatingModeDisplay');
-            if (modeDisplay) {
-                let displayText = mode;
-                
-                if (setValue !== undefined) {
-                    if (mode === 'CV') {
-                        displayText += ' ' + parseFloat(setValue).toFixed(2) + 'V';
-                    } else if (mode === 'CC') {
-                        displayText += ' ' + parseFloat(setValue).toFixed(3) + 'A';
-                    } else if (mode === 'CP') {
-                        displayText += ' ' + parseFloat(setValue).toFixed(1) + 'W';
-                    }
-                }
-                
-                // Remove all mode classes first
-                modeDisplay.classList.remove('mode-cv-bg', 'mode-cc-bg', 'mode-cp-bg');
-                
-                // Update text content before applying the class
-                modeDisplay.textContent = displayText;
-                
-                // Add the appropriate mode class
-                if (mode === 'CV') {
-                    modeDisplay.classList.add('mode-cv-bg');
-                } else if (mode === 'CC') {
-                    modeDisplay.classList.add('mode-cc-bg');
-                } else if (mode === 'CP') {
-                    modeDisplay.classList.add('mode-cp-bg');
-                }
-                
-                // Add pulse animation for feedback
-                modeDisplay.classList.add('mode-pulse');
-                setTimeout(() => {
-                    modeDisplay.classList.remove('mode-pulse');
-                }, 300);
-            }
-            
+            updateOperatingMode(mode, setValue);
             highlightActiveOperatingMode(mode);
         }
     }
@@ -303,7 +322,50 @@ function highlightActiveOperatingMode(mode) {
     });
 }
 
-// Update the basic UI elements
+// New function to cleanly update the operating mode display
+function updateOperatingMode(mode, setValue) {
+    const modeDisplay = document.getElementById('operatingModeDisplay');
+    if (!modeDisplay) return;
+    
+    console.log(`Updating operating mode display: ${mode} with value ${setValue}`);
+    
+    // Clear all mode classes first
+    modeDisplay.classList.remove('mode-cv', 'mode-cc', 'mode-cp', 'mode-unknown', 'status-loading');
+    
+    // Format display text
+    let displayText = mode || "--";
+    
+    if (setValue !== undefined) {
+        if (mode === 'CV') {
+            displayText += ' ' + parseFloat(setValue).toFixed(2) + 'V';
+        } else if (mode === 'CC') {
+            displayText += ' ' + parseFloat(setValue).toFixed(3) + 'A';
+        } else if (mode === 'CP') {
+            displayText += ' ' + parseFloat(setValue).toFixed(1) + 'W';
+        }
+    }
+    
+    // Update text and apply appropriate class
+    modeDisplay.textContent = displayText;
+    
+    if (mode === 'CV') {
+        modeDisplay.classList.add('mode-cv');
+    } else if (mode === 'CC') {
+        modeDisplay.classList.add('mode-cc');
+    } else if (mode === 'CP') {
+        modeDisplay.classList.add('mode-cp');
+    } else {
+        modeDisplay.classList.add('mode-unknown');
+    }
+    
+    // Add pulse animation for visual feedback
+    modeDisplay.classList.add('pulse-update');
+    setTimeout(() => {
+        modeDisplay.classList.remove('pulse-update');
+    }, 300);
+}
+
+// Update the basic UI elements with improved output state handling
 function updateBasicUI(data) {
     // Update voltage
     const voltageEl = document.getElementById('psu-voltage');
@@ -323,17 +385,17 @@ function updateBasicUI(data) {
         powerEl.textContent = parseFloat(data.power).toFixed(1);
     }
     
-    // Update output status
+    // Update output status - more robust handling with data validation
     if (data.outputEnabled !== undefined) {
-        updateOutputStatus(data.outputEnabled);
+        updateOutputStatus(!!data.outputEnabled); // Convert to boolean
     }
 }
 
-// Update output status display - IMPROVED VERSION
+// Update output status display - IMPROVED AND SIMPLIFIED VERSION
 function updateOutputStatus(enabled) {
     console.log("Updating output status UI to:", enabled ? "ON" : "OFF");
     
-    // Update output status text
+    // Update output status display
     updateOutputStatusDisplay(enabled);
     
     // Update power toggle with proper checked state
@@ -344,38 +406,21 @@ function updateOutputStatus(enabled) {
         if (powerToggle.checked !== enabled) {
             powerToggle.checked = enabled;
         }
-    } else {
-        console.warn("Power toggle element not found when updating status");
     }
 }
 
-// Update operating mode display - This will be called from menu_basic.js
-// Keep this for reference but rely on the implementation in menu_connection.js
-function updateOperatingModeDisplay(data) {
-    const modeDisplay = document.getElementById('operatingModeDisplay');
-    
-    if (!modeDisplay) return;
-    
-    if (!data.operatingMode && !data.modeCode) {
-        modeDisplay.textContent = '--';
-        return;
-    }
-    
-    // Log that this function is being called for debugging
-    console.log("menu_basic.js: updateOperatingModeDisplay called with:", data);
-    
-    // Defer to menu_connection.js implementation which is already being called
-}
-
-// Request PSU status
-export function requestPsuStatus() {
-    console.log("Requesting PSU status");
-    return sendCommand({ action: 'getStatus' });
-}
-
-// IMPROVED - Toggle power with correct action name and parameter
+// SIMPLIFIED - Remove backward compatibility code
 export function togglePower(isOn) {
     console.log("togglePower called with:", isOn);
+    
+    // Check if this is triggered by user or initial load
+    const eventType = window.event ? window.event.type : null;
+    
+    // If this is triggered programmatically during initialization, don't send command
+    if (!eventType && document.readyState !== 'complete') {
+        console.log("Skipping automatic power toggle during page load");
+        return false;
+    }
     
     // Make sure we have a valid connection and command function
     if (typeof sendCommand !== 'function') {
@@ -387,8 +432,8 @@ export function togglePower(isOn) {
     try {
         // Use the CORRECT action and parameter names
         const command = { 
-            action: 'powerOutput',  // Changed from 'setOutputState' to 'powerOutput'
-            enable: isOn            // Changed from 'enabled' to 'enable'
+            action: 'powerOutput',
+            enable: isOn
         };
         console.log("Sending power command:", JSON.stringify(command));
         
@@ -399,14 +444,8 @@ export function togglePower(isOn) {
         // Update the UI immediately for feedback
         updateOutputStatusDisplay(isOn);
         
-        // Request a status update after a delay to confirm the change
-        setTimeout(() => {
-            console.log("Requesting status update after power toggle");
-            requestPsuStatus();
-            
-            // ADDED: Also request operating mode after power toggle
-            setTimeout(() => requestOperatingMode(), 200);
-        }, 500);
+        // Request a comprehensive status update after a delay to confirm the change
+        setTimeout(updateAllStatus, 500);
         
         return result;
     } catch (error) {
@@ -419,13 +458,64 @@ export function togglePower(isOn) {
     }
 }
 
-// Request operating mode data
+// Deprecated - Keep for reference but no longer used
+export function requestPsuStatus() {
+    console.log("DEPRECATED: requestPsuStatus called. Use updateAllStatus instead.");
+    return updateAllStatus();
+}
+
+// Deprecated - Keep for reference but no longer used
 export function requestOperatingMode() {
-    console.log("Requesting operating mode from menu_basic.js");
+    console.log("DEPRECATED: requestOperatingMode called. Operating mode is included in updateAllStatus.");
     return sendCommand({ action: 'getOperatingMode' });
 }
 
-// Set Constant Voltage (CV) mode
+// Unified status update function - Now the primary method for all status updates
+export function updateAllStatus() {
+    console.log("Updating all PSU status");
+    
+    // Show loading state for indicators
+    const outputStatus = document.getElementById('output-status');
+    const modeDisplay = document.getElementById('operatingModeDisplay');
+    
+    if (outputStatus) {
+        outputStatus.classList.remove('status-on', 'status-off', 'status-unknown');
+        outputStatus.classList.add('status-loading');
+        outputStatus.textContent = "...";
+    }
+    
+    if (modeDisplay) {
+        modeDisplay.classList.remove('mode-cv', 'mode-cc', 'mode-cp', 'mode-unknown');
+        modeDisplay.classList.add('status-loading');
+        modeDisplay.textContent = "...";
+    }
+    
+    // Request complete status update
+    const result = sendCommand({ action: 'getStatus' });
+    
+    // Handle failed status request
+    if (!result) {
+        console.error("Failed to send status request");
+        setTimeout(() => {
+            if (outputStatus && outputStatus.classList.contains('status-loading')) {
+                outputStatus.classList.remove('status-loading');
+                outputStatus.classList.add('status-unknown');
+                outputStatus.textContent = "--";
+            }
+            
+            if (modeDisplay && modeDisplay.classList.contains('status-loading')) {
+                modeDisplay.classList.remove('status-loading');
+                modeDisplay.classList.add('mode-unknown');
+                modeDisplay.textContent = "--";
+            }
+        }, 1500);
+        return false;
+    }
+    
+    return result;
+}
+
+// Set Constant Voltage (CV) mode - Simplified to use only updateAllStatus
 export function setConstantVoltage(voltage) {
     if (isNaN(voltage) || voltage < 0 || voltage > 30) {
         alert("Please enter a valid voltage between 0 and 30V");
@@ -437,15 +527,15 @@ export function setConstantVoltage(voltage) {
         voltage: voltage 
     });
     
-    // Request operating mode after setting CV mode
+    // Request a comprehensive status update
     if (result) {
-        setTimeout(() => requestOperatingMode(), 300);
+        setTimeout(updateAllStatus, 300);
     }
     
     return result;
 }
 
-// Set Constant Current (CC) mode
+// Set Constant Current (CC) mode - Simplified to use only updateAllStatus
 export function setConstantCurrent(current) {
     if (isNaN(current) || current < 0 || current > 5) {
         alert("Please enter a valid current between 0 and 5A");
@@ -457,15 +547,15 @@ export function setConstantCurrent(current) {
         current: current 
     });
     
-    // Request operating mode after setting CC mode
+    // Request a comprehensive status update
     if (result) {
-        setTimeout(() => requestOperatingMode(), 300);
+        setTimeout(updateAllStatus, 300);
     }
     
     return result;
 }
 
-// Set Constant Power (CP) mode
+// Set Constant Power (CP) mode - Simplified to use only updateAllStatus
 export function setConstantPower(power) {
     if (isNaN(power) || power < 0 || power > 120) {
         alert("Please enter a valid power between 0 and 120W");
@@ -478,22 +568,31 @@ export function setConstantPower(power) {
         power: power 
     });
     
-    // Then enable CP mode
     if (success) {
         setTimeout(() => {
+            // Enable CP mode
             sendCommand({ action: "setConstantPowerMode", enable: true });
+            // Request a comprehensive status update
+            setTimeout(updateAllStatus, 300);
         }, 200);
     }
     
     return success;
 }
 
-// Enable/Disable Constant Power mode
+// Enable/Disable Constant Power mode - Simplified to use only updateAllStatus
 export function setConstantPowerMode(enable) {
-    return sendCommand({ 
+    const result = sendCommand({ 
         action: "setConstantPowerMode", 
         enable: enable 
     });
+    
+    // Request a comprehensive status update
+    if (result) {
+        setTimeout(updateAllStatus, 300);
+    }
+    
+    return result;
 }
 
 // Improved key lock toggle function with better logging
@@ -514,34 +613,30 @@ export function toggleKeyLock(shouldLock) {
     }
 }
 
-// Call directly from HTML button for debugging - ENHANCED with proper class handling
+// Call directly from HTML button for debugging - Enhanced for data-attribute approach
 export function debugOperatingMode() {
     console.log("Manual operating mode debug request");
     const modeDisplay = document.getElementById('operatingModeDisplay');
     if (modeDisplay) {
-        // Store original classes before changing
-        const originalClasses = [...modeDisplay.classList];
-        
-        // Remove only animation classes, preserve mode classes for consistency
-        modeDisplay.classList.remove('mode-pulse');
-        
-        // Show loading state without removing mode classes
+        // Store original text
         const originalText = modeDisplay.textContent;
-        modeDisplay.textContent = "Requesting...";
+        const originalMode = modeDisplay.getAttribute('data-mode');
         
-        // Add temporary loading style
-        modeDisplay.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-900', 'dark:text-gray-100');
+        // Show loading state
+        modeDisplay.textContent = "Requesting...";
+        modeDisplay.setAttribute('data-mode', 'loading');
         
         // Create timeout to restore original state if request fails
         const timeoutId = setTimeout(() => {
-            // Restore original text and remove temporary styles
+            // Restore original text and data attribute
             modeDisplay.textContent = originalText;
-            modeDisplay.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-900', 'dark:text-gray-100');
+            modeDisplay.setAttribute('data-mode', originalMode || 'unknown');
         }, 3000);
         
         // Store data for potential cleanup
         window._operatingModeRequestData = {
             originalText: originalText,
+            originalMode: originalMode,
             timeoutId: timeoutId
         };
     }
@@ -561,3 +656,5 @@ window.setConstantPowerMode = setConstantPowerMode;
 window.toggleKeyLock = toggleKeyLock;
 window.togglePower = togglePower;  // Make sure this is properly exposed
 window.highlightActiveOperatingMode = highlightActiveOperatingMode;
+window.refreshPsuStatus = updateAllStatus; // Redirect to the new function
+window.updateAllStatus = updateAllStatus; // Make the unified status update function available globally

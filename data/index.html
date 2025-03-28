@@ -145,9 +145,9 @@
         
         /* Pulse animation for mode updates */
         @keyframes mode-pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
         .mode-pulse {
             animation: mode-pulse 0.3s ease-in-out;
@@ -202,6 +202,68 @@
         .tab-active {
             border-bottom-color: #3498db;
             color: #3498db;
+        }
+
+        /* Unified status pill styling - simplify by using classes only */
+        .status-pill {
+            @apply font-bold px-2 py-1 rounded-md inline-block text-center min-w-[85px] transition-colors duration-100;
+        }
+        
+        /* Output status specific styles */
+        .status-on {
+            @apply bg-success text-white;
+        }
+        .status-off {
+            @apply bg-danger text-white;
+        }
+        .status-unknown {
+            @apply bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200;
+        }
+        
+        /* Mode status specific styles - ensure consistent text colors */
+        .mode-cv {
+            @apply bg-voltage text-black;
+        }
+        .mode-cc {
+            @apply bg-current text-black;
+        }
+        .mode-cp {
+            @apply bg-power text-white;
+        }
+        .mode-unknown {
+            @apply bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200;
+        }
+        
+        /* Loading state */
+        .status-loading {
+            @apply bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 animate-pulse;
+        }
+        
+        /* Pulse animation for UI feedback */
+        @keyframes pulse-update {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+        .pulse-update {
+            animation: pulse-update 0.3s ease-in-out;
+        }
+        
+        /* Status display layout - ensure consistent layout and alignment */
+        .status-grid {
+            @apply grid grid-cols-2 gap-4 md:gap-6;
+        }
+        
+        .status-item {
+            @apply flex flex-col;
+        }
+        
+        .status-label {
+            @apply text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-1;
+        }
+        
+        .status-value {
+            @apply text-base sm:text-xl;
         }
     </style>
 </head>
@@ -279,11 +341,12 @@
                             <div class="flex items-center">
                                 <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Output</span>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" id="power-toggle" onchange="togglePower(this.checked)">
+                                    <!-- Change to bind event handler directly in JS instead of inline handler -->
+                                    <input type="checkbox" id="power-toggle">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-                            <button id="refresh-psu" onclick="requestPsuStatus()" class="flex items-center px-3 py-1.5 text-sm font-medium text-white transition-colors duration-300 bg-secondary rounded-md hover:bg-opacity-80 focus:outline-none" title="Refresh">
+                            <button id="refresh-psu" onclick="updateAllStatus()" class="flex items-center px-3 py-1.5 text-sm font-medium text-white transition-colors duration-300 bg-secondary rounded-md hover:bg-opacity-80 focus:outline-none" title="Refresh">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                 </svg>
@@ -317,20 +380,22 @@
                         </div>
                     </div>
                     
-                    <!-- Status display - Modified for consistent alignment -->
-                    <div class="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4 text-sm">
-                        <div class="flex items-center space-x-6">
-                            <div class="status-display-item">
-                                <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Output</p>
-                                <p id="output-status" class="text-base sm:text-xl inline-block">--</p>
+                    <!-- Status display - Redesigned with data attributes -->
+                    <div class="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <div class="status-grid">
+                            <div class="status-item">
+                                <p class="status-label">Output</p>
+                                <div id="output-status" class="status-pill status-unknown">--</div>
                             </div>
-                            <div class="status-display-item">
-                                <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Mode</p>
-                                <p id="operatingModeDisplay" class="text-base sm:text-xl inline-block">--</p>
+                            <div class="status-item">
+                                <p class="status-label">Mode</p>
+                                <div id="operatingModeDisplay" class="status-pill mode-unknown">--</div>
                             </div>
                         </div>
-                        <div>
-                            <button onclick="debugOperatingMode()" class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600">Refresh Mode</button>
+                        <div class="mt-3 flex justify-end">
+                            <button id="refresh-mode-btn" onclick="updateAllStatus()" class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600">
+                                Refresh Status
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -564,6 +629,36 @@
     <!-- Simple tab switcher -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Add event listener programmatically instead of using inline
+            const powerToggle = document.getElementById('power-toggle');
+            if (powerToggle) {
+                powerToggle.addEventListener('change', function() {
+                    // Only call togglePower when the user actually interacts with the switch
+                    if (document.readyState === 'complete') {
+                        console.log("User toggled power switch to:", this.checked);
+                        togglePower(this.checked);
+                    }
+                });
+            }
+
+            // Add event handler for refresh status button - Simplified, always use updateAllStatus
+            const refreshStatusBtn = document.getElementById('refresh-mode-btn');
+            if (refreshStatusBtn) {
+                refreshStatusBtn.addEventListener('click', function() {
+                    console.log("Manual status refresh requested");
+                    updateAllStatus();
+                });
+            }
+            
+            // Add event handler for main refresh button - Simplified, always use updateAllStatus
+            const refreshPsuBtn = document.getElementById('refresh-psu');
+            if (refreshPsuBtn) {
+                refreshPsuBtn.addEventListener('click', function() {
+                    console.log("PSU refresh requested");
+                    updateAllStatus();
+                });
+            }
+            
             // Mode tab switcher
             document.querySelectorAll('.mode-tab').forEach(tab => {
                 tab.addEventListener('click', function() {

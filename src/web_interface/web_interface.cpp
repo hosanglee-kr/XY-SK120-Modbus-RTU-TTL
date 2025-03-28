@@ -168,6 +168,115 @@ void getPSUOperatingModeDetails(XY_SKxxx* powerSupply, String& modeName, float& 
   }
 }
 
+// Add a unified function to fetch complete PSU status
+void sendCompletePSUStatus(AsyncWebSocketClient* client) {
+  if (!client || !powerSupply || !powerSupply->testConnection()) {
+    return;
+  }
+  
+  // Fetch all status information
+  DynamicJsonDocument responseDoc(1024);
+  responseDoc["action"] = "statusResponse";
+  
+  // Get basic readings
+  float voltage = getPSUVoltage(powerSupply);
+  float current = getPSUCurrent(powerSupply);
+  float power = getPSUPower(powerSupply);
+  bool outputEnabled = isPSUOutputEnabled(powerSupply);
+  
+  // Add data to response
+  responseDoc["connected"] = true;
+  responseDoc["outputEnabled"] = outputEnabled;
+  responseDoc["voltage"] = voltage;
+  responseDoc["current"] = current;
+  responseDoc["power"] = power;
+  
+  // Add operating mode information - using the backend cache
+  String operatingMode = getPSUOperatingMode(powerSupply);
+  responseDoc["operatingMode"] = operatingMode;
+  
+  // Add detailed operating mode information
+  String modeName;
+  float setValue;
+  getPSUOperatingModeDetails(powerSupply, modeName, setValue);
+  responseDoc["operatingModeName"] = modeName;
+  responseDoc["setValue"] = setValue;
+  
+  // Add more detailed settings for all modes - using the backend cache
+  responseDoc["voltageSet"] = powerSupply->getCachedConstantVoltage(false);
+  responseDoc["currentSet"] = powerSupply->getCachedConstantCurrent(false);
+  responseDoc["cpModeEnabled"] = powerSupply->isConstantPowerModeEnabled(false);
+  responseDoc["powerSet"] = powerSupply->getCachedConstantPower(false);
+  
+  // Add device info
+  responseDoc["model"] = powerSupply->getModel();
+  responseDoc["version"] = powerSupply->getVersion();
+  
+  // Send the response
+  String response;
+  serializeJson(responseDoc, response);
+  client->text(response);
+  
+  // Also send specific operating mode information
+  sendOperatingModeDetails(client);
+}
+
+// Function to specifically send operating mode details
+void sendOperatingModeDetails(AsyncWebSocketClient* client) {
+  if (!client || !powerSupply || !powerSupply->testConnection()) {
+    return;
+  }
+  
+  DynamicJsonDocument responseDoc(256);
+  responseDoc["action"] = "operatingModeResponse";
+  
+  // Get the operating mode - using the backend cache
+  OperatingMode mode = powerSupply->getOperatingMode(true);
+  String modeCode, modeName;
+  float setValue = 0.0;
+  
+  switch (mode) {
+    case MODE_CV:
+      modeCode = "CV";
+      modeName = "Constant Voltage";
+      setValue = powerSupply->getCachedConstantVoltage(false);
+      break;
+    case MODE_CC:
+      modeCode = "CC";
+      modeName = "Constant Current";
+      setValue = powerSupply->getCachedConstantCurrent(false);
+      break;
+    case MODE_CP:
+      modeCode = "CP";
+      modeName = "Constant Power";
+      setValue = powerSupply->getCachedConstantPower(false);
+      break;
+    default:
+      modeCode = "Unknown";
+      modeName = "Unknown";
+  }
+  
+  responseDoc["success"] = true;
+  responseDoc["modeCode"] = modeCode;
+  responseDoc["modeName"] = modeName;
+  responseDoc["setValue"] = setValue;
+  
+  // Add detailed settings for all modes
+  responseDoc["voltageSet"] = powerSupply->getCachedConstantVoltage(false);
+  responseDoc["currentSet"] = powerSupply->getCachedConstantCurrent(false);
+  
+  // Check if CP mode is enabled and get its set value
+  bool cpModeEnabled = powerSupply->isConstantPowerModeEnabled(false);
+  responseDoc["cpModeEnabled"] = cpModeEnabled;
+  if (cpModeEnabled) {
+    responseDoc["powerSet"] = powerSupply->getCachedConstantPower(false);
+  }
+  
+  String response;
+  serializeJson(responseDoc, response);
+  client->text(response);
+}
+
 void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* client, 
                            AwsFrameInfo* info, uint8_t* data, size_t len) {
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
@@ -189,29 +298,8 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
     String action = doc["action"];
     
     if (action == "getData") {
-      // Create a JSON response with power supply data only (removing Modbus dummy data)
-      DynamicJsonDocument responseDoc(1024);
-      
-      // Add power supply status information using helper functions
-      if (powerSupply && powerSupply->testConnection()) {
-        float voltage = getPSUVoltage(powerSupply);
-        float current = getPSUCurrent(powerSupply);
-        float power = getPSUPower(powerSupply);
-        bool outputEnabled = isPSUOutputEnabled(powerSupply);
-        
-        responseDoc["outputEnabled"] = outputEnabled;
-        responseDoc["voltage"] = voltage;
-        responseDoc["current"] = current;
-        responseDoc["power"] = power;
-        
-        // Add model and version info
-        responseDoc["model"] = powerSupply->getModel();
-        responseDoc["version"] = powerSupply->getVersion();
-      }
-      
-      String response;
-      serializeJson(responseDoc, response);
-      client->text(response);
+      // Simply call the comprehensive status function instead of duplicating the logic
+      sendCompletePSUStatus(client);
     } 
     else if (action == "setConfig") {
       // Handle configuration settings
@@ -294,48 +382,8 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
       }
     }
     else if (action == "getStatus") {
-      // Get comprehensive status
-      DynamicJsonDocument responseDoc(1024);
-      responseDoc["action"] = "statusResponse";
-      
-      if (powerSupply && powerSupply->testConnection()) {
-        float voltage = getPSUVoltage(powerSupply);
-        float current = getPSUCurrent(powerSupply);
-        float power = getPSUPower(powerSupply);
-        bool outputEnabled = isPSUOutputEnabled(powerSupply);
-        
-        // Get data using available methods
-        responseDoc["connected"] = true;
-        responseDoc["outputEnabled"] = outputEnabled;
-        responseDoc["voltage"] = voltage;
-        responseDoc["current"] = current;
-        responseDoc["power"] = power;
-        
-        // Add operating mode information
-        String operatingMode = getPSUOperatingMode(powerSupply);
-        responseDoc["operatingMode"] = operatingMode;
-        
-        // Add detailed operating mode information
-        String modeName;
-        float setValue;
-        getPSUOperatingModeDetails(powerSupply, modeName, setValue);
-        responseDoc["operatingModeName"] = modeName;
-        responseDoc["operatingModeSetValue"] = setValue;
-        
-        // Try to get temperature if available
-        float temperature = 25.0; // Default value
-        responseDoc["temperature"] = temperature;
-        
-        // Get device info
-        responseDoc["model"] = powerSupply->getModel();
-        responseDoc["version"] = powerSupply->getVersion();
-      } else {
-        responseDoc["connected"] = false;
-      }
-      
-      String response;
-      serializeJson(responseDoc, response);
-      client->text(response);
+      // No need for duplicate code, just call the unified function
+      sendCompletePSUStatus(client);
     }
     // Key lock control
     else if (action == "setKeyLock") {
@@ -377,6 +425,12 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        
+        // Wait a moment for the changes to take effect
+        delay(100);
+        
+        // Send updated status and operating mode
+        sendCompletePSUStatus(client);
       } else {
         client->text("{\"action\":\"constantVoltageResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
       }
@@ -396,6 +450,12 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        
+        // Wait a moment for the changes to take effect
+        delay(100);
+        
+        // Send updated status and operating mode
+        sendCompletePSUStatus(client);
       } else {
         client->text("{\"action\":\"constantCurrentResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
       }
@@ -415,6 +475,12 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        
+        // Wait a moment for the changes to take effect
+        delay(100);
+        
+        // Send updated status and operating mode
+        sendCompletePSUStatus(client);
       } else {
         client->text("{\"action\":\"constantPowerResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
       }
@@ -437,65 +503,23 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        
+        // Wait a moment for the changes to take effect
+        delay(100);
+        
+        // Send updated status and operating mode
+        sendCompletePSUStatus(client);
       } else {
         client->text("{\"action\":\"constantPowerModeResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
       }
     }
     // Add a specific action to get operating mode details
     else if (action == "getOperatingMode") {
-      DynamicJsonDocument responseDoc(256);
-      responseDoc["action"] = "operatingModeResponse";
-      
-      if (powerSupply && powerSupply->testConnection()) {
-        // Get the operating mode
-        OperatingMode mode = powerSupply->getOperatingMode(true);
-        String modeCode, modeName;
-        float setValue = 0.0;
-        
-        switch (mode) {
-          case MODE_CV:
-            modeCode = "CV";
-            modeName = "Constant Voltage";
-            setValue = powerSupply->getCachedConstantVoltage(false);
-            break;
-          case MODE_CC:
-            modeCode = "CC";
-            modeName = "Constant Current";
-            setValue = powerSupply->getCachedConstantCurrent(false);
-            break;
-          case MODE_CP:
-            modeCode = "CP";
-            modeName = "Constant Power";
-            setValue = powerSupply->getCachedConstantPower(false);
-            break;
-          default:
-            modeCode = "Unknown";
-            modeName = "Unknown";
-        }
-        
-        responseDoc["success"] = true;
-        responseDoc["modeCode"] = modeCode;
-        responseDoc["modeName"] = modeName;
-        responseDoc["setValue"] = setValue;
-        
-        // Add detailed settings for all modes
-        responseDoc["voltageSet"] = powerSupply->getCachedConstantVoltage(false);
-        responseDoc["currentSet"] = powerSupply->getCachedConstantCurrent(false);
-        
-        // Check if CP mode is enabled and get its set value
-        bool cpModeEnabled = powerSupply->isConstantPowerModeEnabled(false);
-        responseDoc["cpModeEnabled"] = cpModeEnabled;
-        if (cpModeEnabled) {
-          responseDoc["powerSet"] = powerSupply->getCachedConstantPower(false);
-        }
-      } else {
-        responseDoc["success"] = false;
-        responseDoc["error"] = "Power supply not connected";
-      }
-      
-      String response;
-      serializeJson(responseDoc, response);
-      client->text(response);
+      sendOperatingModeDetails(client);
+    }
+    // Add a comprehensive status request action
+    else if (action == "getStatus") {
+      sendCompletePSUStatus(client);
     }
   }
 }

@@ -255,10 +255,10 @@ function handleMessage(event) {
   }
 }
 
-// Request operating mode data - Simple version
+// Improved request operating mode function with loading state
 function requestOperatingMode() {
-  console.log("Requesting operating mode data...");
-  return sendCommand({ action: 'getOperatingMode' });
+  console.log("requestOperatingMode called - Using updateAllStatus instead");
+  return window.updateAllStatus();
 }
 
 // Modified sendCommand with improved error handling and request tracking
@@ -388,7 +388,7 @@ function useFallbackHttp(command) {
   }
 }
 
-// Direct UI update for operating mode - Enhanced with background color and fix for persistence
+// Direct UI update for operating mode using data-attributes for styling
 function updateOperatingModeUI(mode, setValue) {
   // Get the operating mode display element
   const modeDisplay = document.getElementById('operatingModeDisplay');
@@ -410,22 +410,13 @@ function updateOperatingModeUI(mode, setValue) {
     }
   }
   
-  // Remove existing mode classes first
-  modeDisplay.classList.remove('mode-cv-bg', 'mode-cc-bg', 'mode-cp-bg', 'text-gray-400', 'dark:text-gray-400');
-  
-  // Update the text before applying the new class to ensure it renders properly
+  // Update text content
   modeDisplay.textContent = displayText;
   
-  // Now apply the appropriate mode class based on the mode
-  if (mode === 'CV') {
-    modeDisplay.classList.add('mode-cv-bg');
-  } else if (mode === 'CC') {
-    modeDisplay.classList.add('mode-cc-bg');
-  } else if (mode === 'CP') {
-    modeDisplay.classList.add('mode-cp-bg');
-  }
+  // Set data-mode attribute for styling (more direct than class manipulation)
+  modeDisplay.setAttribute('data-mode', mode || 'unknown');
   
-  // Add a pulse animation for visual feedback without changing the background color
+  // Add a pulse animation for visual feedback
   modeDisplay.classList.add('mode-pulse');
   
   // Remove the pulse animation after it completes
@@ -464,47 +455,57 @@ function updateModeSettingsDisplay(data) {
   }
 }
 
-// Start periodic status updates
+// Simplified - Use only updateAllStatus without fallbacks
 function startPeriodicUpdates() {
-  console.log("⏱️ Starting periodic updates");
-  
-  // Initially try HTTP if WebSocket isn't connected
-  if (!websocketConnected) {
-    console.log("ℹ️ WebSocket not connected, using HTTP for initial data");
-    fetch('/api/data')
-      .then(response => response.json())
-      .then(data => {
-        updateUI(data);
-        console.log("✅ Initial HTTP data loaded");
-      })
-      .catch(err => console.error("❌ Error fetching initial data:", err));
-  }
-  
-  // Set up recurring updates with WebSocket or HTTP fallback
-  setInterval(() => {
-    if (websocketConnected) {
-      requestPsuStatus();
-      
-      // Also periodically request operating mode
-      requestOperatingMode();
-    } else {
-      // Try to reconnect WebSocket first
-      if (reconnectAttempts < maxReconnectAttempts) {
-        console.log("🔄 Trying to reconnect WebSocket...");
-        initWebSocket();
-      }
-      
-      // Use HTTP fallback if not connected
-      if (!websocketConnected) {
-        console.log("ℹ️ Using HTTP fallback for status update");
+    console.log("⏱️ Starting periodic updates");
+    
+    // Initially try HTTP if WebSocket isn't connected
+    if (!websocketConnected) {
+        console.log("ℹ️ WebSocket not connected, using HTTP for initial data");
         fetch('/api/data')
-          .then(response => response.json())
-          .then(data => updateUI(data))
-          .catch(err => console.error("❌ HTTP fallback error:", err));
-      }
+            .then(response => response.json())
+            .then(data => {
+                updateUI(data);
+                console.log("✅ Initial HTTP data loaded");
+            })
+            .catch(err => console.error("❌ Error fetching initial data:", err));
     }
-  }, 5000);
+    
+    // Set up recurring updates with WebSocket or HTTP fallback
+    setInterval(() => {
+        if (websocketConnected) {
+            // Always use the unified status update function
+            window.updateAllStatus();
+        } else {
+            // Try to reconnect WebSocket first
+            if (reconnectAttempts < maxReconnectAttempts) {
+                console.log("🔄 Trying to reconnect WebSocket...");
+                initWebSocket();
+            }
+            
+            // Use HTTP fallback if not connected
+            if (!websocketConnected) {
+                console.log("ℹ️ Using HTTP fallback for status update");
+                fetch('/api/data')
+                    .then(response => response.json())
+                    .then(data => updateUI(data))
+                    .catch(err => console.error("❌ HTTP fallback error:", err));
+            }
+        }
+    }, 5000);
 }
+
+// Simplified - Use only updateAllStatus without fallbacks
+function initializeStatusUpdates() {
+    // Request complete status on initial connection
+    document.addEventListener('websocket-connected', () => {
+        console.log("Connection established, requesting full status update");
+        setTimeout(window.updateAllStatus, 500);
+    });
+}
+
+// Make sure this gets called during initialization
+window.addEventListener('DOMContentLoaded', initializeStatusUpdates);
 
 // Update the connection status display in the UI - improved with better visual feedback
 function updateConnectionStatusDisplay(status, deviceIP) {
@@ -578,6 +579,18 @@ window.connectToDevice = connectToDevice;
 window.getWebSocketIP = getWebSocketIP;
 window.OperatingMode = OperatingMode;
 window.getModeName = getModeName;
+
+// Make requestOperatingMode a wrapper around updateAllStatus for compatibility
+function requestOperatingMode() {
+    console.log("requestOperatingMode called - Using updateAllStatus instead");
+    return window.updateAllStatus();
+}
+
+// Make requestPsuStatus a wrapper around updateAllStatus for compatibility
+function requestPsuStatus() {
+    console.log("requestPsuStatus called - Using updateAllStatus instead");
+    return window.updateAllStatus();
+}
 
 // Export the essential functions
 export { 
