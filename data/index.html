@@ -143,22 +143,6 @@
             min-width: 85px;
         }
         
-        /* Pulse animation for mode updates */
-        /*
-        @keyframes mode-pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        .mode-pulse {
-            animation: mode-pulse 0.3s ease-in-out;
-        }
-        */
-        
-        .mode-pulse {
-            /* Animation removed */
-        }
-        
         /* Status display row alignment */
         .status-display-item {
             display: flex;
@@ -204,10 +188,35 @@
             border-color: #475569;
         }
         
-        /* Mode tab styling */
+        /* Mode tab styling - updated with mode-specific colors */
         .tab-active {
             border-bottom-color: #3498db;
             color: #3498db;
+        }
+        
+        /* Mode-specific tab active states */
+        .tab-active-cv {
+            border-bottom-color: var(--voltage-color, #64ff00) !important;
+            color: var(--voltage-color, #64ff00) !important;
+        }
+        .tab-active-cc {
+            border-bottom-color: var(--current-color, #fff500) !important;
+            color: var(--current-color, #fff500) !important;
+        }
+        .tab-active-cp {
+            border-bottom-color: var(--power-color, #b73dff) !important;
+            color: var(--power-color, #b73dff) !important;
+        }
+        
+        /* To fix overrides from Tailwind */
+        .mode-tab.tab-active-cv, .mode-tab.tab-active-cc, .mode-tab.tab-active-cp {
+            border-bottom-width: 2px;
+            opacity: 1;
+        }
+        
+        /* Add a subtle glow effect to active tab */
+        .tab-active-cv, .tab-active-cc, .tab-active-cp {
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
         }
 
         /* Unified status pill styling - simplify by using classes only */
@@ -243,22 +252,6 @@
         /* Loading state */
         .status-loading {
             @apply bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 animate-pulse;
-        }
-        
-        /* Pulse animation for UI feedback */
-        /*
-        @keyframes pulse-update {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.03); }
-            100% { transform: scale(1); }
-        }
-        .pulse-update {
-            animation: pulse-update 0.3s ease-in-out;
-        }
-        */
-        
-        .pulse-update {
-            /* Animation removed */
         }
         
         /* Status display layout - ensure consistent layout and alignment */
@@ -533,7 +526,7 @@
                     <!-- Mode tabs -->
                     <div class="border-b border-gray-200 dark:border-gray-700">
                         <nav class="flex -mb-px">
-                            <button data-mode="cv" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm tab-active">
+                            <button data-mode="cv" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
                                 Constant Voltage (CV)
                             </button>
                             <button data-mode="cc" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
@@ -599,14 +592,10 @@
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">CP Mode Control</span>
-                                    <div class="space-x-2">
-                                        <button id="cp-mode-on" onclick="setConstantPowerMode(true)" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-success hover:bg-opacity-90 focus:outline-none">
-                                            Enable CP
-                                        </button>
-                                        <button id="cp-mode-off" onclick="setConstantPowerMode(false)" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-danger hover:bg-opacity-90 focus:outline-none">
-                                            Disable CP
-                                        </button>
-                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="cp-mode-toggle">
+                                        <span class="slider"></span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -647,7 +636,7 @@
                             </button>
                             <button id="wifi-reset-btn" onclick="resetWifiSettings()" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-danger hover:bg-opacity-90 focus:outline-none">
                                 <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5m0 0l9-5-9-5-9 5 9 5m0 0v8"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9-5m0 0l9-5-9 5-9 5 9 5m0 0v8"></path>
                                 </svg>
                                 Reset WiFi
                             </button>
@@ -673,8 +662,8 @@
     <!-- Add Connectivity Checker -->
     <script src="js/connectivity_check.js"></script>
     
-    <!-- Add Menu Interface (renamed from card-swiper.js) -->->
-    <script src="js/menu_interface.js"></script>
+    <!-- Add Web Interface (renamed from menu_interface.js) -->
+    <script src="js/web_interface.js"></script>
     
     <!-- Simple tab switcher -->
     <script>
@@ -709,20 +698,31 @@
                 });
             }
             
-            // Mode tab switcher
+            // Mode tab switcher - updated to use mode-specific active classes and NOT respond to device state
             document.querySelectorAll('.mode-tab').forEach(tab => {
                 tab.addEventListener('click', function() {
                     // Update active tab styling
                     document.querySelectorAll('.mode-tab').forEach(t => {
-                        t.classList.remove('tab-active');
+                        t.classList.remove('tab-active', 'tab-active-cv', 'tab-active-cc', 'tab-active-cp');
                         t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
                     });
                     
+                    // Get the mode from data attribute
+                    const mode = this.getAttribute('data-mode');
                     this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-                    this.classList.add('tab-active');
+                    
+                    // Apply the mode-specific active class
+                    if (mode === 'cv') {
+                        this.classList.add('tab-active-cv');
+                    } else if (mode === 'cc') {
+                        this.classList.add('tab-active-cc');
+                    } else if (mode === 'cp') {
+                        this.classList.add('tab-active-cp');
+                    } else {
+                        this.classList.add('tab-active'); // fallback
+                    }
                     
                     // Show the corresponding settings panel
-                    const mode = this.getAttribute('data-mode');
                     document.querySelectorAll('.mode-settings').forEach(panel => {
                         panel.classList.add('hidden');
                         panel.classList.remove('block');
@@ -730,8 +730,20 @@
                     
                     document.getElementById(`${mode}-settings`).classList.remove('hidden');
                     document.getElementById(`${mode}-settings`).classList.add('block');
+                    
+                    // Store the last active tab in local storage so it persists
+                    localStorage.setItem('lastActiveTab', mode);
                 });
             });
+            
+            // Restore the last active tab from local storage when page loads
+            const lastActiveTab = localStorage.getItem('lastActiveTab') || 'cv'; // Default to CV if none stored
+            const tabToActivate = document.querySelector(`.mode-tab[data-mode="${lastActiveTab}"]`);
+            
+            if (tabToActivate) {
+                // Simulate a click on the tab to restore its state
+                tabToActivate.click();
+            }
 
             // Add explicit initialization for auto-refresh
             setTimeout(() => {
@@ -743,6 +755,15 @@
                     console.log("Auto-refresh function not available or websocket not connected yet");
                 }
             }, 2000);
+
+            // Add CP Mode toggle event listener
+            const cpModeToggle = document.getElementById('cp-mode-toggle');
+            if (cpModeToggle) {
+                cpModeToggle.addEventListener('change', function() {
+                    console.log("CP mode toggle changed to:", this.checked);
+                    setConstantPowerMode(this.checked);
+                });
+            }
         });
         
         // Update WebSocket status with color indicator

@@ -12,10 +12,15 @@
   --border-color: #e0e0e0;
   --text-color: #333333;
   
-  /* Device indicator colors */
+  /* Device indicator colors - standardized naming */
   --voltage-color: #64ff00; /* Green for CV mode */
   --current-color: #fff500; /* Yellow for CC mode */
   --power-color: #b73dff;   /* Purple for CP mode */
+  
+  /* Text colors for mode indicators */
+  --voltage-text-color: #000000; /* Black text on bright green */
+  --current-text-color: #000000; /* Black text on bright yellow */
+  --power-text-color: #ffffff;   /* White text on purple */
   
   /* Element sizes */
   --input-height: 40px;
@@ -42,6 +47,8 @@
   --background-color: #121212;
   --border-color: #333333;
   --text-color: #f5f5f5;
+  
+  /* Mode colors remain the same in dark mode */
 }
 
 /* Tailwind doesn't process these variables directly, but they're useful for non-Tailwind CSS */

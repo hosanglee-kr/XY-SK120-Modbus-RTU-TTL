@@ -326,19 +326,12 @@ function setupOperatingModes() {
         });
     }
     
-    // CP mode toggles
-    const cpModeOnBtn = document.getElementById('cp-mode-on');
-    const cpModeOffBtn = document.getElementById('cp-mode-off');
-    
-    if (cpModeOnBtn) {
-        cpModeOnBtn.addEventListener('click', () => {
-            setConstantPowerMode(true);
-        });
-    }
-    
-    if (cpModeOffBtn) {
-        cpModeOffBtn.addEventListener('click', () => {
-            setConstantPowerMode(false);
+    // CP mode toggle
+    const cpModeToggle = document.getElementById('cp-mode-toggle');
+    if (cpModeToggle) {
+        cpModeToggle.addEventListener('change', function() {
+            console.log("CP mode toggle changed to:", this.checked);
+            setConstantPowerMode(this.checked);
         });
     }
 }
@@ -379,7 +372,6 @@ function handleBasicMessages(event) {
             const powerToggle = document.getElementById('power-toggle');
             if (powerToggle && powerToggle.checked !== data.outputEnabled) {
                 console.log("Updating power toggle to match device state:", data.outputEnabled);
-                // Use this technique to avoid triggering onchange
                 powerToggle.checked = data.outputEnabled;
             }
         }
@@ -389,9 +381,13 @@ function handleBasicMessages(event) {
             updateOperatingMode(data.operatingMode, data.operatingModeSetValue);
         }
         
-        // Highlight appropriate mode tab if needed
-        if (data.operatingMode) {
-            highlightActiveOperatingMode(data.operatingMode);
+        // Update CP mode toggle state if included in status
+        if (data.cpModeEnabled !== undefined) {
+            const cpModeToggle = document.getElementById('cp-mode-toggle');
+            if (cpModeToggle && cpModeToggle.checked !== data.cpModeEnabled) {
+                console.log("Updating CP mode toggle to match device state:", data.cpModeEnabled);
+                cpModeToggle.checked = data.cpModeEnabled;
+            }
         }
     }
     
@@ -411,12 +407,25 @@ function handleBasicMessages(event) {
         
         if (mode) {
             updateOperatingMode(mode, setValue);
-            highlightActiveOperatingMode(mode);
+            // REMOVED: Do not automatically highlight tab based on mode responses
+            // highlightActiveOperatingMode(mode);
+        }
+    }
+    
+    // Handle constant power mode response
+    if (data.action === 'constantPowerModeResponse' && data.success) {
+        console.log("Received CP mode response:", data);
+        const enabled = data.enabled !== undefined ? data.enabled : false;
+        
+        // Update the CP mode toggle state
+        const cpModeToggle = document.getElementById('cp-mode-toggle');
+        if (cpModeToggle && cpModeToggle.checked !== enabled) {
+            cpModeToggle.checked = enabled;
         }
     }
 }
 
-// New function to highlight the active operating mode tab - Updated to handle both string and numeric modes
+// New function to highlight the active operating mode tab with mode-specific colors
 function highlightActiveOperatingMode(mode) {
     console.log("highlightActiveOperatingMode called with:", mode, typeof mode);
     
@@ -442,21 +451,47 @@ function highlightActiveOperatingMode(mode) {
     
     // Find the corresponding tab
     const tabs = document.querySelectorAll('.mode-tab');
+    
+    // First remove all possible active classes from all tabs
+    tabs.forEach(t => {
+        t.classList.remove('tab-active', 'tab-active-cv', 'tab-active-cc', 'tab-active-cp');
+        t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+    });
+    
+    // Find and highlight the correct tab with MODE-SPECIFIC STYLES
+    let foundTab = false;
     tabs.forEach(tab => {
         const dataMode = tab.getAttribute('data-mode');
+        
+        // Match exact mode or mode name that starts with the data-mode value
         if (dataMode && (dataMode === tabMode || tabMode.startsWith(dataMode))) {
-            // This is the active tab, highlight it
-            tabs.forEach(t => {
-                t.classList.remove('tab-active');
-                t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-            });
-            
             tab.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-            tab.classList.add('tab-active');
+            
+            // Apply the mode-specific active class
+            if (dataMode === 'cv') {
+                tab.classList.add('tab-active-cv');
+            } else if (dataMode === 'cc') {
+                tab.classList.add('tab-active-cc');
+            } else if (dataMode === 'cp') {
+                tab.classList.add('tab-active-cp');
+            } else {
+                tab.classList.add('tab-active'); // fallback
+            }
             
             console.log(`Highlighted ${dataMode} tab for mode ${mode}`);
+            foundTab = true;
         }
     });
+    
+    // If no tab was found, default to CV tab as fallback
+    if (!foundTab && tabs.length > 0) {
+        const defaultTab = Array.from(tabs).find(tab => tab.getAttribute('data-mode') === 'cv');
+        if (defaultTab) {
+            defaultTab.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            defaultTab.classList.add('tab-active-cv');
+            console.log("No matching tab found, defaulted to CV tab");
+        }
+    }
 }
 
 // Update operating mode display - REMOVE ANIMATION
@@ -813,7 +848,6 @@ window.setConstantPower = setConstantPower;
 window.setConstantPowerMode = setConstantPowerMode;
 window.toggleKeyLock = toggleKeyLock;
 window.togglePower = togglePower;  // Make sure this is properly exposed
-window.highlightActiveOperatingMode = highlightActiveOperatingMode;
 window.refreshPsuStatus = updateAllStatus; // Redirect to the new function
 window.updateAllStatus = updateAllStatus; // Make the unified status update function available globally
 window.startAutoRefresh = startAutoRefresh;

@@ -176,6 +176,13 @@ function handleMessage(event) {
         const data = JSON.parse(event.data);
         console.log('Received message:', data);
         
+        // REMOVED: Don't automatically highlight tabs on status updates
+        // if (data.action === 'statusResponse' && data.operatingMode) {
+        //     if (typeof window.highlightActiveOperatingMode === 'function') {
+        //         window.highlightActiveOperatingMode(data.operatingMode);
+        //     }
+        // }
+        
         // Special handling for power commands to ensure UI is updated
         if (data.action === 'setOutputStateResponse' || data.action === 'powerOutputResponse') {
             console.log('Received power state update:', data.enabled ? 'ON' : 'OFF');
