@@ -22,6 +22,16 @@ export function updateUI(data) {
         updateCpModeToggle(data.cpModeEnabled);
     }
     
+    // Update key lock status if included
+    if (data.keyLockEnabled !== undefined) {
+        updateKeyLockStatus(data.keyLockEnabled);
+    }
+    
+    // Update device name if included
+    if (data.deviceName) {
+        updateDeviceName(data.deviceName);
+    }
+    
     // Update operating mode if included
     if (data.operatingMode) {
         updateOperatingMode(data.operatingMode, data);
@@ -88,6 +98,54 @@ export function updateCpModeToggle(isEnabled) {
     if (cpModeToggle && cpModeToggle.checked !== isEnabled) {
         console.log("Status update: CP mode is", isEnabled ? "enabled" : "disabled");
         cpModeToggle.checked = isEnabled;
+    }
+}
+
+/**
+ * Update Key Lock status in UI
+ * NOTE: This is now just a wrapper that calls the function in basic_control.js
+ * @param {boolean} isLocked - Whether the keys are locked
+ */
+export function updateKeyLockStatus(isLocked) {
+    // Call the function from basic_control.js instead
+    if (typeof window.updateKeyLockStatus === 'function') {
+        window.updateKeyLockStatus(isLocked);
+    } else {
+        console.error("updateKeyLockStatus function not available in window scope");
+        
+        // Fallback implementation in case the function isn't available yet
+        const keyLockToggle = document.getElementById('key-lock');
+        if (keyLockToggle && keyLockToggle.checked !== isLocked) {
+            console.log("Status update: Key lock is", isLocked ? "enabled" : "disabled");
+            keyLockToggle.checked = isLocked;
+        }
+        
+        // Also update any visual indicator of lock status
+        const keyLockIndicator = document.getElementById('key-lock-indicator');
+        if (keyLockIndicator) {
+            keyLockIndicator.textContent = isLocked ? "Locked" : "Unlocked";
+            keyLockIndicator.className = isLocked ? 
+                "ml-2 text-sm font-medium text-danger" : 
+                "ml-2 text-sm font-medium text-success";
+        }
+    }
+}
+
+/**
+ * Update device name in UI
+ * @param {string} name - The device name
+ */
+export function updateDeviceName(name) {
+    // Update device name in settings
+    const deviceNameInput = document.getElementById('device-name');
+    if (deviceNameInput && deviceNameInput.value !== name) {
+        deviceNameInput.value = name;
+    }
+    
+    // Also update any display of device name in the UI
+    const deviceNameDisplay = document.getElementById('device-name-display');
+    if (deviceNameDisplay) {
+        deviceNameDisplay.textContent = name;
     }
 }
 

@@ -28,6 +28,11 @@
 // Declare external power supply instance
 extern XY_SKxxx* powerSupply;
 
+// Forward declarations for functions used before definition
+bool isPSUKeyLocked(XY_SKxxx* powerSupply);
+void handleKeyLockRequest(AsyncWebSocketClient* client);
+void handleSetKeyLock(AsyncWebSocketClient* client, const JsonObject &json);
+
 AsyncWebSocket ws("/ws");
 
 void notFound(AsyncWebServerRequest *request) {
@@ -212,6 +217,9 @@ void sendCompletePSUStatus(AsyncWebSocketClient* client) {
   responseDoc["model"] = powerSupply->getModel();
   responseDoc["version"] = powerSupply->getVersion();
   
+  // Add key lock state to status response - now uses function that's properly declared
+  responseDoc["keyLockEnabled"] = isPSUKeyLocked(powerSupply);
+  
   // Send the response
   String response;
   serializeJson(responseDoc, response);
@@ -274,6 +282,71 @@ void sendOperatingModeDetails(AsyncWebSocketClient* client) {
   
   String response;
   serializeJson(responseDoc, response);
+  client->text(response);
+}
+
+// Add function to read key lock status from PSU
+bool isPSUKeyLocked(XY_SKxxx* powerSupply) {
+  if (!powerSupply) return false;
+  
+  // Force refresh the key lock status to get latest value
+  // This is important to detect changes made on the physical device
+  return powerSupply->isKeyLocked(true);
+}
+
+// Add dedicated key lock status handler
+void handleKeyLockRequest(AsyncWebSocketClient* client) {
+  XY_SKxxx* psu = powerSupply;
+  if (!psu) {
+    DynamicJsonDocument doc(256);
+    doc["action"] = "keyLockStatusResponse";
+    doc["success"] = false;
+    doc["error"] = "No PSU connected";
+    String response;
+    serializeJson(doc, response);
+    client->text(response);
+    return;
+  }
+  
+  DynamicJsonDocument doc(256);
+  doc["action"] = "keyLockStatusResponse";
+  doc["success"] = true;
+  
+  // Force refresh to get current state
+  bool isLocked = psu->isKeyLocked(true);
+  doc["locked"] = isLocked;
+  
+  String response;
+  serializeJson(doc, response);
+  client->text(response);
+}
+
+// Change parameter type to const JsonObject& to fix the binding error
+void handleSetKeyLock(AsyncWebSocketClient* client, const JsonObject &json) {
+  XY_SKxxx* psu = powerSupply;
+  if (!psu) {
+    DynamicJsonDocument doc(256);
+    doc["action"] = "setKeyLockResponse";
+    doc["success"] = false;
+    doc["error"] = "No PSU connected";
+    String response;
+    serializeJson(doc, response);
+    client->text(response);
+    return;
+  }
+  
+  bool lock = json["lock"] | false;
+  bool success = psu->setKeyLock(lock);
+  
+  DynamicJsonDocument doc(256);
+  doc["action"] = "setKeyLockResponse";
+  doc["success"] = success;
+  
+  // Always return the actual current state (which may differ if the operation failed)
+  doc["locked"] = psu->isKeyLocked(true);
+  
+  String response;
+  serializeJson(doc, response);
   client->text(response);
 }
 
@@ -541,6 +614,18 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
       String response;
       serializeJson(responseDoc, response);
       client->text(response);
+    }
+    // Handle incoming message...
+    if (action == "getKeyLockStatus") {
+      handleKeyLockRequest(client);
+      return;
+    }
+    
+    // Handle key lock command - Fix this call by using as<JsonObject>()
+    if (action == "setKeyLock") {
+      // Convert doc to JsonObject to match function parameter
+      handleSetKeyLock(client, doc.as<JsonObject>());
+      return;
     }
   }
 }

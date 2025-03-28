@@ -21,12 +21,15 @@ export function initBasicControls() {
         requestPsuStatus();
         // Start auto-refresh when connected
         setTimeout(() => startAutoRefresh(), 500);
+        // Start key lock monitor when connected
+        setTimeout(() => startKeyLockStatusMonitor(), 1000);
     });
     
     // Stop auto-refresh when disconnected
     document.addEventListener('websocket-disconnected', () => {
         console.log("❌ WebSocket disconnected event received, stopping auto-refresh");
         stopAutoRefresh();
+        stopKeyLockStatusMonitor();
     });
     
     // Initialize auto-refresh if already connected - with a delay
@@ -34,6 +37,7 @@ export function initBasicControls() {
         if (window.websocketConnected) {
             console.log("WebSocket already connected on init, starting auto-refresh");
             startAutoRefresh();
+            startKeyLockStatusMonitor();
         } else {
             console.log("WebSocket not connected on init, waiting for connection event");
         }
@@ -45,7 +49,19 @@ export function initBasicControls() {
             console.log("⚠️ Auto-refresh not started after 5 seconds, starting as fallback");
             startAutoRefresh();
         }
+        
+        if (!window.keyLockMonitorActive) {
+            console.log("⚠️ Key lock monitor not started after 5 seconds, starting as fallback");
+            startKeyLockStatusMonitor();
+        }
     }, 5000);
+
+    // Start the key lock status monitor after a delay
+    setTimeout(() => {
+        if (window.websocketConnected) {
+            startKeyLockStatusMonitor();
+        }
+    }, 3000);
 }
 
 // Auto-refresh timer variable
@@ -53,6 +69,15 @@ let autoRefreshTimer = null;
 
 // Make autoRefreshTimer globally accessible for debugging
 window.autoRefreshTimer = null;
+
+// Setup timer reference object properly at the top of the file
+let timers = {
+    autoRefresh: null,
+    keyLock: null
+};
+
+// Expose timers globally for debugging
+window.psuTimers = timers;
 
 // Start auto-refresh timer to update status every second
 function startAutoRefresh() {
@@ -80,8 +105,8 @@ function startAutoRefresh() {
     // First do an immediate status update
     updateAllStatus();
     
-    // Set up new timer for auto-refresh - Use window to make it accessible
-    window.autoRefreshTimer = setInterval(() => {
+    // Set up new timer for auto-refresh - Use our timer object structure
+    timers.autoRefresh = setInterval(() => {
         // Debug in case the timer is running but updates aren't happening
         console.log("⏱️ Auto-refresh tick - checking connection status:", window.websocketConnected);
         
@@ -110,6 +135,9 @@ function startAutoRefresh() {
         }
     }, 5000); // Update every 5 seconds
     
+    // Also store in window for backward compatibility
+    window.autoRefreshTimer = timers.autoRefresh;
+    
     // Hide manual refresh buttons since we don't need them anymore
     hideManualRefreshButtons();
     
@@ -123,20 +151,17 @@ function startAutoRefresh() {
     }
 }
 
-// Stop auto-refresh timer - updated to handle both timers
+// Stop auto-refresh timer - updated to handle all timers
 function stopAutoRefresh() {
-    if (window.autoRefreshTimer) {
+    if (timers.autoRefresh) {
         console.log("⏹️ Stopping all auto-refresh timers");
         
-        if (window.autoRefreshTimer.fast) {
-            clearInterval(window.autoRefreshTimer.fast);
-        }
-        
-        if (window.autoRefreshTimer.slow) {
-            clearInterval(window.autoRefreshTimer.slow);
-        }
-        
+        clearInterval(timers.autoRefresh);
+        timers.autoRefresh = null;
         window.autoRefreshTimer = null;
+        
+        // Also clear the key lock monitor
+        stopKeyLockStatusMonitor();
         
         // Show manual refresh buttons again
         showManualRefreshButtons();
@@ -348,7 +373,7 @@ function setupOperatingModes() {
     }
 }
 
-// Set up key lock control - FIXED to prevent duplicate listeners
+// Enhanced setup function with better listener management
 function setupKeyLockControl() {
     const keyLock = document.getElementById('key-lock');
     if (keyLock) {
@@ -358,11 +383,28 @@ function setupKeyLockControl() {
         const newKeyLock = keyLock.cloneNode(true);
         keyLock.parentNode.replaceChild(newKeyLock, keyLock);
         
-        // Add the event listener once
-        newKeyLock.addEventListener('change', function() {
-            console.log("Key lock changed to:", this.checked);
+        // Create a handler function and store reference to it for later removal
+        const changeHandler = function() {
+            console.log("Key lock changed by user to:", this.checked);
             toggleKeyLock(this.checked);
-        });
+        };
+        
+        // Store reference to the handler
+        newKeyLock._changeHandler = changeHandler;
+        
+        // Add the event listener once
+        newKeyLock.addEventListener('change', changeHandler);
+        
+        // Request initial key lock status once connected
+        if (window.websocketConnected) {
+            console.log("WebSocket connected, requesting initial key lock status");
+            setTimeout(() => requestKeyLockStatus(), 500);
+        }
+        
+        // Ensure the visual state gets updated based on the initial state
+        updateKeyLockVisualState(newKeyLock.checked);
+    } else {
+        console.error("Key lock toggle element not found in the DOM");
     }
 }
 
@@ -410,6 +452,15 @@ function handleBasicMessages(event) {
                 }
             }).catch(err => console.error('Error importing status.js:', err));
         }
+        
+        // Update key lock status if available
+        if (data.keyLockEnabled !== undefined) {
+            import('./status.js').then(module => {
+                if (typeof module.updateKeyLockStatus === 'function') {
+                    module.updateKeyLockStatus(data.keyLockEnabled);
+                }
+            }).catch(err => console.error('Error importing status.js:', err));
+        }
     }
     
     // Handle readings-only responses (faster updates for V/I/P)
@@ -450,6 +501,28 @@ function handleBasicMessages(event) {
         if (data.enabled !== undefined) {
             updateCpModeToggle(data.enabled);
         }
+    }
+    
+    // Handle key lock responses
+    if (data.action === 'setKeyLockResponse' && data.success === true) {
+        console.log("Received key lock response:", data);
+        if (data.locked !== undefined) {
+            updateKeyLockStatus(data.locked);
+        }
+    }
+
+    // Add specific handler for key lock status response
+    if (data.action === 'keyLockStatusResponse') {
+        console.log("Received key lock status response:", data);
+        if (data.locked !== undefined) {
+            updateKeyLockStatus(data.locked);
+        }
+    }
+
+    // Handle status response that includes key lock state
+    if (data.action === 'statusResponse' && data.keyLockEnabled !== undefined) {
+        console.log("Status response includes key lock state:", data.keyLockEnabled);
+        updateKeyLockStatus(data.keyLockEnabled);
     }
 }
 
@@ -538,20 +611,34 @@ export function updateOutputStatus(isOn) {
     }
 }
 
-// Improved key lock toggle function with better logging
+// Enhanced toggle function with better error handling and feedback
 export function toggleKeyLock(shouldLock) {
     console.log("toggleKeyLock called with:", shouldLock);
     
     try {
+        // Immediately update visual state to provide feedback
+        updateKeyLockVisualState(shouldLock);
+        
         const command = {
             action: "setKeyLock", 
-            lock: shouldLock
+            lock: shouldLock,
+            timestamp: Date.now() // Add timestamp to prevent caching
         };
         console.log("Sending key lock command:", JSON.stringify(command));
         
-        return sendCommand(command);
+        // Send the command
+        const success = sendCommand(command);
+        
+        // Request status again shortly after to confirm change
+        if (success) {
+            setTimeout(() => requestKeyLockStatus(), 500);
+        }
+        
+        return success;
     } catch (error) {
         console.error("Error toggling key lock:", error);
+        // Reset visual state if there was an error
+        setTimeout(() => requestKeyLockStatus(), 1000);
         return false;
     }
 }
@@ -684,20 +771,129 @@ export function setConstantPowerMode(enable) {
     });
 }
 
+// Enhanced key lock request function with debug logging
+export function requestKeyLockStatus() {
+    console.log("Requesting key lock status from device");
+    try {
+        return sendCommand({ 
+            action: 'getKeyLockStatus',
+            timestamp: Date.now() // Add timestamp to prevent caching
+        });
+    } catch (err) {
+        console.error("Error requesting key lock status:", err);
+        return false;
+    }
+}
+
+// Track if key lock monitor is active
+window.keyLockMonitorActive = false;
+
+// Add a more frequent key lock status check interval - Make it shorter for better responsiveness
+export function startKeyLockStatusMonitor() {
+    if (window.keyLockMonitorActive) {
+        console.log("Key lock status monitor already running");
+        return;
+    }
+    
+    console.log("Starting key lock status monitor");
+    window.keyLockMonitorActive = true;
+    const checkInterval = 2000; // Check every 2 seconds (reduced from 5s for quicker response)
+    
+    // Request status immediately
+    if (window.websocketConnected) {
+        requestKeyLockStatus();
+    }
+    
+    // Create separate interval for key lock status
+    const keyLockTimer = setInterval(() => {
+        if (window.websocketConnected) {
+            console.log("Checking key lock status...");
+            requestKeyLockStatus();
+        } else {
+            console.log("Cannot check key lock status - WebSocket disconnected");
+            // Auto-stop if disconnected for too long
+            if (window.keyLockMonitorActive) {
+                stopKeyLockStatusMonitor();
+            }
+        }
+    }, checkInterval);
+    
+    // Store timer reference in our timer object
+    timers.keyLock = keyLockTimer;
+    
+    return keyLockTimer;
+}
+
+// Stop key lock status monitor
+export function stopKeyLockStatusMonitor() {
+    window.keyLockMonitorActive = false;
+    
+    if (timers.keyLock) {
+        clearInterval(timers.keyLock);
+        timers.keyLock = null;
+        console.log("Key lock status monitor stopped");
+    }
+}
+
 // Make functions available globally for direct HTML access
 window.requestPsuStatus = requestPsuStatus;
-window.requestOperatingMode = requestOperatingMode; // Add this export
-window.debugOperatingMode = debugOperatingMode; // New debug function
+window.requestOperatingMode = requestOperatingMode; 
+window.debugOperatingMode = debugOperatingMode;
 window.setConstantVoltage = setConstantVoltage;
 window.setConstantCurrent = setConstantCurrent;
 window.setConstantPower = setConstantPower;
 window.setConstantPowerMode = setConstantPowerMode;
 window.toggleKeyLock = toggleKeyLock;
-window.togglePower = togglePower;  // Make sure this is properly exposed
-window.refreshPsuStatus = updateAllStatus; // Redirect to the new function
-window.updateAllStatus = updateAllStatus; // Make the unified status update function available globally
+window.togglePower = togglePower;
+window.refreshPsuStatus = updateAllStatus;
+window.updateAllStatus = updateAllStatus;
 window.startAutoRefresh = startAutoRefresh;
 window.stopAutoRefresh = stopAutoRefresh;
+window.requestKeyLockStatus = requestKeyLockStatus;
+window.startKeyLockStatusMonitor = startKeyLockStatusMonitor;
+window.stopKeyLockStatusMonitor = stopKeyLockStatusMonitor;
+
+// Enhanced key lock status update function with improved sync handling
+export function updateKeyLockStatus(isLocked) {
+    console.log("updateKeyLockStatus called with:", isLocked);
+    
+    const keyLockToggle = document.getElementById('key-lock');
+    if (keyLockToggle && keyLockToggle.checked !== isLocked) {
+        console.log("Status update: Key lock is", isLocked ? "enabled" : "disabled");
+        
+        // Temporarily remove the change event handler to prevent infinite loops
+        if (keyLockToggle._changeHandler) {
+            keyLockToggle.removeEventListener('change', keyLockToggle._changeHandler);
+        }
+        
+        // Update the toggle state
+        keyLockToggle.checked = isLocked;
+        
+        // Re-attach the event listener after a short delay
+        setTimeout(() => {
+            if (keyLockToggle._changeHandler) {
+                keyLockToggle.addEventListener('change', keyLockToggle._changeHandler);
+            }
+        }, 100);
+        
+        // Update visual styling of the lock toggle to reflect status
+        updateKeyLockVisualState(isLocked);
+    }
+}
+
+// Add function to update visual styling of the key lock toggle
+function updateKeyLockVisualState(isLocked) {
+    const keyLockSlider = document.querySelector('.key-lock-slider');
+    if (keyLockSlider) {
+        if (isLocked) {
+            keyLockSlider.classList.add('locked');
+            keyLockSlider.title = "Panel Keys Locked - Click to unlock";
+        } else {
+            keyLockSlider.classList.remove('locked');
+            keyLockSlider.title = "Panel Keys Unlocked - Click to lock";
+        }
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Mode tab switcher - updated to use mode-specific active classes

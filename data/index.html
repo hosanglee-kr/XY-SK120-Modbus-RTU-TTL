@@ -446,6 +446,89 @@
             height: 50%;
             width: 1px;
         }
+
+        /* Toggle Switch - Enhanced with symbols */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #666;
+        }
+        input:checked + .slider {
+            background-color: #2ecc71;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* Power toggle specific styling */
+        .power-slider {
+            background-color: #e74c3c;  /* Red background when off */
+        }
+        .power-slider:before {
+            content: "⏻";  /* Power symbol */
+            font-size: 12px;
+        }
+        input:checked + .power-slider {
+            background-color: #2ecc71;  /* Green background when on */
+        }
+        
+        /* Key lock toggle specific styling */
+        .key-lock-slider:before {
+            content: "🔒";  /* Lock symbol */
+            font-size: 10px;
+        }
+        input:checked + .key-lock-slider {
+            background-color: #3498db;  /* Blue background when locked */
+        }
+        
+        /* Enhanced visual feedback for key lock state */
+        .key-lock-slider.locked {
+            box-shadow: 0 0 4px #3498db; /* Add glow effect when locked */
+        }
+        
+        /* Animation for key lock changes */
+        @keyframes keylock-change {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .key-lock-slider.state-changing:before {
+            animation: keylock-change 0.5s ease-in-out;
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 h-full transition-colors duration-200">
@@ -456,7 +539,9 @@
                 <div class="flex justify-between h-16">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <h1 class="text-xl font-bold text-gray-800 dark:text-white">XY-SK120</h1>
+                            <h1 class="text-xl font-bold text-gray-800 dark:text-white">
+                                XY-SK120 <span id="device-name-display" class="text-sm text-gray-600 dark:text-gray-400"></span>
+                            </h1>
                         </div>
                         <div class="hidden md:block">
                             <div class="ml-10 flex items-baseline space-x-4">
@@ -517,12 +602,22 @@
                         
                         <!-- Power toggle & refresh buttons -->
                         <div class="flex items-center space-x-3">
+                            <!-- Key lock toggle with enhanced title for better UX -->
+                            <div class="flex items-center">
+                                <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Key Lock</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="key-lock" onchange="toggleKeyLock(this.checked)">
+                                    <span class="slider key-lock-slider" title="Panel Keys Unlocked - Click to lock"></span>
+                                </label>
+                            </div>
+                            
+                            <!-- Power toggle remains the same -->
                             <div class="flex items-center">
                                 <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Output</span>
                                 <label class="toggle-switch">
                                     <!-- Add the input with ID -->
                                     <input type="checkbox" id="power-toggle">
-                                    <span class="slider"></span>
+                                    <span class="slider power-slider"></span>
                                 </label>
                             </div>
                             <!-- Keep but hide the refresh button -->
@@ -656,13 +751,8 @@
                             </div>
                         </div>
                         
-                        <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
-                            <label for="key-lock" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lock Front Panel Keys</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="key-lock" onchange="toggleKeyLock(this.checked)">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+                        <!-- REMOVED: The key lock control div is now at the top by the power toggle -->
+                        
                     </div>
                 </div>
                 <!-- Operating Mode Controls Card -->
@@ -1287,6 +1377,14 @@
                     }
                 });
             }
+        
+            // Add more frequent status check for key lock specifically
+            setTimeout(() => {
+                if (typeof window.startKeyLockStatusMonitor === 'function') {
+                    window.startKeyLockStatusMonitor();
+                    console.log("Started dedicated key lock status monitor");
+                }
+            }, 2000);
         });
     
         // Improved theme initialization - runs immediately, not in DOMContentLoaded

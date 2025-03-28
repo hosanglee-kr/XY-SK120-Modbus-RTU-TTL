@@ -113,7 +113,7 @@ function initializeModules() {
         console.log("Status module loaded successfully");
     }).catch(err => console.error('Failed to load status module:', err));
     
-    // Then import basic functionality
+    // Then import basic functionality with key lock monitoring
     import('./basic_control.js').then(module => {
         window.initBasicControls = module.initBasicControls;
         window.togglePower = module.togglePower;
@@ -126,6 +126,12 @@ function initializeModules() {
         window.setConstantPowerMode = module.setConstantPowerMode;
         window.startAutoRefresh = module.startAutoRefresh;
         window.stopAutoRefresh = module.stopAutoRefresh;
+        window.requestKeyLockStatus = module.requestKeyLockStatus;
+        window.startKeyLockStatusMonitor = module.startKeyLockStatusMonitor;
+        window.stopKeyLockStatusMonitor = module.stopKeyLockStatusMonitor;
+        
+        // Expose the key lock status update function globally
+        window.updateKeyLockStatus = module.updateKeyLockStatus;
         
         if(module.initBasicControls) module.initBasicControls();
         console.log("Basic controls module loaded successfully");
@@ -140,6 +146,8 @@ function initializeModules() {
     import('./device_manager.js').then(module => {
         if(module.initDeviceManager) module.initDeviceManager();
     }).catch(err => console.error('Failed to load device manager:', err));
+    
+    // Remove status_monitor.js import - already commented out
     
     // Import other modules as needed
     // Note: Each module should handle its own initialization
