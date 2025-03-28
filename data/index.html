@@ -1421,22 +1421,9 @@
                 }        // Check if the UI settings tab exists
             }, 2000);
         });
-     settingsContainer = uiSettingsTab.querySelector('.max-w-lg');
-        // Improved theme initialization - runs immediately, not in DOMContentLoaded
-        // This ensures the theme is applied before page renders to prevent flashing
-        (function() {        const autoRefreshToggle = settingsContainer.querySelector('.flex:nth-child(2)');t-lg border border-gray-200 dark:border-gray-700 p-4 transform translate-y-full transition duration-300 ease-in-out z-50" style="height: 16.67vh;">
-            const savedTheme = localStorage.getItem('theme');
-            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;lement('div');
-                showLogsToggle.className = 'flex items-center justify-between mt-4';
-            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-                document.documentElement.classList.add('dark');               <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">Show WebSocket Logs</span>
-            } else {               <label class="toggle-switch">-sm text-gray-700 dark:text-gray-300">Show Time</label>
-                document.documentElement.classList.remove('dark');                   <input type="checkbox" id="show-logs-toggle">
-            }                                <span class="slider"></span>
-        })();       <input id="show-ip" type="checkbox" checked class="form-checkbox h-4 w-4 text-secondary transition duration-150 ease-in-out">
-    </script>       <label for="show-ip" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Show IPs</label>
-le);            </div>
-    <!-- Log Viewer Overlay - Initially hidden --> py-1 bg-success text-white text-xs rounded">Start</button>
+    </script>
+    
+    <!-- Log Viewer Overlay - Initially hidden and properly structured -->
     <div id="log-viewer-overlay" class="fixed inset-x-0 bottom-0 bg-white dark:bg-gray-800 shadow-lg rounded-t-lg border border-gray-200 dark:border-gray-700 p-2 transform translate-y-full transition duration-300 ease-in-out z-50" style="height: 33.33vh;">
         <div class="flex justify-between items-center mb-2">
             <div class="flex items-center space-x-3 text-sm">
@@ -1483,5 +1470,23 @@ le);            </div>
             <div id="logs"></div>
         </div>
     </div>
+
+    <!-- Add script for settings tab initializer -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add fallback initialization for settings tabs if they fail to initialize
+            setTimeout(function() {
+                const activeTabs = document.querySelectorAll('.settings-tab.border-secondary');
+                if (activeTabs.length === 0) {
+                    console.log("No active settings tabs detected, attempting recovery...");
+                    if (typeof window.initSettingsTabs === 'function') {
+                        window.initSettingsTabs();
+                    } else {
+                        console.error("Settings tabs initialization function not available");
+                    }
+                }
+            }, 3000);
+        });
+    </script>
 </body>
 </html>
