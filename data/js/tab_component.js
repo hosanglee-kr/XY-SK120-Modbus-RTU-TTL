@@ -218,8 +218,153 @@ function initDarkModeToggle() {
 
 // Update setupLogsToggle function to create a better WebSocket logs UI
 function setupLogsToggle() {
-    // ...existing code...
+    // Check if the UI settings tab exists
+    const uiSettingsTab = document.getElementById('ui-settings-tab');
+    if (uiSettingsTab) {
+        const settingsContainer = uiSettingsTab.querySelector('.max-w-lg');
+        if (settingsContainer) {
+            // Look for the logs toggle
+            const showLogsToggle = document.getElementById('show-logs-toggle');
+            if (showLogsToggle) {
+                // Add event listener for the logs toggle
+                showLogsToggle.addEventListener('change', function() {
+                    // If toggle is switched on, show logs
+                    if (this.checked) {
+                        toggleLogViewer(true);
+                    } else {
+                        toggleLogViewer(false);
+                    }
+                });
+            }
+            
+            // Add open logs button
+            const logsSection = document.createElement('div');
+            logsSection.className = 'mt-6 border-t border-gray-200 dark:border-gray-700 pt-4';
+            logsSection.innerHTML = `
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">WebSocket Communication Logs</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    View real-time communication between the browser and device. Helpful for troubleshooting.
+                </p>
+                <button id="open-logs-btn" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Open WebSocket Logs
+                </button>
+            `;
+            
+            // Insert after the save button container
+            const saveButtonContainer = settingsContainer.querySelector('.flex.justify-end');
+            if (saveButtonContainer) {
+                saveButtonContainer.after(logsSection);
+            }
+            
+            // Add event listener for the open logs button
+            setTimeout(() => {
+                const openLogsBtn = document.getElementById('open-logs-btn');
+                if (openLogsBtn) {
+                    openLogsBtn.addEventListener('click', function() {
+                        toggleLogViewer(true);
+                        console.log("Log viewer opened from settings");
+                    });
+                }
+            }, 100);
+        }
+    }
+    
+    // Initialize log viewer
+    setupLogViewer();
 }
+
+// Add function to toggle log viewer
+window.toggleLogViewer = function(show) {
+    const logViewer = document.getElementById('log-viewer-overlay');
+    if (!logViewer) return;
+    
+    if (show) {
+        logViewer.classList.add('active');
+    } else {
+        logViewer.classList.remove('active');
+    }
+    
+    // Store preference in localStorage
+    localStorage.setItem('showLogs', show ? 'true' : 'false');
+};
+
+// Add function to setup log viewer
+window.setupLogViewer = function() {
+    const logViewer = document.getElementById('log-viewer-overlay');
+    const logs = document.getElementById('logs');
+    
+    if (!logViewer || !logs) {
+        console.error("Log viewer elements not found");
+        return;
+    }
+    
+    // Set up log viewer controls
+    const closeBtn = document.getElementById('log-close');
+    const clearBtn = document.getElementById('log-clear');
+    const pauseBtn = document.getElementById('log-pause');
+    const resumeBtn = document.getElementById('log-resume');
+    const copyBtn = document.getElementById('log-copy');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            toggleLogViewer(false);
+            // Also update the UI toggle if it exists
+            const showLogsToggle = document.getElementById('show-logs-toggle');
+            if (showLogsToggle) {
+                showLogsToggle.checked = false;
+            }
+        });
+    }
+    
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            logs.innerHTML = '';
+        });
+    }
+    
+    if (pauseBtn && resumeBtn) {
+        pauseBtn.addEventListener('click', function() {
+            window.logsPaused = true;
+            pauseBtn.classList.add('hidden');
+            resumeBtn.classList.remove('hidden');
+        });
+        
+        resumeBtn.addEventListener('click', function() {
+            window.logsPaused = false;
+            resumeBtn.classList.add('hidden');
+            pauseBtn.classList.remove('hidden');
+        });
+    }
+    
+    if (copyBtn) {
+        copyBtn.addEventListener('click', function() {
+            const logText = logs.innerText;
+            navigator.clipboard.writeText(logText)
+                .then(() => {
+                    console.log('Logs copied to clipboard');
+                    alert('Logs copied to clipboard');
+                })
+                .catch(err => {
+                    console.error('Error copying logs: ', err);
+                    alert('Failed to copy logs: ' + err);
+                });
+        });
+    }
+    
+    // Check localStorage for previous state
+    const showLogs = localStorage.getItem('showLogs') === 'true';
+    if (showLogs) {
+        toggleLogViewer(true);
+        // Also update the UI toggle if it exists
+        const showLogsToggle = document.getElementById('show-logs-toggle');
+        if (showLogsToggle) {
+            showLogsToggle.checked = true;
+        }
+    }
+};
 
 // Populate settings tabs with content if they're empty
 function populateSettingsTabs() {
