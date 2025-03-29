@@ -1,6 +1,12 @@
+/* Main Tailwind CSS input file */
+
+/* Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Import custom component styles */
+@import 'components.css';
 
 /* Base styles that extend Tailwind */
 @layer base {
@@ -146,9 +152,86 @@
     @apply bg-secondary transform scale-110 shadow-md;
   }
 
-  /* Basic utilities needed for the minimal interface */
-  .card {
-    @apply bg-card rounded p-4 mb-4 border border-border;
+  /* Toggle switch component */
+  .toggle-switch {
+    @apply relative inline-block w-10 h-5 align-middle select-none;
+  }
+
+  .toggle-switch input {
+    @apply opacity-0 w-0 h-0;
+  }
+
+  .slider {
+    @apply absolute cursor-pointer inset-0 bg-gray-300 dark:bg-gray-600 rounded-full transition-all duration-300;
+  }
+
+  .slider:before {
+    @apply absolute h-4 w-4 left-0.5 bottom-0.5 bg-white rounded-full transition-all duration-300;
+    content: "";
+  }
+
+  input:checked + .slider {
+    @apply bg-secondary;
+  }
+
+  input:focus + .slider {
+    @apply ring-2 ring-secondary;
+  }
+
+  input:checked + .slider:before {
+    @apply transform translate-x-5;
+  }
+
+  .power-slider:before {
+    @apply bg-white;
+  }
+
+  input:checked + .power-slider {
+    @apply bg-success;
+  }
+
+  .key-lock-slider:before {
+    @apply bg-white;
+  }
+
+  input:checked + .key-lock-slider {
+    @apply bg-danger;
+  }
+
+  /* Tab active states */
+  .tab-active {
+    @apply border-secondary text-secondary;
+  }
+
+  .tab-active-cv {
+    @apply border-voltage text-voltage;
+  }
+
+  .tab-active-cc {
+    @apply border-current text-current;
+  }
+
+  .tab-active-cp {
+    @apply border-power text-power;
+  }
+
+  /* Add auto-refresh indicator */
+  .auto-refresh-indicator {
+    @apply flex items-center text-xs text-gray-500 dark:text-gray-400;
+  }
+
+  .auto-refresh-indicator .dot {
+    @apply h-2 w-2 rounded-full bg-success mr-1 opacity-60;
+    transition: opacity 0.4s ease-in-out, background-color 0.5s ease;
+  }
+
+  .auto-refresh-indicator.slow .dot {
+    animation: slowPulse 3s infinite;
+  }
+
+  @keyframes slowPulse {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.6; }
   }
 }
 
@@ -204,7 +287,7 @@
     
     .tw-dot::before {
       content: "";
-      @apply absolute -inset-5 z-[1]; /* Using arbitrary value syntax */
+      @apply absolute -inset-5 z-[1];
     }
     
     /* Mobile card animations */
@@ -246,6 +329,46 @@
     .tw-reading-item {
       @apply text-center min-w-[100px] m-1 flex flex-col items-center;
     }
+  }
+
+  /* Responsive sizing for readings display */
+  .readings-row {
+    @apply flex items-center justify-between;
+  }
+
+  .reading-item {
+    @apply text-center flex-1 px-1;
+  }
+
+  .readings-separator {
+    @apply relative;
+  }
+
+  .readings-separator::after {
+    content: "";
+    @apply absolute right-0 top-1/2 -translate-y-1/2 h-8 w-px bg-gray-200 dark:bg-gray-700;
+  }
+
+  /* Log viewer overlay utilities */
+  #log-viewer-overlay {
+    @apply shadow-lg z-[9999] bottom-0 left-0 right-0 fixed p-2;
+    height: 33.33vh !important;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  #log-viewer-overlay.active {
+    transform: translateY(0) !important;
+  }
+
+  #log-container {
+    @apply overflow-auto bg-gray-100 dark:bg-gray-900 rounded p-2 text-xs font-mono;
+    height: calc(33.33vh - 40px);
+  }
+
+  /* Ensure settings tab active state is clearly visible */
+  .settings-tab.border-secondary {
+    @apply border-secondary text-secondary;
   }
 }
 

@@ -1,0 +1,182 @@
+/* Custom components that need specific styling beyond Tailwind */
+
+/* Toggle Switch Component */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+  vertical-align: middle;
+  user-select: none;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #3498db;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #3498db;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* Special toggle styles */
+input:checked + .power-slider {
+  background-color: #2ecc71;
+}
+
+input:checked + .key-lock-slider {
+  background-color: #e74c3c;
+}
+
+/* Dark mode adjustments */
+.dark .slider {
+  background-color: #4b5563;
+}
+
+/* Reading values with specific colors */
+.text-volt {
+  color: #64ff00; /* Green for voltage */
+}
+
+.text-amp {
+  color: #fff500; /* Yellow for current */
+}
+
+.text-watt {
+  color: #b73dff; /* Purple for power */
+}
+
+.text-temp {
+  color: #e74c3c; /* Red for temperature */
+}
+
+/* Ensure dark mode works with colored text */
+.dark .text-volt {
+  color: #64ff00;
+}
+
+.dark .text-amp {
+  color: #fff500;
+}
+
+.dark .text-watt {
+  color: #b73dff;
+}
+
+.dark .text-temp {
+  color: #e74c3c;
+}
+
+/* Auto-refresh heartbeat indicator */
+.auto-refresh-indicator {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #71717a;
+}
+
+.auto-refresh-indicator .dot {
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  background-color: #2ecc71;
+  margin-right: 4px;
+  opacity: 0.6;
+}
+
+.dark .auto-refresh-indicator {
+  color: #d1d5db;
+}
+
+/* Special animation for slow connections */
+.auto-refresh-indicator.slow .dot {
+  animation: slowPulse 3s infinite;
+}
+
+@keyframes slowPulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.6; }
+}
+
+/* Tab styling enhancements */
+.tab-active {
+  border-bottom-width: 2px;
+  border-bottom-color: #3498db;
+  color: #3498db;
+}
+
+.tab-active-cv {
+  border-bottom-width: 2px;
+  border-bottom-color: #64ff00;
+  color: #64ff00;
+}
+
+.tab-active-cc {
+  border-bottom-width: 2px;
+  border-bottom-color: #fff500;
+  color: #fff500;
+}
+
+.tab-active-cp {
+  border-bottom-width: 2px;
+  border-bottom-color: #b73dff;
+  color: #b73dff;
+}
+
+/* Make reading values in readings section more readable with shadows */
+.readings-row .reading-item p:last-child {
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.dark .readings-row .reading-item p:last-child {
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Add a divider between reading items */
+.readings-separator::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 32px;
+  width: 1px;
+  background-color: #e5e7eb;
+}
+
+.dark .readings-separator::after {
+  background-color: #374151;
+}
