@@ -260,17 +260,33 @@
                             Operating Mode
                         </h2>
                     </div>
-                    <!-- Mode tabs - ensure they have proper data-mode attributes -->
+                    <!-- Mode tabs - updated to show both abbreviation and full name -->
                     <div class="border-b border-gray-200 dark:border-gray-700">
-                        <nav class="flex -mb-px">
-                            <button data-mode="cv" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                Constant Voltage (CV)
+                        <nav class="flex overflow-x-auto overflow-y-hidden whitespace-nowrap">
+                            <button data-mode="cv" class="mode-tab flex-1 inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500 dark:text-gray-400 text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    <span class="font-medium">CV</span> <span class="hidden sm:inline">- Constant Voltage</span>
+                                </span>
                             </button>
-                            <button data-mode="cc" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                Constant Current (CC)
+                            <button data-mode="cc" class="mode-tab flex-1 inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500 dark:text-gray-400 text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    <span class="font-medium">CC</span> <span class="hidden sm:inline">- Constant Current</span>
+                                </span>
                             </button>
-                            <button data-mode="cp" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                Constant Power (CP)
+                            <button data-mode="cp" class="mode-tab flex-1 inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500 dark:text-gray-400 text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    <span class="font-medium">CP</span> <span class="hidden sm:inline">- Constant Power</span>
+                                </span>
                             </button>
                         </nav>
                     </div>
@@ -350,28 +366,51 @@
                             Settings
                         </h2>
                     </div>
-                    <!-- Settings tabs -->
-                    <div class="border-b border-gray-200 dark:border-gray-700">
-                        <nav class="flex -mb-px">
-                            <button data-settings-tab="device" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                Device
-                            </button>
-                            <button data-settings-tab="ui" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                Web UI
-                            </button>
-                            <button data-settings-tab="wifi" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                WiFi
-                            </button>
-                            <button data-settings-tab="manager" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                Links
-                            </button>
-                        </nav>
-                    </div>
                     
-                    <!-- Tab Content Container -->
-                    <div class="settings-tab-content">
-                        <!-- WiFi Settings Tab Content -->
-                        <div id="wifi-settings-tab" class="settings-panel px-4 py-5 sm:p-6 block">
+                    <!-- Settings tabs - New tab component implementation -->
+                    <div id="settings-tabs-container" data-tabs="settings">
+                        <div class="flex overflow-x-auto overflow-y-hidden border-b border-gray-200 whitespace-nowrap dark:border-gray-700" role="tablist" id="settings-tablist" aria-label="Settings tabs">
+                            <button id="tab-device" role="tab" aria-selected="false" aria-controls="device-settings-tab" 
+                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 -px-1 dark:text-white text-gray-700 whitespace-nowrap focus:outline-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    Device
+                                </span>
+                            </button>
+                            <button id="tab-ui" role="tab" aria-selected="false" aria-controls="ui-settings-tab" 
+                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 -px-1 dark:text-white text-gray-700 whitespace-nowrap focus:outline-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    Web UI
+                                </span>
+                            </button>
+                            <button id="tab-wifi" role="tab" aria-selected="true" aria-controls="wifi-settings-tab" 
+                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-blue-500 sm:px-4 -px-1 dark:text-blue-300 dark:border-blue-400 text-blue-600 whitespace-nowrap focus:outline-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    WiFi
+                                </span>
+                            </button>
+                            <button id="tab-manager" role="tab" aria-selected="false" aria-controls="manager-settings-tab" 
+                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 -px-1 dark:text-white text-gray-700 whitespace-nowrap focus:outline-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    Links
+                                </span>
+                            </button>
+                        </div>
+                        
+                        <!-- Tab panel content remains the same, just add ARIA attributes -->
+                        <div id="wifi-settings-tab" role="tabpanel" aria-labelledby="tab-wifi" tabindex="0" aria-hidden="false" class="settings-panel px-4 py-5 sm:p-6">
+                            <!-- Existing Wi-Fi settings content -->
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Status</p>
@@ -402,8 +441,8 @@
                             </div>
                         </div>
                         
-                        <!-- Device Settings Tab Content -->
-                        <div id="device-settings-tab" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                        <div id="device-settings-tab" role="tabpanel" aria-labelledby="tab-device" tabindex="0" aria-hidden="true" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                            <!-- Existing device settings content -->
                             <div class="max-w-lg mx-auto space-y-6">
                                 <div>
                                     <label for="device-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Name</label>
@@ -465,8 +504,8 @@
                             </div>
                         </div>
                         
-                        <!-- Web UI Settings Tab Content -->
-                        <div id="ui-settings-tab" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                        <div id="ui-settings-tab" role="tabpanel" aria-labelledby="tab-ui" tabindex="0" aria-hidden="true" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                            <!-- Existing UI settings content -->
                             <div class="max-w-lg mx-auto space-y-6">
                                 <div class="flex items-center justify-between">
                                     <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">Dark Mode</span>
@@ -516,8 +555,8 @@
                             </div>
                         </div>
                         
-                        <!-- Device Manager Tab Content -->
-                        <div id="manager-settings-tab" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                        <div id="manager-settings-tab" role="tabpanel" aria-labelledby="tab-manager" tabindex="0" aria-hidden="true" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                            <!-- Existing manager settings content -->
                             <form id="add-device-form" class="space-y-4">
                                 <div>
                                     <label for="new-device-ip" class="block text-sm font-medium text-gray-700 dark:text-gray-300">IP Address</label>
@@ -570,7 +609,7 @@
     <script src="js/web_interface.js"></script>
     
     <!-- Add Settings Tabs -->
-    <script src="js/settings_tabs.js"></script>
+    <script src="js/tab_component.js"></script>
     
     <!-- Add Debug Script -->
     <script src="js/debug.js"></script>
