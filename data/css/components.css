@@ -196,7 +196,7 @@ input:checked + .key-lock-slider {
 }
 
 .card-header {
-    @apply px-6 py-4 border-b border-gray-200 dark:border-gray-700;
+    @apply border-b border-gray-200 dark:border-gray-700;
     position: relative;
     display: flex;
     align-items: center;
@@ -205,22 +205,30 @@ input:checked + .key-lock-slider {
     margin-bottom: 0;
     border-top-left-radius: 0.75rem;
     border-top-right-radius: 0.75rem;
+    padding: 0.5rem 1.5rem; /* 8px top/bottom, 24px left/right */
 }
 
 .dark .card-header {
     background-color: #374151;
 }
 
+/* Improved card title spacing and alignment */
 .card-title {
     @apply text-lg font-medium text-gray-900 dark:text-white;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.25rem 0;
     margin: 0;
     line-height: 1.5;
     letter-spacing: 0.01em;
-    border-bottom: 2px solid transparent;
+}
+
+/* Improved card icon sizing and alignment */
+.card-icon {
+    height: 22px;
+    width: 22px;
+    flex-shrink: 0;
+    margin-right: 0.75rem; /* Increased spacing between icon and text */
+    transition: transform 0.2s ease;
 }
 
 .card-title svg {
@@ -238,7 +246,7 @@ input:checked + .key-lock-slider {
 
 .card-body {
     @apply space-y-4;
-    padding: 1.5rem;
+    padding: 1.5rem; /* Simplified for consistency */
     border-top: 1px solid transparent;
 }
 
