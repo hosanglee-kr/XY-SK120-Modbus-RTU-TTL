@@ -7,7 +7,7 @@ import {
   websocketConnected,
   startPeriodicUpdates,
   sendCommand
-} from './modules/menu_connection.js';
+} from '../js/menu_connection.js';
 import { setVoltageValue, setCurrentValue, initPowerButton, initBasicControls } from './modules/menu_basic.js';
 import { updateUI } from './modules/menu_display.js';
 import { initDeviceManager } from './modules/device_manager.js';
