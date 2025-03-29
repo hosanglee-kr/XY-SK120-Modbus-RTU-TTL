@@ -1,16 +1,20 @@
-/* Ensure settings tab active state is clearly visible */
-.settings-tab.border-secondary {
+@tailwind components;
+
+@layer components {
+  /* Ensure settings tab active state is clearly visible */
+  .settings-tab.border-secondary {
     border-bottom-color: #3498db !important;
     border-bottom-width: 2px !important;
     opacity: 1 !important;
-}
+  }
 
-.settings-tab.text-secondary {
+  .settings-tab.text-secondary {
     color: #3498db !important;
     opacity: 1 !important;
-}
+  }
 
-/* Make hidden elements truly hidden */
-.hidden {
+  /* Make hidden elements truly hidden */
+  .hidden {
     display: none !important;
+  }
 }
