@@ -1,0 +1,16 @@
+{
+  "name": "xy-sk120-modbus-rtu-ttl",
+  "version": "1.0.0",
+  "description": "Power Supply Control Interface",
+  "main": "index.js",
+  "scripts": {
+    "build:css": "tailwindcss -i ./data/css/input.css -o ./data/css/tailwind.css",
+    "watch:css": "tailwindcss -i ./data/css/input.css -o ./data/css/tailwind.css --watch",
+    "prod:css": "tailwindcss -i ./data/css/input.css -o ./data/css/tailwind.css --minify"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17"
+  }
+}

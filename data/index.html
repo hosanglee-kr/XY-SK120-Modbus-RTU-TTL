@@ -1,426 +1,1492 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XY-SK120 120W DPS</title>
+    <title>XY-SK120 Power Supply Control</title>
     
-    <!-- Move splash screen styles to external file -->
-    <link rel="stylesheet" href="css/splash.css">
-    <link rel="stylesheet" href="css/main.css">
+    <!-- Meta theme color for browsers -->
+    <meta id="theme-color" name="theme-color" content="#2c3e50">
     
-    <!-- Updated Favicon references -->
-    <link rel="icon" href="favicon/favicon.ico" type="image/x-icon">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
-    <link rel="apple-touch-icon" href="favicon/apple-touch-icon.png">
-    <link rel="manifest" href="site.webmanifest">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="XY-SK120">
-    <meta name="theme-color" content="#2c3e50" id="theme-color">
-
-    <!-- Emergency card layout in head -->
-    <style>
-      @media (max-width: 600px) {
-        .card { display: none !important; }
-        .card:first-of-type { display: block !important; }
-      }
-      @media (min-width: 601px) {
-        .card { display: block !important; }
-      }
-      
-      /* Removed the temporary hiding of readings container */
-    </style>
-    
-    <!-- Consolidated scripts - moved all script references to one place -->
-    <script src="js/splash.js"></script>
-    <script src="js/card-fixer.js"></script>
-    <script type="module" src="main.js"></script>
-</head>
-<body>
-    <!-- Splash screen -->
-    <div class="splash-screen" id="splash-screen">
-        <div class="splash-logo">
-            <svg width="64" xmlns="http://www.w3.org/2000/svg" height="64" viewBox="0 0 64 64" fill="none">
-              <g style="fill: rgb(0, 0, 0);" class="frame-children">
-                <defs>
-                  <linearGradient id="splash-a" x1=".5" y1="0" x2=".5" y2="1">
-                    <stop offset=".37" stop-color="#64ff00"/>
-                    <stop offset=".65" stop-color="#fff500"/>
-                  </linearGradient>
-                  <pattern patternUnits="userSpaceOnUse" x="8" y="4" width="48" height="56.002" patternTransform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" id="splash-b">
-                    <rect width="48" height="56.002" style="fill: url(#splash-a);"/>
-                  </pattern>
-                </defs>
-                <path d="M38.973,4.253C39.777,4.701,40.172,5.638,39.931,6.525L34.619,26.000L54.000,26.000C54.797,26.000,55.517,26.473,55.834,27.203C56.152,27.934,56.005,28.783,55.461,29.365L27.461,59.365C26.834,60.039,25.827,60.197,25.023,59.749C24.219,59.300,23.825,58.360,24.069,57.472L29.381,38.000L10.000,38.000C9.203,38.000,8.483,37.527,8.166,36.797C7.848,36.066,7.995,35.217,8.539,34.635L36.539,4.635C37.166,3.963,38.171,3.806,38.973,4.253Z" fill="url(#splash-b)" clip-rule="evenodd" fill-rule="evenodd" class="fills"/>
-                <path d="M38.973,4.253C39.777,4.701,40.172,5.638,39.931,6.525L34.619,26.000L54.000,26.000C54.797,26.000,55.517,26.473,55.834,27.203C56.152,27.934,56.005,28.783,55.461,29.365L27.461,59.365C26.834,60.039,25.827,60.197,25.023,59.749C24.219,59.300,23.825,58.360,24.069,57.472L29.381,38.000L10.000,38.000C9.203,38.000,8.483,37.527,8.166,36.797C7.848,36.066,7.995,35.217,8.539,34.635L36.539,4.635C37.166,3.963,38.171,3.806,38.973,4.253Z" style="fill: none; stroke-width: 1.5; stroke: rgb(183, 61, 255); stroke-opacity: 1;" class="stroke-shape"/>
-              </g>
-            </svg>
-        </div>
-        <div class="spinner"></div>
-        <div class="splash-text">Loading XY-SK120 Interface...</div>
-    </div>
-    
-    <div class="container">
-        <header>
-            <div class="header-container">
-                <div class="header-left">
-                    <div class="header-logo">
-                        <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" class="logo-svg">
-                          <defs>
-                            <linearGradient id="fill-color-gradient" x1="0.5" y1="0" x2="0.5" y2="1">
-                              <stop offset="0.37" stop-color="#64ff00" stop-opacity="1"></stop>
-                              <stop offset="0.65" stop-color="#fff500" stop-opacity="1"></stop>
-                            </linearGradient>
-                            <pattern id="fill-pattern" patternUnits="userSpaceOnUse" x="8" y="4" width="48" height="56" patternTransform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)">
-                              <rect width="48" height="56" style="fill:url(#fill-color-gradient)"></rect>
-                            </pattern>
-                          </defs>
-                          <path d="M38.973,4.253C39.777,4.701,40.172,5.638,39.931,6.525L34.619,26.000L54.000,26.000C54.797,26.000,55.517,26.473,55.834,27.203C56.152,27.934,56.005,28.783,55.461,29.365L27.461,59.365C26.834,60.039,25.827,60.197,25.023,59.749C24.219,59.300,23.825,58.360,24.069,57.472L29.381,38.000L10.000,38.000C9.203,38.000,8.483,37.527,8.166,36.797C7.848,36.066,7.995,35.217,8.539,34.635L36.539,4.635C37.166,3.963,38.171,3.806,38.973,4.253Z" 
-                          fill="url(#fill-pattern)" 
-                          stroke="#b73dff" 
-                          stroke-width="1.5"
-                          style="fill:url(#fill-pattern) !important; fill-opacity:1;"
-                          ></path>
-                        </svg>
-                    </div>
-                    <h1>XY-SK120 120W DPS</h1>
-                </div>
-            </div>
-        </header>
-        
-        <!-- Readings display - fixed visibility issues -->
-        <div class="readings-container">
-            <div class="readings">
-                <div class="reading-item voltage">
-                    <div class="reading-label">Voltage</div>
-                    <div class="reading-display">
-                        <span class="reading-value" id="psu-voltage">--</span>
-                        <span class="reading-unit">V</span>
-                    </div>
-                </div>
-                <div class="reading-item current">
-                    <div class="reading-label">Current</div>
-                    <div class="reading-display">
-                        <span class="reading-value" id="psu-current">--</span>
-                        <span class="reading-unit">A</span>
-                    </div>
-                </div>
-                <div class="reading-item power">
-                    <div class="reading-label">Power</div>
-                    <div class="reading-display">
-                        <span class="reading-value" id="psu-power">--</span>
-                        <span class="reading-unit">W</span>
-                    </div>
-                </div>
-            </div>
-            <div class="status-row">
-                <div class="status-info">
-                    <span class="status-label">Output:</span>
-                    <span class="status-value" id="output-status">--</span>
-                </div>
-                <div class="operating-mode">
-                    <span id="operatingModeDisplay">--</span>
-                </div>
-                <div class="status-controls">
-                    <!-- Fixed power switch structure -->
-                    <div class="power-button-container">
-                        <label class="power-switch">
-                            <input type="checkbox" id="power-checkbox" style="display:none;">
-                            <span class="switch-slider" id="power-slider"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Basic Control Card - Enhanced inline style for immediate visibility -->
-        <div class="card" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
-            <h2>Basic Control</h2>
-            <div class="power-supply-control">
-                <div class="control-settings">
-                    <!-- Readings moved to outside the card -->
-                    
-                    <div class="control-inputs">
-                        <div class="form-group compact">
-                            <label for="set-voltage">Set Voltage (V)</label>
-                            <div class="input-with-button small">
-                                <input type="number" id="set-voltage" min="0" max="30" step="0.1" inputmode="decimal" pattern="[0-9]*\.?[0-9]*">
-                                <button id="apply-voltage" class="secondary">Set</button>
-                            </div>
-                            
-                            <!-- Replace multiple preset buttons with a single hold-to-select button -->
-                            <div class="voltage-presets">
-                                <button id="voltage-preset-btn" class="preset-hold-btn">
-                                    Common Voltages
-                                    <span class="hint-text">Tap to select</span>
-                                </button>
-                                
-                                <!-- Popup menu for voltage selection (hidden by default) -->
-                                <div class="popup-overlay" id="voltage-overlay"></div>
-                                <div id="voltage-popup" class="voltage-popup">
-                                    <div class="voltage-popup-title">Select Voltage</div>
-                                    <div class="voltage-popup-content">
-                                        <div class="voltage-option" data-voltage="1.8">1.8V</div>
-                                        <div class="voltage-option" data-voltage="3.3">3.3V</div>
-                                        <div class="voltage-option" data-voltage="4.2">4.2V</div>
-                                        <div class="voltage-option" data-voltage="5">5V</div>
-                                        <div class="voltage-option" data-voltage="9">9V</div>
-                                        <div class="voltage-option" data-voltage="12">12V</div>
-                                        <div class="voltage-option" data-voltage="15">15V</div>
-                                        <div class="voltage-option" data-voltage="18">18V</div>
-                                        <div class="voltage-option" data-voltage="20">20V</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group compact">
-                            <label for="set-current">Set Current (A)</label>
-                            <div class="input-with-button small">
-                                <input type="number" id="set-current" min="0" max="5" step="0.01" inputmode="decimal" pattern="[0-9]*\.?[0-9]*">
-                                <button id="apply-current" class="secondary">Set</button>
-                            </div>
-                        </div>
-                        
-                        <!-- Key lock control - minimal fix -->
-                        <div class="form-group compact">
-                            <div class="key-switch">
-                                <span class="key-label">Front Panel Keys</span>
-                                <div class="switch-container">
-                                    <div class="switch-slider" id="key-lock-slider"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="button-group">
-                        <button id="refresh-psu" class="secondary">Refresh</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- NEW OPERATION MODE CARD - Fix tab-to-content mapping -->
-        <div class="card">
-            <h2>Operation Modes</h2>
-            <div class="mode-selector">
-                <div class="mode-tabs">
-                    <!-- Remove "Normal" tab and add correct data-mode attributes -->
-                    <button class="mode-tab active" data-mode="cv">CV</button>
-                    <button class="mode-tab" data-mode="cc">CC</button>
-                    <button class="mode-tab" data-mode="cp">CP</button>
-                </div>
-                
-                <!-- Mode Settings (fix IDs to correctly match tab data-mode) -->
-                <div class="mode-settings active" id="cv-settings">
-                    <div class="form-group compact">
-                        <label for="set-cv-voltage">Constant Voltage (V)</label>
-                        <div class="input-with-button">
-                            <input type="number" id="set-cv-voltage" min="0" max="30" step="0.1" inputmode="decimal">
-                            <button id="apply-cv" class="secondary">Apply</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mode-settings" id="cc-settings">
-                    <div class="form-group compact">
-                        <label for="set-cc-current">Constant Current (A)</label>
-                        <div class="input-with-button">
-                            <input type="number" id="set-cc-current" min="0" max="5" step="0.01" inputmode="decimal">
-                            <button id="apply-cc" class="secondary">Apply</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mode-settings" id="cp-settings">
-                    <div class="form-group compact">
-                        <label for="set-cp-power">Constant Power (W)</label>
-                        <div class="input-with-button">
-                            <input type="number" id="set-cp-power" min="0" max="120" step="0.5" inputmode="decimal">
-                            <button id="apply-cp" class="secondary">Apply</button>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group compact">
-                        <label>CP Mode</label>
-                        <div class="button-group horizontal">
-                            <button id="cp-mode-on" class="success">Enable</button>
-                            <button id="cp-mode-off" class="danger">Disable</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Configuration Card -->
-        <div class="card" style="display: none !important;">
-            <h2>Configuration</h2>
-            
-            <!-- Theme toggle control -->
-            <div class="config-header">
-                <label class="theme-switch" for="theme-checkbox">
-                    <span class="theme-label">Dark Mode</span>
-                    <div class="switch-container">
-                        <input type="checkbox" id="theme-checkbox" style="display:none;">
-                        <span class="switch-slider" id="theme-slider"></span>
-                    </div>
-                </label>
-            </div>
-            
-            <form id="configForm">
-                <div class="form-group">
-                    <label for="deviceName">Device Name</label>
-                    <input type="text" id="deviceName" name="deviceName">
-                </div>
-                
-                <div class="form-group">
-                    <label for="modbusId">Modbus ID</label>
-                    <input type="number" id="modbusId" name="modbusId" min="1" max="247" inputmode="numeric" pattern="[0-9]*">
-                </div>
-                
-                <div class="form-group">
-                    <label for="baudRate">Baud Rate</label>
-                    <select id="baudRate" name="baudRate">
-                        <option value="4800">4800</option>
-                        <option value="9600">9600</option>
-                        <option value="19200">19200</option>
-                        <option value="38400">38400</option>
-                        <option value="57600">57600</option>
-                        <option value="115200">115200</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="dataBits">Data Bits</label>
-                    <select id="dataBits" name="dataBits">
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="parity">Parity</label>
-                    <select id="parity" name="parity">
-                        <option value="0">None</option>
-                        <option value="1">Odd</option>
-                        <option value="2">Even</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="stopBits">Stop Bits</label>
-                    <select id="stopBits" name="stopBits">
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="updateInterval">Update Interval (ms)</label>
-                    <input type="number" id="updateInterval" name="updateInterval" min="1000" max="60000" inputmode="numeric" pattern="[0-9]*">
-                </div>
-                
-                <div class="button-group">
-                    <button type="submit" class="primary">Save Configuration</button>
-                    <button type="button" id="resetBtn">Reset Device</button>
-                </div>
-            </form>
-        </div>
-        
-        <!-- WiFi Status card -->
-        <div class="card" style="display: none !important;">
-            <h2>WiFi Status</h2>
-            <div class="wifi-status">
-                <div class="status-row">
-                    <div class="status-label">Status:</div>
-                    <div class="status-value" id="wifi-status">Unknown</div>
-                </div>
-                <div class="status-row">
-                    <div class="status-label">SSID:</div>
-                    <div class="status-value" id="wifi-ssid">--</div>
-                </div>
-                <div class="status-row">
-                    <div class="status-label">IP Address:</div>
-                    <div class="status-value" id="wifi-ip">--</div>
-                </div>
-                <div class="status-row">
-                    <div class="status-label">Signal Strength:</div>
-                    <div class="status-value" id="wifi-rssi">--</div>
-                </div>
-                <div class="button-group">
-                    <button type="button" id="wifiResetBtn" class="danger">Reset WiFi Settings</button>
-                    <button type="button" id="wifiRefreshBtn" class="secondary">Refresh Status</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Dots indicator for mobile -->
-        <div class="dots-indicator" id="dots-indicator">
-            <div class="dot active" title="Basic Control"></div>
-            <div class="dot" title="Operation Modes"></div>
-            <div class="dot" title="Configuration"></div>
-        </div>
-    </div>
-    
-    <!-- More aggressive card fix script - place after splash.js -->
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Run this immediately after page load
-        (function() {
-            console.log('Main card fix script running');
-            
-            // Run the fix multiple times to ensure it takes effect
-            fixCardsNow();
-            setTimeout(fixCardsNow, 100);
-            setTimeout(fixCardsNow, 500);
-            
-            // Start polling for card visibility
-            let visibilityCheckCount = 0;
-            const checkInterval = setInterval(function() {
-                visibilityCheckCount++;
-                const firstCard = document.querySelector('.card');
-                
-                if (firstCard && getComputedStyle(firstCard).display === 'none') {
-                    console.log('Card still not visible, forcing it visible');
-                    fixCardsNow();
-                } else {
-                    console.log('Cards appear to be visible now');
-                    if (visibilityCheckCount >= 5) {
-                        clearInterval(checkInterval);
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2c3e50',
+                        secondary: '#3498db',
+                        success: '#2ecc71',
+                        danger: '#e74c3c',
+                        voltage: '#64ff00',
+                        current: '#fff500',
+                        power: '#b73dff',
                     }
                 }
-            }, 300);
+            }
+        }
+    </script>
+    
+    <!-- Add this script to apply the theme immediately before page renders -->
+    <script>
+        // Apply theme immediately to prevent flash of wrong theme
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             
-            function fixCardsNow() {
-                const isMobile = window.innerWidth <= 600;
-                const cards = document.querySelectorAll('.card');
-                
-                if (isMobile) {
-                    // Mobile view - show only first card
-                    cards.forEach((card, index) => {
-                        if (index === 0) {
-                            card.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important;';
-                        } else {
-                            card.style.cssText = 'display: none !important;';
-                        }
-                    });
-                    
-                    // Make dots visible
-                    const dots = document.getElementById('dots-indicator');
-                    if (dots) dots.style.display = 'flex';
-                } else {
-                    // Desktop view - show all cards
-                    cards.forEach(card => {
-                        card.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important;';
-                    });
-                    
-                    // Hide dots
-                    const dots = document.getElementById('dots-indicator');
-                    if (dots) dots.style.display = 'none';
-                }
+            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
             }
         })();
+    </script>
+    
+    <!-- Add this line in the head section -->
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        .animate-pulse-slow {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2ecc71;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* Reading values */
+        .reading-value {
+            font-variant-numeric: tabular-nums;
+        }
+        .voltage-value { color: #64ff00; }
+        .current-value { color: #fff500; }
+        .power-value { color: #b73dff; }
+        
+        /* Mode display backgrounds with consistent text colors - fixed to prevent overrides */
+        .mode-cv-bg {
+            background-color: #64ff00;
+            color: #000000 !important; /* Black text for bright background */
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        .mode-cc-bg {
+            background-color: #fff500;
+            color: #000000 !important; /* Black text for bright background */
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        .mode-cp-bg {
+            background-color: #b73dff;
+            color: #ffffff !important; /* White text for dark background */
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        /* Output status display styling to match mode display */
+        .output-on-bg {
+            background-color: #2ecc71; /* Success green */
+            color: #ffffff !important; /* White text */
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        .output-off-bg {
+            background-color: #e74c3c; /* Danger red */
+            color: #ffffff !important; /* White text */
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        /* Ensure no Tailwind override on our custom styles */
+        .mode-cv-bg, .mode-cc-bg, .mode-cp-bg, .output-on-bg, .output-off-bg {
+            --tw-text-opacity: 1 !important;
+            text-align: center;
+            display: inline-block;
+            min-width: 85px;
+        }
+        
+        /* Status display row alignment */
+        .status-display-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .status-display-item p:first-child {
+            margin-bottom: 0.25rem;
+        }
+        
+        /* Dark mode overrides */
+        .dark .dark\:voltage-value { color: #64ff00; }
+        .dark .dark\:current-value { color: #fff500; }
+        .dark .dark\:power-value { color: #b73dff; }
+        
+        /* Separator for readings */
+        .readings-separator:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 20%;
+            height: 60%;
+            width: 1px;
+            background-color: #e5e7eb;
+        }
+        .dark .readings-separator:not(:last-child)::after {
+            background-color: #4b5563;
+        }
+        
+        /* Compact readings styles */
+        .compact-readings {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0.5rem;
+            margin: -1px;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        
+        .dark .compact-readings {
+            background-color: #1e293b;
+            border-color: #475569;
+        }
+        
+        /* Mode tab styling - updated with mode-specific colors */
+        .tab-active {
+            border-bottom-color: #3498db;
+            color: #3498db;
+        }
+        
+        /* Mode-specific tab active states */
+        .tab-active-cv {
+            border-bottom-color: var(--voltage-color, #64ff00) !important;
+            color: var(--voltage-color, #64ff00) !important;
+        }
+        .tab-active-cc {
+            border-bottom-color: var(--current-color, #fff500) !important;
+            color: var(--current-color, #fff500) !important;
+        }
+        .tab-active-cp {
+            border-bottom-color: var(--power-color, #b73dff) !important;
+            color: var(--power-color, #b73dff) !important;
+        }
+        
+        /* To fix overrides from Tailwind */
+        .mode-tab.tab-active-cv, .mode-tab.tab-active-cc, .mode-tab.tab-active-cp {
+            border-bottom-width: 2px;
+            opacity: 1;
+        }
+        
+        /* Add a subtle glow effect to active tab */
+        .tab-active-cv, .tab-active-cc, .tab-active-cp {
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+        }
+
+        /* Unified status pill styling - simplify by using classes only */
+        .status-pill {
+            @apply font-bold px-2 py-1 rounded-md inline-block text-center min-w-[85px] transition-colors duration-100;
+        }
+        
+        /* Output status specific styles */
+        .status-on {
+            @apply bg-success text-white;
+        }
+        .status-off {
+            @apply bg-danger text-white;
+        }
+        .status-unknown {
+            @apply bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200;
+        }
+        
+        /* Mode status specific styles - ensure consistent text colors */
+        .mode-cv {
+            @apply bg-voltage text-black;
+        }
+        .mode-cc {
+            @apply bg-current text-black;
+        }
+        .mode-cp {
+            @apply bg-power text-white;
+        }
+        .mode-unknown {
+            @apply bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200;
+        }
+        
+        /* Loading state */
+        .status-loading {
+            @apply bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 animate-pulse;
+        }
+        
+        /* Status display layout - ensure consistent layout and alignment */
+        .status-grid {
+            @apply grid grid-cols-3 gap-x-4 gap-y-2 md:grid-cols-6;
+        }
+        
+        .status-item {
+            @apply flex flex-col;
+        }
+        
+        .status-label {
+            @apply text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-1;
+        }
+        
+        .status-value {
+            @apply text-base;
+        }
+
+        /* Color coding for status values */
+        .text-volt {
+            color: #64ff00;
+        }
+        .text-amp {
+            color: #fff500;
+        }
+        .text-watt {
+            color: #b73dff;
+        }
+        .text-temp {
+            color: #00c8ff;
+        }
+        
+        .dark .text-volt {
+            color: #64ff00;
+        }
+        .dark .text-amp {
+            color: #fff500;
+        }
+        .dark .text-watt {
+            color: #b73dff;
+        }
+        .dark .text-temp {
+            color: #00c8ff;
+        }
+
+        /* Auto-refresh indicator */
+        .auto-refresh-indicator {
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #3498db;
+            margin-left: auto;
+        }
+        
+        .auto-refresh-indicator .dot {
+            width: 6px;
+            height: 6px;
+            background-color: #3498db;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        /* Settings tab styling - enhanced to ensure proper blue color */
+        .settings-tab.border-secondary {
+            border-bottom-color: #3498db !important;
+            border-bottom-width: 2px !important;
+        }
+        
+        .settings-tab.text-secondary {
+            color: #3498db !important;
+        }
+        
+        /* Override Tailwind for dark mode tab styles */
+        .dark .settings-tab.text-secondary {
+            color: #3498db !important;
+        }
+
+        /* Ensure mode tab colors are strongly defined (add these at the end of your style section) */
+        .mode-tab.tab-active-cv {
+            border-bottom-color: #64ff00 !important;
+            color: #64ff00 !important;
+            border-bottom-width: 2px !important;
+        }
+        
+        .mode-tab.tab-active-cc {
+            border-bottom-color: #fff500 !important;
+            color: #fff500 !important;
+            border-bottom-width: 2px !important;
+        }
+        
+        .mode-tab.tab-active-cp {
+            border-bottom-color: #b73dff !important;
+            color: #b73dff !important;
+            border-bottom-width: 2px !important;
+        }
+        
+        /* Fix for dark mode */
+        .dark .mode-tab.tab-active-cv {
+            border-bottom-color: #64ff00 !important;
+            color: #64ff00 !important;
+        }
+        
+        .dark .mode-tab.tab-active-cc {
+            border-bottom-color: #fff500 !important;
+            color: #fff500 !important;
+        }
+        
+        .dark .mode-tab.tab-active-cp {
+            border-bottom-color: #b73dff !important;
+            color: #b73dff !important;
+        }
+
+        /* Responsive scaling for readings display */
+        @media (max-width: 640px) {
+            .readings-row {
+                font-size: clamp(0.7rem, 2vw, 1rem);
+            }
+            
+            .readings-row .text-2xl {
+                font-size: clamp(1.2rem, 4vw, 1.5rem);
+            }
+            
+            .readings-row .text-sm {
+                font-size: clamp(0.7rem, 2vw, 0.875rem);
+            }
+            
+            .readings-row .sm\:text-4xl {
+                font-size: clamp(1.5rem, 5vw, 2.25rem);
+            }
+            
+            .readings-row .sm\:text-xl {
+                font-size: clamp(0.8rem, 2.5vw, 1.25rem);
+            }
+            
+            .readings-row p {
+                margin-bottom: 0;
+                line-height: 1.2;
+            }
+        }
+        
+        /* Compact readings display */
+        .readings-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            width: 100%;
+            gap: 4px;
+        }
+        
+        .reading-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.25rem;
+            text-align: center;
+        }
+        
+        .reading-item p:first-child {
+            margin-bottom: 0.25rem;
+        }
+        
+        /* Readings separators - more compact */
+        .readings-separator:not(:last-child)::after {
+            right: -2px;
+            top: 25%;
+            height: 50%;
+            width: 1px;
+        }
+
+        /* Toggle Switch - Enhanced with symbols */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #666;
+        }
+        input:checked + .slider {
+            background-color: #2ecc71;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* Power toggle specific styling */
+        .power-slider {
+            background-color: #e74c3c;  /* Red background when off */
+        }
+        .power-slider:before {
+            content: "⏻";  /* Power symbol */
+            font-size: 12px;
+        }
+        input:checked + .power-slider {
+            background-color: #2ecc71;  /* Green background when on */
+        }
+        
+        /* Key lock toggle specific styling */
+        .key-lock-slider:before {
+            content: "🔒";  /* Lock symbol */
+            font-size: 10px;
+        }
+        input:checked + .key-lock-slider {
+            background-color: #3498db;  /* Blue background when locked */
+        }
+        
+        /* Enhanced visual feedback for key lock state */
+        .key-lock-slider.locked {
+            box-shadow: 0 0 4px #3498db; /* Add glow effect when locked */
+        }
+        
+        /* Animation for key lock changes */
+        @keyframes keylock-change {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .key-lock-slider.state-changing:before {
+            animation: keylock-change 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 h-full transition-colors duration-200">
+    <div class="min-h-full flex flex-col">
+        <!-- Top Navigation Bar -->
+        <nav class="bg-white dark:bg-gray-800 shadow-md">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <h1 class="text-xl font-bold text-gray-800 dark:text-white">
+                                XY-SK120 <span id="device-name-display" class="text-sm text-gray-600 dark:text-gray-400"></span>
+                            </h1>
+                        </div>
+                        <div class="hidden md:block">
+                            <div class="ml-10 flex items-baseline space-x-4">
+                                <span class="text-gray-600 dark:text-gray-300 px-3 py-2 text-sm font-medium">
+                                    Power Supply Control
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <!-- WebSocket Status Indicator -->
+                        <div class="mr-4 hidden md:block">
+                            <div class="flex items-center">
+                                <div id="websocket-status-indicator" class="h-3 w-3 rounded-full bg-gray-300 mr-2"></div>
+                                <span id="websocket-status" class="text-sm text-gray-600 dark:text-gray-400">Disconnected</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Device Selector -->
+                        <div class="relative mr-4">
+                            <select id="device-selector" class="appearance-none block w-40 py-2 px-3 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-700 dark:text-gray-200">
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                            <!-- Add custom dropdown arrow indicator -->
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <!-- Dark Mode Toggle - REMOVED -->
+                        <!-- Removed theme-toggle button here -->
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <!-- Power Supply Readings Card -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden compact-readings">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
+                                <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                                <span class="hidden sm:inline">Power Supply </span>Status
+                            </h2>
+                            <!-- Auto-refresh indicator moved here -->
+                            <div id="heartbeat-indicator" class="auto-refresh-indicator ml-3" style="display:flex;">
+                                <div class="dot"></div>
+                                <span class="hidden sm:inline">Auto-updating</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Power toggle & refresh buttons -->
+                        <div class="flex items-center space-x-3">
+                            <!-- Key lock toggle with enhanced title for better UX -->
+                            <div class="flex items-center">
+                                <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Key Lock</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="key-lock" onchange="toggleKeyLock(this.checked)">
+                                    <span class="slider key-lock-slider" title="Panel Keys Unlocked - Click to lock"></span>
+                                </label>
+                            </div>
+                            
+                            <!-- Power toggle remains the same -->
+                            <div class="flex items-center">
+                                <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Output</span>
+                                <label class="toggle-switch">
+                                    <!-- Add the input with ID -->
+                                    <input type="checkbox" id="power-toggle">
+                                    <span class="slider power-slider"></span>
+                                </label>
+                            </div>
+                            <!-- Keep but hide the refresh button -->
+                            <button id="refresh-psu" onclick="updateAllStatus()" class="flex items-center px-3 py-1.5 text-sm font-medium text-white transition-colors duration-300 bg-secondary rounded-md hover:bg-opacity-80 focus:outline-none" title="Refresh" style="display: none;">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                <span class="hidden sm:inline ml-1">Refresh</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Readings display -->
+                <div class="px-4 py-2 sm:px-6 sm:py-4">
+                    <!-- Readings Display - using grid for consistent layout -->
+                    <div class="readings-row">
+                        <div class="reading-item readings-separator">
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Voltage</p>
+                            <p class="text-xl sm:text-3xl font-bold voltage-value dark:dark:voltage-value">
+                                <span id="psu-voltage">--</span><span class="text-sm sm:text-base">V</span>
+                            </p>
+                        </div>
+                        <div class="reading-item readings-separator">
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Current</p>
+                            <p class="text-xl sm:text-3xl font-bold current-value dark:dark:current-value">
+                                <span id="psu-current">--</span><span class="text-sm sm:text-base">A</span>
+                            </p>
+                        </div>
+                        <div class="reading-item readings-separator">
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Power</p>
+                            <p class="text-xl sm:text-3xl font-bold power-value dark:dark:power-value">
+                                <span id="psu-power">--</span><span class="text-sm sm:text-base">W</span>
+                            </p>
+                        </div>
+                        <!-- Mode display as a primary reading -->
+                        <div class="reading-item">
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Mode</p>
+                            <p class="text-xl sm:text-3xl font-bold">
+                                <span id="mode-display-value" class="text-gray-500">--</span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Status display - Modified to be a 5-column grid without the mode (now moved up) -->
+                    <div class="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <div class="grid grid-cols-5 gap-1 sm:gap-4 text-center text-xs sm:text-sm">
+                            <!-- Protection values - Overvoltage -->
+                            <div class="relative">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OVP</p>
+                                <p>
+                                    <span id="ovp-value" class="text-volt">00.00</span><span class="text-volt">V</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Protection values - Overcurrent -->
+                            <div class="relative">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OCP</p>
+                                <p>
+                                    <span id="ocp-value" class="text-amp">0.000</span><span class="text-amp">A</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Protection values - Overpower -->
+                            <div class="relative">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OPP</p>
+                                <p>
+                                    <span id="opp-value" class="text-watt">000.0</span><span class="text-watt">W</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Protection values - Low voltage -->
+                            <div class="relative">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">LVP</p>
+                                <p>
+                                    <span id="lvp-value" class="text-volt">00.00</span><span class="text-volt">V</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Protection values - Over temperature -->
+                            <div class="relative">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OTP</p>
+                                <p>
+                                    <span id="otp-value" class="text-temp">000.0</span><span class="text-temp">°C</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 flex justify-between">
+                            <!-- Remove the auto-refresh indicator from here as it's now in the header -->
+                            
+                            <!-- Keep the refresh button but initially hidden - it will show if auto-refresh fails -->
+                            <button id="refresh-mode-btn" onclick="updateAllStatus()" class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600" style="display: none;">
+                                Refresh Status
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main content sections - simple stacked layout instead of swiper -->
+            <div class="space-y-6">
+                <!-- Basic Controls Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
+                            <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                            </svg>
+                            Basic Controls
+                        </h2>
+                    </div>
+                    <div class="px-4 py-5 sm:p-6 space-y-6">
+                        <div>
+                            <label for="set-voltage" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Set Voltage (V)</label>
+                            <div class="mt-1 flex rounded-md shadow-sm">
+                                <input type="number" id="set-voltage" min="0" max="30" step="0.1" class="appearance-none flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-secondary focus:border-secondary">
+                                <button id="apply-voltage" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                    Set
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="set-current" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Set Current (A)</label>
+                            <div class="mt-1 flex rounded-md shadow-sm">
+                                <input type="number" id="set-current" min="0" max="5" step="0.01" class="appearance-none flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-secondary focus:border-secondary">
+                                <button id="apply-current" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                    Set
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- REMOVED: The key lock control div is now at the top by the power toggle -->
+                        
+                    </div>
+                </div>
+                <!-- Operating Mode Controls Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
+                            <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                            </svg>
+                            Operating Mode
+                        </h2>
+                    </div>
+                    <!-- Mode tabs - ensure they have proper data-mode attributes -->
+                    <div class="border-b border-gray-200 dark:border-gray-700">
+                        <nav class="flex -mb-px">
+                            <button data-mode="cv" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
+                                Constant Voltage (CV)
+                            </button>
+                            <button data-mode="cc" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
+                                Constant Current (CC)
+                            </button>
+                            <button data-mode="cp" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
+                                Constant Power (CP)
+                            </button>
+                        </nav>
+                    </div>
+                    
+                    <!-- Tab Content Container -->
+                    <div class="tab-content">
+                        <!-- CV Settings -->
+                        <div id="cv-settings" class="mode-settings px-4 py-5 sm:p-6 block">
+                            <div class="max-w-lg mx-auto">
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 dark:text-gray-400 sm:text-sm">V</span>
+                                    </div>
+                                    <input type="number" id="set-cv-voltage" min="0" max="30" step="0.1" class="appearance-none block w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-secondary focus:border-secondary">
+                                    <div class="absolute inset-y-0 right-0 flex items-center">
+                                        <button id="apply-cv" class="inline-flex items-center h-full px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                            Set CV Mode
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Set the constant voltage value between 0-30V</p>
+                            </div>
+                        </div>
+                        
+                        <!-- CC Settings -->
+                        <div id="cc-settings" class="mode-settings px-4 py-5 sm:p-6 hidden">
+                            <div class="max-w-lg mx-auto">
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 dark:text-gray-400 sm:text-sm">A</span>
+                                    </div>
+                                    <input type="number" id="set-cc-current" min="0" max="5" step="0.01" class="appearance-none block w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-secondary focus:border-secondary">
+                                    <div class="absolute inset-y-0 right-0 flex items-center">
+                                        <button id="apply-cc" class="inline-flex items-center h-full px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                            Set CC Mode
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Set the constant current value between 0-5A</p>
+                            </div>
+                        </div>
+                        
+                        <!-- CP Settings -->
+                        <div id="cp-settings" class="mode-settings px-4 py-5 sm:p-6 hidden">
+                            <div class="max-w-lg mx-auto space-y-6">
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 dark:text-gray-400 sm:text-sm">W</span>
+                                    </div>
+                                    <input type="number" id="set-cp-power" min="0" max="120" step="0.1" class="appearance-none block w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-secondary focus:border-secondary">
+                                    <div class="absolute inset-y-0 right-0 flex items-center">
+                                        <button id="apply-cp" class="inline-flex items-center h-full px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                            Set CP Mode
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">CP Mode Control</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="cp-mode-toggle">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Settings Card - New unified settings interface -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
+                            <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Settings
+                        </h2>
+                    </div>
+                    <!-- Settings tabs -->
+                    <div class="border-b border-gray-200 dark:border-gray-700">
+                        <nav class="flex -mb-px">
+                            <button data-settings-tab="device" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
+                                Device
+                            </button>
+                            <button data-settings-tab="ui" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
+                                Web UI
+                            </button>
+                            <button data-settings-tab="wifi" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
+                                WiFi
+                            </button>
+                            <button data-settings-tab="manager" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
+                                Links
+                            </button>
+                        </nav>
+                    </div>
+                    
+                    <!-- Tab Content Container -->
+                    <div class="settings-tab-content">
+                        <!-- WiFi Settings Tab Content -->
+                        <div id="wifi-settings-tab" class="settings-panel px-4 py-5 sm:p-6 block">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Status</p>
+                                    <p id="wifi-status" class="text-lg font-semibold text-gray-800 dark:text-gray-200">--</p>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">SSID</p>
+                                    <p id="wifi-ssid" class="text-lg font-semibold text-gray-800 dark:text-gray-200 truncate">--</p>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">IP</p>
+                                    <p id="wifi-ip" class="text-lg font-semibold text-gray-800 dark:text-gray-200">--</p>
+                                </div>
+                            </div>
+                            <div class="mt-6 flex justify-end">
+                                <button id="wifi-refresh-btn" onclick="fetchWifiStatus()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none">
+                                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                    Refresh WiFi Status
+                                </button>
+                                <button id="wifi-reset-btn" onclick="resetWifiSettings()" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-danger hover:bg-opacity-90 focus:outline-none">
+                                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9-5m0 0l9-5-9 5-9 5 9 5m0 0v8"></path>
+                                    </svg>
+                                    Reset WiFi
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Device Settings Tab Content -->
+                        <div id="device-settings-tab" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                            <div class="max-w-lg mx-auto space-y-6">
+                                <div>
+                                    <label for="device-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Name</label>
+                                    <input type="text" id="device-name" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary">
+                                </div>
+                                
+                                <!-- Add Time Zone Setting -->
+                                <div>
+                                    <label for="timezone-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Time Zone</label>
+                                    <div class="mt-1 relative rounded-md shadow-sm">
+                                        <input 
+                                            type="text" 
+                                            id="timezone-search" 
+                                            class="form-input block w-full pl-3 pr-10 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
+                                            placeholder="Search for a city or timezone..."
+                                            autocomplete="off"
+                                        >
+                                        <div id="timezone-dropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 shadow-lg rounded-md border border-gray-300 dark:border-gray-600 max-h-60 overflow-y-auto hidden">
+                                            <!-- Options will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                        Current: <span id="current-timezone">UTC</span>
+                                    </p>
+                                </div>
+                                
+                                <div>
+                                    <label for="modbus-id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Modbus ID</label>
+                                    <select id="modbus-id" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary">
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="baudrate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Baud Rate</label>
+                                    <select id="baudrate" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary">
+                                        <option value="9600">9600</option>
+                                        <option value="19200">19200</option>
+                                        <option value="38400">38400</option>
+                                        <option value="57600">57600</option>
+                                        <option value="115200">115200</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="update-interval" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Update Interval (ms)</label>
+                                    <input type="number" id="update-interval" min="500" max="10000" step="100" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary">
+                                </div>
+                                
+                                <div class="flex justify-end pt-4">
+                                    <button id="save-device-settings" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                        Save Device Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Web UI Settings Tab Content -->
+                        <div id="ui-settings-tab" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                            <div class="max-w-lg mx-auto space-y-6">
+                                <div class="flex items-center justify-between">
+                                    <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">Dark Mode</span>
+                                    <label class="toggle-switch">
+                                        <!-- Make sure this is a complete toggle switch with ID -->
+                                        <input type="checkbox" id="dark-mode-toggle">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">Auto-refresh Status</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="auto-refresh-toggle" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div>
+                                    <label for="refresh-interval" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Refresh Interval (seconds)</label>
+                                    <select id="refresh-interval" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-secondary focus:border-secondary">
+                                        <option value="1">1 second</option>
+                                        <option value="2">2 seconds</option>
+                                        <option value="5" selected>5 seconds</option>
+                                        <option value="10">10 seconds</option>
+                                        <option value="30">30 seconds</option>
+                                    </select>
+                                </div>
+
+                                <!-- Add Show Logs option -->
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label for="show-logs-toggle" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Show Logs</label>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">Display WebSocket communication logs</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="show-logs-toggle">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex justify-end pt-4">
+                                    <button id="save-ui-settings" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                        Save UI Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Device Manager Tab Content -->
+                        <div id="manager-settings-tab" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                            <form id="add-device-form" class="space-y-4">
+                                <div>
+                                    <label for="new-device-ip" class="block text-sm font-medium text-gray-700 dark:text-gray-300">IP Address</label>
+                                    <input type="text" id="new-device-ip" placeholder="192.168.1.100" required class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
+                                </div>
+                                <div>
+                                    <label for="new-device-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name (optional)</label>
+                                    <input type="text" id="new-device-name" placeholder="My Power Supply" class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
+                                </div>
+                                <div class="flex justify-end">
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                        Add Device
+                                    </button>
+                                    <button id="reconnect-btn" onclick="initWebSocket()" type="button" class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none">
+                                        Reconnect
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Saved Devices</h3>
+                                    <div id="saved-devices-list" class="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
+                                        <!-- Saved devices will be listed here dynamically -->
+                                        <div class="p-4 text-sm text-gray-500 dark:text-gray-400">Loading saved devices...</div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+                    XY-SK120 Modbus RTU Power Supply Control &copy; 2023
+                </p>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Core JS -->
+    <script src="js/core.js"></script>
+    
+    <!-- Add Connectivity Checker -->
+    <script src="js/connectivity_check.js"></script>
+    
+    <!-- Add Web Interface (renamed from menu_interface.js) -->
+    <script src="js/web_interface.js"></script>
+    
+    <!-- Add Settings Tabs -->
+    <script src="js/settings_tabs.js"></script>
+    
+    <!-- Add Debug Script -->
+    <script src="js/debug.js"></script>
+    
+    <!-- Add Log Viewer -->
+    <script src="js/log_viewer.js"></script>
+    
+    <!-- Simple tab switcher -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listener programmatically instead of using inline
+            const powerToggle = document.getElementById('power-toggle');
+            if (powerToggle) {
+                powerToggle.addEventListener('change', function() {
+                    // Only call togglePower when the user actually interacts with the switch
+                    if (document.readyState === 'complete') {
+                        console.log("User toggled power switch to:", this.checked);
+                        togglePower(this.checked);
+                    }
+                });
+            }
+
+            // Add event handler for refresh status button - Simplified, always use updateAllStatus
+            const refreshStatusBtn = document.getElementById('refresh-mode-btn');
+            if (refreshStatusBtn) {
+                refreshStatusBtn.addEventListener('click', function() {
+                    console.log("Manual status refresh requested");
+                    updateAllStatus();
+                });
+            }
+            
+            // Add event handler for main refresh button - Simplified, always use updateAllStatus
+            const refreshPsuBtn = document.getElementById('refresh-psu');
+            if (refreshPsuBtn) {
+                refreshPsuBtn.addEventListener('click', function() {
+                    console.log("PSU refresh requested");
+                    updateAllStatus();
+                });
+            }
+            
+            // Mode tab switcher - completely fixed to work properly
+            document.querySelectorAll('.mode-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    console.log("Mode tab clicked:", this.getAttribute('data-mode'));
+                    
+                    // Update active tab styling
+                    document.querySelectorAll('.mode-tab').forEach(t => {
+                        t.classList.remove('tab-active', 'tab-active-cv', 'tab-active-cc', 'tab-active-cp');
+                        t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                    });
+                    
+                    // Get the mode from data attribute
+                    const mode = this.getAttribute('data-mode');
+                    this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                    
+                    // Apply the mode-specific active class
+                    if (mode === 'cv') {
+                        this.classList.add('tab-active-cv');
+                    } else if (mode === 'cc') {
+                        this.classList.add('tab-active-cc');
+                    } else if (mode === 'cp') {
+                        this.classList.add('tab-active-cp');
+                    } else {
+                        this.classList.add('tab-active'); // fallback
+                    }
+                    
+                    // Show the corresponding settings panel
+                    document.querySelectorAll('.mode-settings').forEach(panel => {
+                        panel.classList.add('hidden');
+                    });
+                    
+                    const targetPanel = document.getElementById(`${mode}-settings`);
+                    if (targetPanel) {
+                        targetPanel.classList.remove('hidden');
+                        targetPanel.classList.add('block');
+                    } else {
+                        console.error("Could not find panel with ID:", `${mode}-settings`);
+                    }
+                    
+                    // Store the last active tab in local storage so it persists
+                    localStorage.setItem('lastActiveTab', mode);
+                });
+            });
+            
+            // Restore the last active tab from local storage when page loads
+            const lastActiveTab = localStorage.getItem('lastActiveTab') || 'cv'; // Default to CV if none stored
+            const tabToActivate = document.querySelector(`.mode-tab[data-mode="${lastActiveTab}"]`);
+            
+            if (tabToActivate) {
+                // Simulate a click on the tab to restore its state
+                tabToActivate.click();
+            }
+
+            // Add explicit initialization for auto-refresh
+            setTimeout(() => {
+                console.log("Document loaded - checking if auto-refresh needs to be started");
+                if (typeof window.startAutoRefresh === 'function' && window.websocketConnected) {
+                    console.log("Starting auto-refresh from DOMContentLoaded");
+                    window.startAutoRefresh();
+                } else {
+                    console.log("Auto-refresh function not available or websocket not connected yet");
+                }
+            }, 2000);
+
+            // Add CP Mode toggle event listener
+            const cpModeToggle = document.getElementById('cp-mode-toggle');
+            if (cpModeToggle) {
+                cpModeToggle.addEventListener('change', function() {
+                    console.log("CP mode toggle changed to:", this.checked);
+                    setConstantPowerMode(this.checked);
+                });
+            }
+        
+            // Update WebSocket status with color indicator
+            document.addEventListener('websocket-message', function(event) {
+                const statusIndicator = document.getElementById('websocket-status-indicator');
+                const statusText = document.getElementById('websocket-status');
+                
+                if (statusIndicator && statusText) {
+                    statusText.textContent = 'Connected';
+                    statusIndicator.className = 'h-3 w-3 rounded-full bg-success mr-2';
+                }
+            });
+        
+            // REMOVE all the old theme toggler code referring to the nav bar button
+            // Keep just the code that initializes the theme from localStorage
+            const htmlElement = document.documentElement;
+            
+            // Check for saved theme preference or use device preference
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                htmlElement.classList.add('dark');
+            } else {
+                htmlElement.classList.remove('dark');
+            }
+        
+            // Settings tab switcher
+            document.querySelectorAll('.settings-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Update active tab styling
+                    document.querySelectorAll('.settings-tab').forEach(t => {
+                        t.classList.remove('border-secondary', 'text-secondary');
+                        t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                    });
+                    
+                    // Get the settings tab from data attribute
+                    const tabName = this.getAttribute('data-settings-tab');
+                    this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                    this.classList.add('border-secondary', 'text-secondary');
+                    
+                    // Show the corresponding settings panel
+                    document.querySelectorAll('.settings-panel').forEach(panel => {
+                        panel.classList.add('hidden');
+                        panel.classList.remove('block');
+                    });
+                    document.getElementById(`${tabName}-settings-tab`).classList.remove('hidden');
+                    document.getElementById(`${tabName}-settings-tab`).classList.add('block');
+                    
+                    // Store the last active settings tab
+                    localStorage.setItem('lastActiveSettingsTab', tabName);
+                });
+            });
+            
+            // Restore the last active settings tab
+            const lastActiveSettingsTab = localStorage.getItem('lastActiveSettingsTab') || 'wifi';
+            const settingsTabToActivate = document.querySelector(`.settings-tab[data-settings-tab="${lastActiveSettingsTab}"]`);
+            
+            if (settingsTabToActivate) {
+                // Simulate a click on the tab to restore its state
+                settingsTabToActivate.click();
+            }
+        
+            // Setup dark mode toggle in UI settings
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            if (darkModeToggle) {
+                // Set initial state based on current theme
+                darkModeToggle.checked = document.documentElement.classList.contains('dark');
+                
+                // Add change listener
+                darkModeToggle.addEventListener('change', function() {
+                    if (this.checked) {
+                        document.documentElement.classList.add('dark');
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.setItem('theme', 'light');
+                    }
+                });
+            }
+        
+            // Setup auto-refresh toggle
+            const autoRefreshToggle = document.getElementById('auto-refresh-toggle');
+            if (autoRefreshToggle) {
+                autoRefreshToggle.addEventListener('change', function() {
+                    if (this.checked) {
+                        if (typeof window.startAutoRefresh === 'function') {
+                            window.startAutoRefresh();
+                        }
+                    } else {
+                        if (typeof window.stopAutoRefresh === 'function') {
+                            window.stopAutoRefresh();
+                        }
+                    }
+                });
+            }
+        
+            // Setup refresh interval selector
+            const refreshIntervalSelector = document.getElementById('refresh-interval');
+            if (refreshIntervalSelector) {
+                refreshIntervalSelector.addEventListener('change', function() {
+                    const interval = parseInt(this.value) * 1000;
+                    // Store the selected interval
+                    localStorage.setItem('refreshInterval', interval);
+                    
+                    // Restart auto-refresh with new interval if it's running
+                    if (typeof window.autoRefreshTimer !== 'undefined' && window.autoRefreshTimer) {
+                        if (typeof window.stopAutoRefresh === 'function' && 
+                            typeof window.startAutoRefresh === 'function') {
+                            window.stopAutoRefresh();
+                            window.startAutoRefresh();
+                        }
+                    }
+                });
+            }
+        
+            // Setup saved devices list
+            function updateSavedDevicesList() {
+                const savedDevicesList = document.getElementById('saved-devices-list');
+                if (!savedDevicesList) return;
+                
+                const devices = window.loadSavedDevices ? window.loadSavedDevices() : [];
+                if (devices.length === 0) {
+                    savedDevicesList.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">No saved devices</div>';
+                    return;
+                }
+                
+                let html = '';
+                devices.forEach((device, index) => {
+                    html += `
+                    <div class="border-b border-gray-200 dark:border-gray-700 last:border-b-0 p-3 flex justify-between items-center">
+                        <div>
+                            <span class="font-medium">${device.name || 'Unnamed Device'}</span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">${device.ip}</span>
+                        </div>
+                        <div>
+                            <button 
+                                onclick="connectToDevice('${device.ip}')"
+                                class="text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-opacity-90">
+                                Connect
+                            </button>
+                            <button 
+                                onclick="removeSavedDevice(${index})"
+                                class="text-xs px-2 py-1 bg-danger text-white rounded hover:bg-opacity-90 ml-1">
+                                Remove
+                            </button>
+                        </div>
+                    </div>`;
+                });
+                
+                savedDevicesList.innerHTML = html;
+            }
+        
+            // Function to remove a saved device
+            window.removeSavedDevice = function(index) {
+                if (!window.loadSavedDevices) return;
+                
+                const devices = window.loadSavedDevices();
+                devices.splice(index, 1);
+                localStorage.setItem('savedDevices', JSON.stringify(devices));
+                
+                // Update the list display
+                updateSavedDevicesList();
+                
+                // Also update the device selector
+                if (typeof setupDeviceSelector === 'function') {
+                    setupDeviceSelector();
+                }
+            };
+        
+            // Initialize the saved devices list
+            updateSavedDevicesList();
+        
+            // Save device settings button
+            const saveDeviceSettingsBtn = document.getElementById('save-device-settings');
+            if (saveDeviceSettingsBtn) {
+                saveDeviceSettingsBtn.addEventListener('click', function() {
+                    const deviceName = document.getElementById('device-name').value;
+                    const modbusId = document.getElementById('modbus-id').value;
+                    const baudrate = document.getElementById('baudrate').value;
+                    const updateInterval = document.getElementById('update-interval').value;
+                    
+                    const config = {
+                        deviceName: deviceName,
+                        modbusId: modbusId,
+                        baudRate: baudrate,
+                        updateInterval: updateInterval
+                    };
+                    
+                    // Save using the global function if available
+                    if (typeof window.saveDeviceConfig === 'function') {
+                        window.saveDeviceConfig(config);
+                    } else {
+                        alert('Device settings saved locally');
+                        localStorage.setItem('deviceConfig', JSON.stringify(config));
+                    }
+                });
+            }
+        
+            // Save UI settings button
+            const saveUiSettingsBtn = document.getElementById('save-ui-settings');
+            if (saveUiSettingsBtn) {
+                saveUiSettingsBtn.addEventListener('click', function() {
+                    const theme = document.getElementById('dark-mode-toggle').checked ? 'dark' : 'light';
+                    const autoRefresh = document.getElementById('auto-refresh-toggle').checked;
+                    const refreshInterval = document.getElementById('refresh-interval').value;
+                    
+                    const uiConfig = {
+                        theme: theme,
+                        autoRefresh: autoRefresh,
+                        refreshInterval: refreshInterval
+                    };
+                    
+                    // Save to localStorage
+                    localStorage.setItem('uiConfig', JSON.stringify(uiConfig));
+                    alert('UI settings saved');
+                    
+                    // Apply theme immediately
+                    if (theme === 'dark') {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                });
+            }
+        
+            // Add more frequent status check for key lock specifically
+            setTimeout(() => {
+                if (typeof window.startKeyLockStatusMonitor === 'function') {
+                    window.startKeyLockStatusMonitor();
+                    console.log("Started dedicated key lock status monitor");
+                }        // Check if the UI settings tab exists
+            }, 2000);
+        });
+    </script>
+    
+    <!-- Log Viewer Overlay - Initially hidden and properly structured -->
+    <div id="log-viewer-overlay" class="fixed inset-x-0 bottom-0 bg-white dark:bg-gray-800 shadow-lg rounded-t-lg border border-gray-200 dark:border-gray-700 p-2 transform translate-y-full transition duration-300 ease-in-out z-50" style="height: 33.33vh;">
+        <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center space-x-3 text-sm">
+                <h3 class="font-medium text-gray-800 dark:text-white">Logs</h3>
+                <label class="flex items-center">
+                    <input id="show-timestamp" type="checkbox" checked class="form-checkbox h-3 w-3 text-secondary">
+                    <span class="ml-1 text-xs text-gray-700 dark:text-gray-300">Time</span>
+                </label>
+                <label class="flex items-center">
+                    <input id="show-ip" type="checkbox" checked class="form-checkbox h-3 w-3 text-secondary">
+                    <span class="ml-1 text-xs text-gray-700 dark:text-gray-300">IPs</span>
+                </label>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="log-pause" class="p-1 text-secondary" title="Pause">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m-7-10a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
+                    </svg>
+                </button>
+                <button id="log-resume" class="p-1 text-secondary hidden" title="Resume">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </button>
+                <button id="log-clear" class="p-1 text-gray-500" title="Clear logs">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+                <button id="log-copy" class="p-1 text-secondary" title="Copy logs">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                    </svg>
+                </button>
+                <button id="log-close" class="p-1 text-gray-500" title="Close logs">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div id="log-container" class="overflow-auto bg-gray-100 dark:bg-gray-900 rounded p-2 text-xs font-mono" style="height: calc(33.33vh - 40px);">
+            <div id="logs"></div>
+        </div>
+    </div>
+
+    <!-- Add script for settings tab initializer -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add fallback initialization for settings tabs if they fail to initialize
+            setTimeout(function() {
+                const activeTabs = document.querySelectorAll('.settings-tab.border-secondary');
+                if (activeTabs.length === 0) {
+                    console.log("No active settings tabs detected, attempting recovery...");
+                    if (typeof window.initSettingsTabs === 'function') {
+                        window.initSettingsTabs();
+                    } else {
+                        console.error("Settings tabs initialization function not available");
+                    }
+                }
+            }, 3000);
+        });
     </script>
 </body>
 </html>

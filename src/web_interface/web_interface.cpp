@@ -21,12 +21,18 @@
 #include "wifi_interface/wifi_manager_wrapper.h"
 #include "modbus_handler.h"
 #include "config_manager.h"
+#include "web_interface/log_utils.h" // Update to use the web_interface-specific log utils
 
 // Include XY-SKxxx header to access power supply functions
 #include "XY-SKxxx.h"
 
 // Declare external power supply instance
 extern XY_SKxxx* powerSupply;
+
+// Forward declarations for functions used before definition
+bool isPSUKeyLocked(XY_SKxxx* powerSupply);
+void handleKeyLockRequest(AsyncWebSocketClient* client);
+void handleSetKeyLock(AsyncWebSocketClient* client, const JsonObject &json);
 
 AsyncWebSocket ws("/ws");
 
@@ -168,50 +174,215 @@ void getPSUOperatingModeDetails(XY_SKxxx* powerSupply, String& modeName, float& 
   }
 }
 
+// Add a unified function to fetch complete PSU status
+void sendCompletePSUStatus(AsyncWebSocketClient* client) {
+  if (!client || !powerSupply || !powerSupply->testConnection()) {
+    return;
+  }
+  
+  // Fetch all status information
+  DynamicJsonDocument responseDoc(1024);
+  responseDoc["action"] = "statusResponse";
+  
+  // Get basic readings
+  float voltage = getPSUVoltage(powerSupply);
+  float current = getPSUCurrent(powerSupply);
+  float power = getPSUPower(powerSupply);
+  bool outputEnabled = isPSUOutputEnabled(powerSupply);
+  
+  // Add data to response
+  responseDoc["connected"] = true;
+  responseDoc["outputEnabled"] = outputEnabled;
+  responseDoc["voltage"] = voltage;
+  responseDoc["current"] = current;
+  responseDoc["power"] = power;
+  
+  // Add operating mode information - using the backend cache
+  String operatingMode = getPSUOperatingMode(powerSupply);
+  responseDoc["operatingMode"] = operatingMode;
+  
+  // Add detailed operating mode information
+  String modeName;
+  float setValue;
+  getPSUOperatingModeDetails(powerSupply, modeName, setValue);
+  responseDoc["operatingModeName"] = modeName;
+  responseDoc["setValue"] = setValue;
+  
+  // Add more detailed settings for all modes - using the backend cache
+  responseDoc["voltageSet"] = powerSupply->getCachedConstantVoltage(false);
+  responseDoc["currentSet"] = powerSupply->getCachedConstantCurrent(false);
+  responseDoc["cpModeEnabled"] = powerSupply->isConstantPowerModeEnabled(false);
+  responseDoc["powerSet"] = powerSupply->getCachedConstantPower(false);
+  
+  // Add device info
+  responseDoc["model"] = powerSupply->getModel();
+  responseDoc["version"] = powerSupply->getVersion();
+  
+  // Add key lock state to status response - now uses function that's properly declared
+  responseDoc["keyLockEnabled"] = isPSUKeyLocked(powerSupply);
+  
+  // Send the response
+  String response;
+  serializeJson(responseDoc, response);
+  client->text(response);
+  
+  // Also send specific operating mode information
+  sendOperatingModeDetails(client);
+}
+
+// Function to specifically send operating mode details
+void sendOperatingModeDetails(AsyncWebSocketClient* client) {
+  if (!client || !powerSupply || !powerSupply->testConnection()) {
+    return;
+  }
+  
+  DynamicJsonDocument responseDoc(256);
+  responseDoc["action"] = "operatingModeResponse";
+  
+  // Get the operating mode - using the backend cache
+  OperatingMode mode = powerSupply->getOperatingMode(true);
+  String modeCode, modeName;
+  float setValue = 0.0;
+  
+  switch (mode) {
+    case MODE_CV:
+      modeCode = "CV";
+      modeName = "Constant Voltage";
+      setValue = powerSupply->getCachedConstantVoltage(false);
+      break;
+    case MODE_CC:
+      modeCode = "CC";
+      modeName = "Constant Current";
+      setValue = powerSupply->getCachedConstantCurrent(false);
+      break;
+    case MODE_CP:
+      modeCode = "CP";
+      modeName = "Constant Power";
+      setValue = powerSupply->getCachedConstantPower(false);
+      break;
+    default:
+      modeCode = "Unknown";
+      modeName = "Unknown";
+  }
+  
+  responseDoc["success"] = true;
+  responseDoc["modeCode"] = modeCode;
+  responseDoc["modeName"] = modeName;
+  responseDoc["setValue"] = setValue;
+  
+  // Add detailed settings for all modes
+  responseDoc["voltageSet"] = powerSupply->getCachedConstantVoltage(false);
+  responseDoc["currentSet"] = powerSupply->getCachedConstantCurrent(false);
+  
+  // Check if CP mode is enabled and get its set value
+  bool cpModeEnabled = powerSupply->isConstantPowerModeEnabled(false);
+  responseDoc["cpModeEnabled"] = cpModeEnabled;
+  if (cpModeEnabled) {
+    responseDoc["powerSet"] = powerSupply->getCachedConstantPower(false);
+  }
+  
+  String response;
+  serializeJson(responseDoc, response);
+  client->text(response);
+}
+
+// Add function to read key lock status from PSU
+bool isPSUKeyLocked(XY_SKxxx* powerSupply) {
+  if (!powerSupply) return false;
+  
+  // Force refresh the key lock status to get latest value
+  // This is important to detect changes made on the physical device
+  return powerSupply->isKeyLocked(true);
+}
+
+// Add dedicated key lock status handler
+void handleKeyLockRequest(AsyncWebSocketClient* client) {
+  XY_SKxxx* psu = powerSupply;
+  if (!psu) {
+    DynamicJsonDocument doc(256);
+    doc["action"] = "keyLockStatusResponse";
+    doc["success"] = false;
+    doc["error"] = "No PSU connected";
+    String response;
+    serializeJson(doc, response);
+    client->text(response);
+    return;
+  }
+  
+  DynamicJsonDocument doc(256);
+  doc["action"] = "keyLockStatusResponse";
+  doc["success"] = true;
+  
+  // Force refresh to get current state
+  bool isLocked = psu->isKeyLocked(true);
+  doc["locked"] = isLocked;
+  
+  String response;
+  serializeJson(doc, response);
+  client->text(response);
+}
+
+// Change parameter type to const JsonObject& to fix the binding error
+void handleSetKeyLock(AsyncWebSocketClient* client, const JsonObject &json) {
+  XY_SKxxx* psu = powerSupply;
+  if (!psu) {
+    DynamicJsonDocument doc(256);
+    doc["action"] = "setKeyLockResponse";
+    doc["success"] = false;
+    doc["error"] = "No PSU connected";
+    String response;
+    serializeJson(doc, response);
+    client->text(response);
+    return;
+  }
+  
+  bool lock = json["lock"] | false;
+  bool success = psu->setKeyLock(lock);
+  
+  DynamicJsonDocument doc(256);
+  doc["action"] = "setKeyLockResponse";
+  doc["success"] = success;
+  
+  // Always return the actual current state (which may differ if the operation failed)
+  doc["locked"] = psu->isKeyLocked(true);
+  
+  String response;
+  serializeJson(doc, response);
+  client->text(response);
+}
+
 void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* client, 
                            AwsFrameInfo* info, uint8_t* data, size_t len) {
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
     String message = String((char*)data);
     
-    Serial.print("WebSocket received: ");
-    Serial.println(message);
+    // Enhanced logging with IP address information
+    IPAddress clientIP = client->remoteIP();
+    IPAddress serverIP = WiFi.localIP();
+    LOG_WS(clientIP, serverIP, "WebSocket received: " + message);
     
     DynamicJsonDocument doc(1024);
     DeserializationError error = deserializeJson(doc, message);
     
     if (error) {
-      Serial.print("deserializeJson() failed: ");
-      Serial.println(error.c_str());
+      LOG_ERROR("deserializeJson() failed: " + String(error.c_str()));
       return;
     }
     
     String action = doc["action"];
     
+    // Add ping response handler
+    if (action == "ping") {
+        // Simply respond with a pong message
+        client->text("{\"action\":\"pong\"}");
+        LOG_WS(serverIP, clientIP, "WebSocket sent: {\"action\":\"pong\"}");
+        return;
+    }
+    
     if (action == "getData") {
-      // Create a JSON response with power supply data only (removing Modbus dummy data)
-      DynamicJsonDocument responseDoc(1024);
-      
-      // Add power supply status information using helper functions
-      if (powerSupply && powerSupply->testConnection()) {
-        float voltage = getPSUVoltage(powerSupply);
-        float current = getPSUCurrent(powerSupply);
-        float power = getPSUPower(powerSupply);
-        bool outputEnabled = isPSUOutputEnabled(powerSupply);
-        
-        responseDoc["outputEnabled"] = outputEnabled;
-        responseDoc["voltage"] = voltage;
-        responseDoc["current"] = current;
-        responseDoc["power"] = power;
-        
-        // Add model and version info
-        responseDoc["model"] = powerSupply->getModel();
-        responseDoc["version"] = powerSupply->getVersion();
-      }
-      
-      String response;
-      serializeJson(responseDoc, response);
-      client->text(response);
+      // Simply call the comprehensive status function instead of duplicating the logic
+      sendCompletePSUStatus(client);
     } 
     else if (action == "setConfig") {
       // Handle configuration settings
@@ -222,8 +393,7 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
       // Toggle power output on/off - ensure we get the correct current state first
       if (powerSupply && powerSupply->testConnection()) {
         bool enable = doc["enable"];
-        Serial.print("Power output command received. Setting output to: ");
-        Serial.println(enable ? "ON" : "OFF");
+        LOG_INFO("Power output command received. Setting output to: " + String(enable ? "ON" : "OFF"));
         
         bool success = setPSUOutput(powerSupply, enable);
         
@@ -233,8 +403,7 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         // Get current status after change
         bool outputEnabled = isPSUOutputEnabled(powerSupply);
         
-        Serial.print("Output status after command: ");
-        Serial.println(outputEnabled ? "ON" : "OFF");
+        LOG_INFO("Output status after command: " + String(outputEnabled ? "ON" : "OFF"));
         
         // Send response
         DynamicJsonDocument responseDoc(256);
@@ -245,8 +414,11 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
       } else {
-        client->text("{\"action\":\"powerOutputResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"powerOutputResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     else if (action == "setVoltage") {
@@ -267,8 +439,11 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
       } else {
-        client->text("{\"action\":\"setVoltageResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"setVoltageResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     else if (action == "setCurrent") {
@@ -289,60 +464,22 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
       } else {
-        client->text("{\"action\":\"setCurrentResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"setCurrentResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     else if (action == "getStatus") {
-      // Get comprehensive status
-      DynamicJsonDocument responseDoc(1024);
-      responseDoc["action"] = "statusResponse";
-      
-      if (powerSupply && powerSupply->testConnection()) {
-        float voltage = getPSUVoltage(powerSupply);
-        float current = getPSUCurrent(powerSupply);
-        float power = getPSUPower(powerSupply);
-        bool outputEnabled = isPSUOutputEnabled(powerSupply);
-        
-        // Get data using available methods
-        responseDoc["connected"] = true;
-        responseDoc["outputEnabled"] = outputEnabled;
-        responseDoc["voltage"] = voltage;
-        responseDoc["current"] = current;
-        responseDoc["power"] = power;
-        
-        // Add operating mode information
-        String operatingMode = getPSUOperatingMode(powerSupply);
-        responseDoc["operatingMode"] = operatingMode;
-        
-        // Add detailed operating mode information
-        String modeName;
-        float setValue;
-        getPSUOperatingModeDetails(powerSupply, modeName, setValue);
-        responseDoc["operatingModeName"] = modeName;
-        responseDoc["operatingModeSetValue"] = setValue;
-        
-        // Try to get temperature if available
-        float temperature = 25.0; // Default value
-        responseDoc["temperature"] = temperature;
-        
-        // Get device info
-        responseDoc["model"] = powerSupply->getModel();
-        responseDoc["version"] = powerSupply->getVersion();
-      } else {
-        responseDoc["connected"] = false;
-      }
-      
-      String response;
-      serializeJson(responseDoc, response);
-      client->text(response);
+      // No need for duplicate code, just call the unified function
+      sendCompletePSUStatus(client);
     }
     // Key lock control
     else if (action == "setKeyLock") {
       if (powerSupply && powerSupply->testConnection()) {
         bool lock = doc["lock"];
-        Serial.print("Key lock command received. Setting keys to: ");
-        Serial.println(lock ? "LOCKED" : "UNLOCKED");
+        LOG_INFO("Key lock command received. Setting keys to: " + String(lock ? "LOCKED" : "UNLOCKED"));
         
         bool success = powerSupply->setKeyLock(lock);
         
@@ -358,8 +495,11 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
       } else {
-        client->text("{\"action\":\"keyLockResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"keyLockResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     // Constant Voltage mode
@@ -377,8 +517,17 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        
+        // Wait a moment for the changes to take effect
+        delay(100);
+        
+        // Send updated status and operating mode
+        sendCompletePSUStatus(client);
       } else {
-        client->text("{\"action\":\"constantVoltageResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"constantVoltageResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     // Constant Current mode
@@ -396,8 +545,17 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        
+        // Wait a moment for the changes to take effect
+        delay(100);
+        
+        // Send updated status and operating mode
+        sendCompletePSUStatus(client);
       } else {
-        client->text("{\"action\":\"constantCurrentResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"constantCurrentResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     // Constant Power mode
@@ -415,8 +573,17 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        
+        // Wait a moment for the changes to take effect
+        delay(100);
+        
+        // Send updated status and operating mode
+        sendCompletePSUStatus(client);
       } else {
-        client->text("{\"action\":\"constantPowerResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"constantPowerResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     // Constant Power mode toggle
@@ -437,65 +604,92 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         String response;
         serializeJson(responseDoc, response);
         client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        
+        // Wait a moment for the changes to take effect
+        delay(100);
+        
+        // Send updated status and operating mode
+        sendCompletePSUStatus(client);
       } else {
-        client->text("{\"action\":\"constantPowerModeResponse\",\"success\":false,\"error\":\"Power supply not connected\"}");
+        String errorMsg = "{\"action\":\"constantPowerModeResponse\",\"success\":false,\"error\":\"Power supply not connected\"}";
+        client->text(errorMsg);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + errorMsg);
       }
     }
     // Add a specific action to get operating mode details
     else if (action == "getOperatingMode") {
+      sendOperatingModeDetails(client);
+    }
+    // Add a comprehensive status request action
+    else if (action == "getStatus") {
+      sendCompletePSUStatus(client);
+    }
+    // Add a WebSocket handler for WiFi status
+    else if (action == "getWifiStatus") {
       DynamicJsonDocument responseDoc(256);
-      responseDoc["action"] = "operatingModeResponse";
+      responseDoc["action"] = "wifiStatusResponse"; 
+      responseDoc["status"] = isWiFiConnected() ? "connected" : "disconnected";
+      responseDoc["ssid"] = getWiFiSSID();
+      responseDoc["ip"] = getWiFiIP();
+      responseDoc["rssi"] = getWiFiRSSI();
+      responseDoc["mac"] = getWiFiMAC();
       
-      if (powerSupply && powerSupply->testConnection()) {
-        // Get the operating mode
-        OperatingMode mode = powerSupply->getOperatingMode(true);
-        String modeCode, modeName;
-        float setValue = 0.0;
-        
-        switch (mode) {
-          case MODE_CV:
-            modeCode = "CV";
-            modeName = "Constant Voltage";
-            setValue = powerSupply->getCachedConstantVoltage(false);
-            break;
-          case MODE_CC:
-            modeCode = "CC";
-            modeName = "Constant Current";
-            setValue = powerSupply->getCachedConstantCurrent(false);
-            break;
-          case MODE_CP:
-            modeCode = "CP";
-            modeName = "Constant Power";
-            setValue = powerSupply->getCachedConstantPower(false);
-            break;
-          default:
-            modeCode = "Unknown";
-            modeName = "Unknown";
-        }
-        
-        responseDoc["success"] = true;
-        responseDoc["modeCode"] = modeCode;
-        responseDoc["modeName"] = modeName;
-        responseDoc["setValue"] = setValue;
-        
-        // Add detailed settings for all modes
-        responseDoc["voltageSet"] = powerSupply->getCachedConstantVoltage(false);
-        responseDoc["currentSet"] = powerSupply->getCachedConstantCurrent(false);
-        
-        // Check if CP mode is enabled and get its set value
-        bool cpModeEnabled = powerSupply->isConstantPowerModeEnabled(false);
-        responseDoc["cpModeEnabled"] = cpModeEnabled;
-        if (cpModeEnabled) {
-          responseDoc["powerSet"] = powerSupply->getCachedConstantPower(false);
-        }
-      } else {
-        responseDoc["success"] = false;
-        responseDoc["error"] = "Power supply not connected";
+      String response;
+      serializeJson(responseDoc, response);
+      client->text(response);
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+    }
+    // Handle incoming message...
+    if (action == "getKeyLockStatus") {
+      handleKeyLockRequest(client);
+      return;
+    }
+    
+    // Handle key lock command - Fix this call by using as<JsonObject>()
+    if (action == "setKeyLock") {
+      // Convert doc to JsonObject to match function parameter
+      handleSetKeyLock(client, doc.as<JsonObject>());
+      return;
+    }
+    
+    // Add a handler for time zone settings requests
+    if (action == "getTimeZones") {
+      String timeZones = getAvailableTimeZones();
+      String currentTZ = getCurrentTimeZone();
+      
+      DynamicJsonDocument responseDoc(1024);
+      responseDoc["action"] = "timeZonesResponse";
+      responseDoc["timeZones"] = serialized(timeZones);
+      responseDoc["current"] = serialized(currentTZ);
+      
+      String response;
+      serializeJson(responseDoc, response);
+      client->text(response);
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+      return;
+    }
+    
+    // Handle time zone setting changes
+    if (action == "setTimeZone") {
+      int tzIndex = doc["index"];
+      
+      bool success = setTimeZoneByIndex(tzIndex);
+      
+      DynamicJsonDocument responseDoc(256);
+      responseDoc["action"] = "setTimeZoneResponse";
+      responseDoc["success"] = success;
+      
+      // If successful, include the new time zone info
+      if (success) {
+        responseDoc["timeZone"] = serialized(getCurrentTimeZone());
       }
       
       String response;
       serializeJson(responseDoc, response);
       client->text(response);
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+      return;
     }
   }
 }
@@ -504,10 +698,10 @@ void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
               AwsEventType type, void* arg, uint8_t* data, size_t len) {
   switch (type) {
     case WS_EVT_CONNECT:
-      Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+      LOG_INFO("WebSocket client #" + String(client->id()) + " connected from " + client->remoteIP().toString());
       break;
     case WS_EVT_DISCONNECT:
-      Serial.printf("WebSocket client #%u disconnected\n", client->id());
+      LOG_INFO("WebSocket client #" + String(client->id()) + " disconnected");
       break;
     case WS_EVT_DATA:
       handleWebSocketMessage(server, client, (AwsFrameInfo*)arg, data, len);
@@ -519,6 +713,11 @@ void onWsEvent(AsyncWebSocket* server, AsyncWebSocketClient* client,
 }
 
 void setupWebServer(AsyncWebServer* server) {
+  // Try to configure NTP for better logging timestamps
+  if (WiFi.status() == WL_CONNECTED) {
+    configureNTP();
+  }
+  
   // Wrap in try-catch to handle possible initialization errors
   try {
     // Initialize WebSocket
@@ -616,15 +815,24 @@ void setupWebServer(AsyncWebServer* server) {
     // WiFi management API endpoints
     server->on("/api/wifi/status", HTTP_GET, [](AsyncWebServerRequest *request){
       DynamicJsonDocument doc(256);
+      
+      // More robust status response
       doc["status"] = isWiFiConnected() ? "connected" : "disconnected";
       doc["ssid"] = getWiFiSSID();
       doc["ip"] = getWiFiIP();
       doc["rssi"] = getWiFiRSSI();
       doc["mac"] = getWiFiMAC();
       
+      // Ensure the response is valid JSON with proper error handling
       String response;
       serializeJson(doc, response);
-      request->send(200, "application/json", response);
+      
+      // Add CORS headers for this specific endpoint
+      AsyncWebServerResponse *resp = request->beginResponse(200, "application/json", response);
+      resp->addHeader("Access-Control-Allow-Origin", "*");
+      resp->addHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+      resp->addHeader("Access-Control-Allow-Headers", "Content-Type");
+      request->send(resp);
     });
     
     server->on("/api/wifi/reset", HTTP_POST, [](AsyncWebServerRequest *request){
@@ -640,6 +848,46 @@ void setupWebServer(AsyncWebServer* server) {
       ESP.restart();
     });
     
+    // Add an API endpoint for time zone settings
+    server->on("/api/timezone", HTTP_GET, [](AsyncWebServerRequest *request){
+      String timeZones = getAvailableTimeZones();
+      String currentTZ = getCurrentTimeZone();
+      
+      DynamicJsonDocument doc(1024);
+      doc["timeZones"] = serialized(timeZones);
+      doc["current"] = serialized(currentTZ);
+      
+      String jsonString;
+      serializeJson(doc, jsonString);
+      
+      // Add CORS headers
+      AsyncWebServerResponse *resp = request->beginResponse(200, "application/json", jsonString);
+      resp->addHeader("Access-Control-Allow-Origin", "*");
+      resp->addHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+      resp->addHeader("Access-Control-Allow-Headers", "Content-Type");
+      request->send(resp);
+    });
+    
+    server->on("/api/timezone", HTTP_POST, [](AsyncWebServerRequest *request){
+      request->send(200, "application/json", "{\"success\":true}");
+    }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+      if (len > 0) {
+        DynamicJsonDocument doc(256);
+        DeserializationError error = deserializeJson(doc, data, len);
+        
+        if (!error && doc.containsKey("index")) {
+          int tzIndex = doc["index"];
+          bool success = setTimeZoneByIndex(tzIndex);
+          
+          // Respond with success status
+          String response = "{\"success\":" + String(success ? "true" : "false") + "}";
+          AsyncWebServerResponse *resp = request->beginResponse(200, "application/json", response);
+          resp->addHeader("Access-Control-Allow-Origin", "*");
+          request->send(resp);
+        }
+      }
+    });
+
     // Add a simple health check endpoint
     server->on("/health", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send(200, "text/plain", "OK");
@@ -650,10 +898,10 @@ void setupWebServer(AsyncWebServer* server) {
       request->send(200, "text/plain", "pong");
     });
     
-    Serial.println("Web server routes configured successfully");
+    LOG_INFO("Web server routes configured successfully");
   } 
   catch (const std::exception& e) {
-    Serial.println("Error setting up web server routes");
+    LOG_ERROR("Error setting up web server routes");
   }
   
   // Handle file reads
