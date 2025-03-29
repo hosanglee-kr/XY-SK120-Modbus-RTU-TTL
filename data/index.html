@@ -8,19 +8,35 @@
     <!-- Meta theme color for browsers -->
     <meta id="theme-color" name="theme-color" content="#2c3e50">
     
-    <!-- Theme initialization script -->
+    <!-- Theme initialization script - improved for better performance -->
     <script>
-        // Apply theme immediately to prevent flash of wrong theme
-        (function() {
-            const savedTheme = localStorage.getItem('theme');
-            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
-            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+      // Apply theme immediately to prevent flash of wrong theme
+      (function() {
+        // Feature detection for localStorage
+        const hasStorage = (function() {
+          try {
+            localStorage.setItem('test', 'test');
+            localStorage.removeItem('test');
+            return true;
+          } catch (e) {
+            return false;
+          }
         })();
+        
+        // Determine theme preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const savedTheme = hasStorage ? localStorage.getItem('theme') : null;
+        const isDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+        
+        // Apply theme class
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#111827');
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff');
+        }
+      })();
     </script>
     
     <!-- CSS files -->
@@ -83,134 +99,126 @@
         <!-- Main Content -->
         <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-gray-100 dark:bg-gray-900">
             <!-- Power Supply Readings Card -->
-            <div class="card mb-6 compact-readings">
-                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
-                                <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                </svg>
-                                <span class="hidden sm:inline">Power Supply </span>Status
-                            </h2>
-                            <!-- Auto-refresh indicator moved here -->
-                            <div id="heartbeat-indicator" class="auto-refresh-indicator ml-3" style="display:flex;">
-                                <div class="dot"></div>
-                                <span class="hidden sm:inline">Auto-updating</span>
-                            </div>
+            <div class="card readings-card mb-6">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        <span><span class="hidden sm:inline">Power Supply </span>Status</span>
+                    </h2>
+                    <div class="flex items-center space-x-3">
+                        <!-- Auto-refresh indicator -->
+                        <div id="heartbeat-indicator" class="auto-refresh-indicator flex items-center text-xs text-gray-600 dark:text-gray-400">
+                            <div class="dot h-2 w-2 rounded-full bg-green-500 opacity-60 mr-1"></div>
+                            <span class="hidden sm:inline">Auto-updating</span>
                         </div>
                         
-                        <!-- Power toggle & refresh buttons -->
-                        <div class="flex items-center space-x-3">
-                            <!-- Key lock toggle with enhanced title for better UX -->
-                            <div class="flex items-center">
-                                <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Key Lock</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="key-lock" onchange="toggleKeyLock(this.checked)">
-                                    <span class="slider key-lock-slider" title="Panel Keys Unlocked - Click to lock"></span>
-                                </label>
-                            </div>
-                            
-                            <!-- Power toggle remains the same -->
-                            <div class="flex items-center">
-                                <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Output</span>
-                                <label class="toggle-switch">
-                                    <!-- Add the input with ID -->
-                                    <input type="checkbox" id="power-toggle">
-                                    <span class="slider power-slider"></span>
-                                </label>
-                            </div>
-                            <!-- Keep but hide the refresh button -->
-                            <button id="refresh-psu" onclick="updateAllStatus()" class="flex items-center px-3 py-1.5 text-sm font-medium text-white transition-colors duration-300 bg-secondary rounded-md hover:bg-opacity-80 focus:outline-none" title="Refresh" style="display: none;">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                </svg>
-                                <span class="hidden sm:inline ml-1">Refresh</span>
-                            </button>
+                        <!-- Key lock toggle -->
+                        <div class="flex items-center">
+                            <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Key Lock</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="key-lock" onchange="toggleKeyLock(this.checked)">
+                                <span class="slider key-lock-slider" title="Panel Keys Unlocked - Click to lock"></span>
+                            </label>
+                        </div>
+                        
+                        <!-- Power toggle -->
+                        <div class="flex items-center">
+                            <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Output</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="power-toggle">
+                                <span class="slider power-slider"></span>
+                            </label>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Readings display -->
-                <div class="px-4 py-2 sm:px-6 sm:py-4">
-                    <!-- Readings Display - using grid for consistent layout -->
-                    <div class="readings-row">
-                        <div class="reading-item readings-separator">
-                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Voltage</p>
-                            <p class="text-xl sm:text-3xl font-bold text-voltage">
-                                <span id="psu-voltage">--</span><span class="text-sm sm:text-base text-voltage">V</span>
-                            </p>
-                        </div>
-                        <div class="reading-item readings-separator">
-                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Current</p>
-                            <p class="text-xl sm:text-3xl font-bold text-current">
-                                <span id="psu-current">--</span><span class="text-sm sm:text-base text-current">A</span>
-                            </p>
-                        </div>
-                        <div class="reading-item readings-separator">
-                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Power</p>
-                            <p class="text-xl sm:text-3xl font-bold text-power">
-                                <span id="psu-power">--</span><span class="text-sm sm:text-base text-power">W</span>
-                            </p>
-                        </div>
-                        <!-- Mode display as a primary reading -->
-                        <div class="reading-item">
-                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Mode</p>
-                            <p class="text-xl sm:text-3xl font-bold">
-                                <span id="mode-display-value" class="text-gray-500">--</span>
-                            </p>
+                <div class="card-body">
+                    <!-- Primary Readings (inline) -->
+                    <div class="primary-readings">
+                        <div class="grid grid-cols-4 gap-4">
+                            <!-- Voltage -->
+                            <div class="text-center">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Voltage</p>
+                                <p class="text-xl sm:text-3xl font-bold text-voltage">
+                                    <span id="psu-voltage">--</span><span class="text-sm sm:text-base text-voltage">V</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Current -->
+                            <div class="text-center">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Current</p>
+                                <p class="text-xl sm:text-3xl font-bold text-current">
+                                    <span id="psu-current">--</span><span class="text-sm sm:text-base text-current">A</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Power -->
+                            <div class="text-center">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Power</p>
+                                <p class="text-xl sm:text-3xl font-bold text-power">
+                                    <span id="psu-power">--</span><span class="text-sm sm:text-base text-power">W</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Mode -->
+                            <div class="text-center">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Mode</p>
+                                <p class="text-xl sm:text-3xl font-bold">
+                                    <span id="mode-display-value" class="text-gray-500">--</span>
+                                </p>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- Status display - Modified to be a 5-column grid without the mode (now moved up) -->
-                    <div class="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                        <div class="grid grid-cols-5 gap-1 sm:gap-4 text-center text-xs sm:text-sm">
-                            <!-- Protection values - Overvoltage -->
-                            <div class="relative">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OVP</p>
-                                <p>
+                    <!-- Protection Readings (inline) -->
+                    <div class="protection-readings mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div class="grid grid-cols-5 gap-2 sm:gap-4 text-center">
+                            <!-- OVP -->
+                            <div>
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">OVP</p>
+                                <p class="text-sm">
                                     <span id="ovp-value" class="text-voltage">00.00</span><span class="text-voltage">V</span>
                                 </p>
                             </div>
                             
-                            <!-- Protection values - Overcurrent -->
-                            <div class="relative">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OCP</p>
-                                <p>
+                            <!-- OCP -->
+                            <div>
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">OCP</p>
+                                <p class="text-sm">
                                     <span id="ocp-value" class="text-current">0.000</span><span class="text-current">A</span>
                                 </p>
                             </div>
                             
-                            <!-- Protection values - Overpower -->
-                            <div class="relative">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OPP</p>
-                                <p>
+                            <!-- OPP -->
+                            <div>
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">OPP</p>
+                                <p class="text-sm">
                                     <span id="opp-value" class="text-power">000.0</span><span class="text-power">W</span>
                                 </p>
                             </div>
                             
-                            <!-- Protection values - Low voltage -->
-                            <div class="relative">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">LVP</p>
-                                <p>
+                            <!-- LVP -->
+                            <div>
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">LVP</p>
+                                <p class="text-sm">
                                     <span id="lvp-value" class="text-voltage">00.00</span><span class="text-voltage">V</span>
                                 </p>
                             </div>
                             
-                            <!-- Protection values - Over temperature -->
-                            <div class="relative">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OTP</p>
-                                <p>
+                            <!-- OTP -->
+                            <div>
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">OTP</p>
+                                <p class="text-sm">
                                     <span id="otp-value" class="text-temperature">000.0</span><span class="text-temperature">°C</span>
                                 </p>
                             </div>
                         </div>
-
-                        <div class="mt-3 flex justify-between">
-                            <!-- Remove the auto-refresh indicator from here as it's now in the header -->
-                            
-                            <!-- Keep the refresh button but initially hidden - it will show if auto-refresh fails -->
-                            <button id="refresh-mode-btn" onclick="updateAllStatus()" class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600" style="display: none;">
+                        
+                        <!-- Optional hidden refresh button - only shown if auto-refresh fails -->
+                        <div class="mt-3 flex justify-end">
+                            <button id="refresh-mode-btn" onclick="updateAllStatus()" class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none" style="display: none;">
                                 Refresh Status
                             </button>
                         </div>
@@ -598,7 +606,49 @@
     </div>
     
     <!-- Log Viewer component placeholder -->
-    <div data-component="log_viewer"></div>
+    <div id="log-viewer-overlay" class="fixed inset-x-0 bottom-0 bg-white dark:bg-gray-800 shadow-lg rounded-t-lg border border-gray-200 dark:border-gray-700 p-2 transform translate-y-full transition-transform duration-300 ease-in-out z-50" style="height: 33.33vh;">
+        <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center space-x-3 text-sm">
+                <h3 class="font-medium text-gray-800 dark:text-white">WebSocket Logs</h3>
+                <label class="flex items-center">
+                    <input id="show-timestamp" type="checkbox" checked class="form-checkbox h-3 w-3 text-blue-500">
+                    <span class="ml-1 text-xs text-gray-700 dark:text-gray-300">Time</span>
+                </label>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="log-pause" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Pause">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m-7-10a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
+                    </svg>
+                </button>
+                <button id="log-resume" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200 hidden" title="Resume">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </button>
+                <button id="log-clear" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Clear logs">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+                <button id="log-copy" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Copy logs">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                    </svg>
+                </button>
+                <button id="log-close" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Close logs">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div id="log-container" class="w-full overflow-auto bg-gray-100 dark:bg-gray-900 rounded p-2 text-xs font-mono" style="height: calc(33.33vh - 40px);">
+            <div id="logs" class="w-full"></div>
+        </div>
+    </div>
     
     <!-- JavaScript files -->
     <script src="js/component_loader.js"></script>

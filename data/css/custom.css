@@ -1,5 +1,55 @@
 /* Custom CSS overrides */
 
+/* Fix for partial white background in all viewport sizes */
+html {
+  min-height: 100vh !important;
+  background-color: var(--color-white) !important; /* Use CSS variable */
+}
+
+.dark html {
+  background-color: var(--color-gray-900) !important; /* Use CSS variable */
+}
+
+body {
+  min-height: 100vh !important;
+  background-color: var(--color-white) !important; /* Use CSS variable */
+  background-attachment: fixed !important; /* Prevent background from scrolling */
+}
+
+.dark body {
+  background-color: var(--color-gray-900) !important; /* Use CSS variable */
+}
+
+/* Main application wrapper needs proper background and full height */
+.min-h-full {
+  min-height: 100vh !important;
+  background-color: inherit !important; /* Inherit from body */
+}
+
+/* Ensure consistent background color across viewport */
+main.flex-1 {
+  background-color: var(--color-white) !important; /* Use CSS variable */
+  flex-grow: 1 !important;
+}
+
+.dark main.flex-1 {
+  background-color: var(--color-gray-900) !important; /* Use CSS variable */
+}
+
+/* Force all parent containers to have background color */
+#app, .flex-col {
+  background-color: var(--color-white) !important; /* Use CSS variable */
+}
+
+.dark #app, .dark .flex-col {
+  background-color: var(--color-gray-900) !important; /* Use CSS variable */
+}
+
+/* Ensure footer has the same background color */
+footer {
+  background-color: inherit !important;
+}
+
 /* Minimal custom CSS for log viewer - only what can't be done with Tailwind */
 #log-viewer-overlay::before {
     content: "";
@@ -33,12 +83,28 @@ html body #log-viewer-overlay.active {
 
 /* Add fallback color if Tailwind classes fail */
 #log-viewer-overlay button {
-    color: #3b82f6; /* Fallback to blue-500 color */
+  color: var(--color-primary); /* Use CSS variable instead of hardcoded blue-500 */
 }
 
 /* Ensure content is pushed to the very bottom - can't be represented with Tailwind */
 body.log-viewer-open {
     padding-bottom: 33.33vh;
+}
+
+/* Add pulse animation for the heartbeat indicator */
+@keyframes pulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+
+/* Make the dot pulse properly */
+.auto-refresh-indicator .dot {
+    transition: opacity 0.2s ease-in-out;
+}
+
+.auto-refresh-indicator .dot {
+    animation: pulse 1.5s infinite;
 }
 
 /* Rest of your custom CSS for other components... */

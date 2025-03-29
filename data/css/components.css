@@ -23,7 +23,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
+  background-color: var(--color-gray-300); /* Use CSS variable instead of #ccc */
   transition: 0.3s;
   border-radius: 34px;
 }
@@ -35,35 +35,35 @@
   width: 16px;
   left: 2px;
   bottom: 2px;
-  background-color: white;
+  background-color: var(--color-white); /* Use CSS variable */
   transition: 0.3s;
   border-radius: 50%;
 }
 
 input:checked + .slider {
-  background-color: #3498db;
+  background-color: var(--color-primary); /* Use CSS variable */
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 1px #3498db;
+  box-shadow: 0 0 1px var(--color-primary); /* Use CSS variable */
 }
 
 input:checked + .slider:before {
   transform: translateX(20px);
 }
 
-/* Special toggle styles */
+/* Special toggle styles - use CSS variables defined in colors.css */
 input:checked + .power-slider {
-  background-color: #2ecc71;
+  background-color: var(--color-success);
 }
 
 input:checked + .key-lock-slider {
-  background-color: #e74c3c;
+  background-color: var(--color-danger);
 }
 
 /* Dark mode adjustments */
 .dark .slider {
-  background-color: #4b5563;
+  background-color: var(--color-gray-600);
 }
 
 /* Reading values with specific colors */
@@ -105,20 +105,20 @@ input:checked + .key-lock-slider {
   display: flex;
   align-items: center;
   font-size: 0.75rem;
-  color: #71717a;
+  color: var(--color-gray-500);
 }
 
 .auto-refresh-indicator .dot {
   height: 8px;
   width: 8px;
   border-radius: 50%;
-  background-color: #2ecc71;
+  background-color: var(--color-success);
   margin-right: 4px;
   opacity: 0.6;
 }
 
 .dark .auto-refresh-indicator {
-  color: #d1d5db;
+  color: var(--color-gray-300);
 }
 
 /* Special animation for slow connections */
@@ -134,26 +134,26 @@ input:checked + .key-lock-slider {
 /* Tab styling enhancements */
 .tab-active {
   border-bottom-width: 2px;
-  border-bottom-color: #3498db;
-  color: #3498db;
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .tab-active-cv {
   border-bottom-width: 2px;
-  border-bottom-color: #64ff00;
-  color: #64ff00;
+  border-bottom-color: var(--color-voltage);
+  color: var(--color-voltage);
 }
 
 .tab-active-cc {
   border-bottom-width: 2px;
-  border-bottom-color: #fff500;
-  color: #fff500;
+  border-bottom-color: var(--color-current);
+  color: var(--color-current);
 }
 
 .tab-active-cp {
   border-bottom-width: 2px;
-  border-bottom-color: #b73dff;
-  color: #b73dff;
+  border-bottom-color: var(--color-power);
+  color: var(--color-power);
 }
 
 /* Make reading values in readings section more readable with shadows */
@@ -300,7 +300,8 @@ input:checked + .key-lock-slider {
 }
 
 .line-tab-active {
-    @apply text-blue-600 border-blue-500 dark:text-blue-300 dark:border-blue-400;
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
 }
 
 .line-tab-inactive {
@@ -318,4 +319,51 @@ input:checked + .key-lock-slider {
 /* Apply tab styles to existing mode tabs */
 .mode-tab {
     @apply inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500;
+}
+
+/* Remove these now that we've switched to Tailwind classes */
+.readings-row,
+.reading-item,
+.readings-separator::after,
+.compact-readings {
+  /* These styles are now replaced with Tailwind utility classes */
+}
+
+/* Keep color-specific classes that can't be done with standard Tailwind */
+.text-voltage {
+  color: var(--voltage-color, #64ff00);
+}
+
+.text-current {
+  color: var(--current-color, #fff500);
+}
+
+.text-power {
+  color: var(--power-color, #b73dff);
+}
+
+.text-temperature {
+  color: var(--temperature-color, #00e5ff);
+}
+
+/* Ensure dark mode works with colored text */
+.dark .text-voltage {
+  color: #64ff00;
+}
+
+.dark .text-current {
+  color: #fff500;
+}
+
+.dark .text-power {
+  color: #b73dff;
+}
+
+.dark .text-temperature {
+  color: #e74c3c;
+}
+
+/* Special styling for readings card icon */
+.readings-card .card-icon {
+  color: #e74c3c; /* Red color for power status icon */
 }

@@ -375,6 +375,8 @@ function startAutoRefresh() {
         updateAllStatus();
     }, interval);
     
+    updateHeartbeatIndicator(true); // Add this line to the existing function
+    
     console.log(`Auto-refresh started with interval ${interval}ms`);
 }
 
@@ -391,6 +393,32 @@ function stopAutoRefresh() {
             toggleHeartbeatIndicator(false);
         }
         
+        updateHeartbeatIndicator(false); // Add this line to the existing function
+        
         console.log('Auto-refresh stopped');
+    }
+}
+
+// Add or update this function to properly update the heartbeat indicator
+function updateHeartbeatIndicator(active = true) {
+    const heartbeatIndicator = document.getElementById('heartbeat-indicator');
+    const heartbeatDot = heartbeatIndicator ? heartbeatIndicator.querySelector('.dot') : null;
+    
+    if (!heartbeatIndicator || !heartbeatDot) {
+        console.error("Auto-refresh indicator elements not found");
+        return;
+    }
+    
+    if (active) {
+        // Make sure it has the auto-refresh-indicator class
+        heartbeatIndicator.classList.add('auto-refresh-indicator');
+        
+        // Add animation by toggling opacity
+        heartbeatDot.style.animation = 'pulse 1.5s infinite';
+        heartbeatIndicator.style.opacity = '1';
+    } else {
+        // Remove animation when not active
+        heartbeatDot.style.animation = 'none';
+        heartbeatIndicator.style.opacity = '0.5';
     }
 }
