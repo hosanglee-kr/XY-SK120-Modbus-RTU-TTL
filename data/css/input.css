@@ -366,9 +366,16 @@
     height: calc(33.33vh - 40px);
   }
 
-  /* Ensure settings tab active state is clearly visible */
+  /* Ensure settings tab active state is clearly visible - FIXED CIRCULAR DEPENDENCY */
   .settings-tab.border-secondary {
-    @apply border-secondary text-secondary;
+    border-bottom-color: #3498db !important;
+    border-bottom-width: 2px !important;
+    opacity: 1 !important;
+  }
+
+  .settings-tab.text-secondary {
+    color: #3498db !important;
+    opacity: 1 !important;
   }
 }
 
