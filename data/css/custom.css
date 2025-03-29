@@ -1,0 +1,82 @@
+/* Custom CSS overrides */
+
+/* Fix log viewer background on wide screens */
+#log-viewer-overlay {
+    width: 100% !important;
+    background-color: var(--bg-color, #fff) !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 9999 !important;
+    padding: 8px !important;
+    
+    /* Ensure background covers the entire element */
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+}
+
+/* Set background color based on theme */
+:root {
+    --bg-color: #fff;
+    --log-viewer-bg: #fff;
+    --log-container-bg: #f3f4f6;
+}
+
+.dark {
+    --bg-color: #1f2937; /* dark:bg-gray-800 */
+    --log-viewer-bg: #1f2937; /* dark:bg-gray-800 */
+    --log-container-bg: #111827; /* dark:bg-gray-900 */
+}
+
+/* Fix content area to also have proper background color */
+#log-container {
+    width: 100% !important;
+}
+
+#logs {
+    width: 100% !important;
+}
+
+/* Fix initial render with white background */
+#log-viewer-overlay::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    background-color: var(--bg-color);
+}
+
+#log-viewer-overlay.active {
+    transform: translateY(0) !important;
+    -webkit-transform: translateY(0) !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+#log-viewer-overlay.active::after {
+    content: none;
+}
+
+/* Transition fix to avoid white flash */
+#log-viewer-overlay {
+    transition: transform 0.3s ease-in-out, background-color 0.2s ease-in-out !important;
+}
+
+/* Ensure content is pushed to the very bottom */
+body.log-viewer-open {
+    padding-bottom: 33.33vh;
+}
+
+/* Add stronger rules for log viewer background */
+html.dark #log-viewer-overlay {
+    background-color: var(--log-viewer-bg) !important;
+}
+
+html.dark #log-container {
+    background-color: var(--log-container-bg) !important;
+}

@@ -213,7 +213,41 @@ function initModeTabs() {
 
 // Function to initialize dark mode toggle with the proper event listener
 function initDarkModeToggle() {
-    // ...existing code...
+    console.log("Initializing dark mode toggle");
+    
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (!darkModeToggle) {
+        console.error("Dark mode toggle element not found!");
+        return;
+    }
+    
+    // Set initial state based on document class and localStorage
+    const savedTheme = localStorage.getItem('theme');
+    
+    // Update the toggle to match the current theme state
+    darkModeToggle.checked = document.documentElement.classList.contains('dark');
+    console.log("Initial dark mode state:", darkModeToggle.checked, "Saved theme:", savedTheme);
+    
+    // Add change listener with proper reference to document element
+    darkModeToggle.addEventListener('change', function() {
+        console.log("Dark mode toggle changed to:", this.checked);
+        
+        // Update DOM and persist to localStorage
+        if (this.checked) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            console.log("Saved dark theme to localStorage");
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            console.log("Saved light theme to localStorage");
+        }
+        
+        // Dispatch theme changed event
+        document.dispatchEvent(new CustomEvent('theme-changed', {
+            detail: { theme: this.checked ? 'dark' : 'light' }
+        }));
+    });
 }
 
 // Update setupLogsToggle function to create a better WebSocket logs UI

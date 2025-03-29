@@ -102,7 +102,59 @@ window.toggleLogViewer = function(show) {
     
     // Store preference in localStorage
     localStorage.setItem('showLogs', logViewer.classList.contains('active') ? 'true' : 'false');
+    
+    // When showing the log viewer, make sure it fills the viewport correctly
+    if (logViewer.classList.contains('active')) {
+        adjustLogViewerSize();
+    }
 };
+
+// Function to adjust log viewer size based on viewport
+function adjustLogViewerSize() {
+    const logViewer = document.getElementById('log-viewer-overlay');
+    const logContainer = document.getElementById('log-container');
+    
+    if (!logViewer || !logContainer) return;
+    
+    // Set height to 33.33% of viewport height
+    const viewportHeight = window.innerHeight;
+    const logViewerHeight = Math.floor(viewportHeight * 0.3333);
+    
+    logViewer.style.height = `${logViewerHeight}px`;
+    logViewer.style.width = '100%';
+    
+    // Adjust log container height accordingly
+    const headerHeight = logViewer.querySelector('.flex.justify-between').offsetHeight;
+    logContainer.style.height = `${logViewerHeight - headerHeight - 16}px`; // 16px for padding
+    
+    // Ensure background colors are applied - Fix for dark mode
+    // Use CSS variables instead of hardcoded colors
+    if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.style.setProperty('--log-viewer-bg', '#1f2937');
+        document.documentElement.style.setProperty('--log-container-bg', '#111827');
+    } else {
+        document.documentElement.style.setProperty('--log-viewer-bg', '#ffffff');
+        document.documentElement.style.setProperty('--log-container-bg', '#f3f4f6');
+    }
+    
+    // Apply the CSS variables - this ensures consistency
+    logViewer.style.backgroundColor = 'var(--log-viewer-bg)';
+    logContainer.style.backgroundColor = 'var(--log-container-bg)';
+    
+    // Force immediate repaint to avoid white flashing
+    requestAnimationFrame(() => {
+        logViewer.style.backgroundColor = 'var(--log-viewer-bg)';
+        logContainer.style.backgroundColor = 'var(--log-container-bg)';
+    });
+}
+
+// Set up window resize listener to adjust log viewer dimensions
+window.addEventListener('resize', function() {
+    const logViewer = document.getElementById('log-viewer-overlay');
+    if (logViewer && logViewer.classList.contains('active')) {
+        adjustLogViewerSize();
+    }
+});
 
 // Setup log viewer controls and event listeners
 window.setupLogViewer = function() {
@@ -241,6 +293,21 @@ window.setupLogViewer = function() {
         if (showLogsToggle) {
             showLogsToggle.checked = true;
         }
+    }
+    
+    // Add this at the end of the function:
+    
+    // Set up theme change listener
+    document.addEventListener('theme-changed', function() {
+        const logViewer = document.getElementById('log-viewer-overlay');
+        if (logViewer && logViewer.classList.contains('active')) {
+            adjustLogViewerSize();
+        }
+    });
+    
+    // Initial size adjustment if opened
+    if (showLogs) {
+        setTimeout(adjustLogViewerSize, 100);
     }
 };
 
