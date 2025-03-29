@@ -43,228 +43,23 @@
     <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/colors.css">
+    <link rel="stylesheet" href="css/log-viewer.css">
     <link rel="stylesheet" href="css/custom.css">
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 h-full transition-colors duration-200">
     <div class="min-h-full flex flex-col">
-        <!-- Top Navigation Bar -->
-        <nav class="bg-white dark:bg-gray-800 shadow-md">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <!-- Logo and title -->
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <h1 class="text-xl font-bold text-gray-700 dark:text-white">
-                                XY-SK120 <span id="device-name-display" class="text-sm text-gray-600 dark:text-gray-400"></span>
-                            </h1>
-                        </div>
-                        <div class="hidden md:block">
-                            <div class="ml-10 flex items-baseline space-x-4">
-                                <span class="text-gray-600 dark:text-gray-300 px-3 py-2 text-sm font-medium">
-                                    Power Supply Control
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Device selector -->
-                    <div class="flex items-center">
-                        <!-- WebSocket Status Indicator -->
-                        <div class="mr-4 hidden md:block">
-                            <div class="flex items-center">
-                                <div id="websocket-status-indicator" class="h-3 w-3 rounded-full bg-gray-300 mr-2"></div>
-                                <span id="websocket-status" class="text-sm text-gray-600 dark:text-gray-400">Disconnected</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Device Selector -->
-                        <div class="relative mr-4">
-                            <select id="device-selector" class="form-select w-40">
-                                <!-- Options will be populated by JavaScript -->
-                            </select>
-                            <!-- Add custom dropdown arrow indicator -->
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        
-                        <!-- Dark Mode Toggle - REMOVED -->
-                        <!-- Removed theme-toggle button here -->
-                    </div>
-                </div>
-            </div>
-        </nav>
+        <!-- Component: Top Navigation Bar -->
+        <div id="navbar" data-component="navbar"></div>
         
         <!-- Main Content -->
         <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-gray-100 dark:bg-gray-900">
-            <!-- Power Supply Readings Card -->
-            <div class="card readings-card mb-6">
-                <div class="card-header">
-                    <h2 class="card-title text-gray-700 dark:text-white">
-                        <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                        <span><span class="hidden sm:inline">Power Supply </span>Status</span>
-                    </h2>
-                    <div class="flex items-center space-x-3">
-                        <!-- Auto-refresh indicator -->
-                        <div id="heartbeat-indicator" class="auto-refresh-indicator flex items-center text-xs text-gray-600 dark:text-gray-400">
-                            <div class="dot h-2 w-2 rounded-full bg-green-500 opacity-60 mr-1"></div>
-                            <span class="hidden sm:inline">Auto-updating</span>
-                        </div>
-                        
-                        <!-- Key lock toggle -->
-                        <div class="flex items-center">
-                            <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Key Lock</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="key-lock" onchange="toggleKeyLock(this.checked)">
-                                <span class="slider key-lock-slider" title="Panel Keys Unlocked - Click to lock"></span>
-                            </label>
-                        </div>
-                        
-                        <!-- Power toggle -->
-                        <div class="flex items-center">
-                            <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Output</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="power-toggle">
-                                <span class="slider power-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card-body">
-                    <!-- Primary Readings (inline) -->
-                    <div class="primary-readings">
-                        <div class="grid grid-cols-4 gap-4">
-                            <!-- Voltage -->
-                            <div class="text-center">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Voltage</p>
-                                <p class="text-xl sm:text-3xl font-bold text-voltage">
-                                    <span id="psu-voltage">--</span><span class="text-sm sm:text-base text-voltage">V</span>
-                                </p>
-                            </div>
-                            
-                            <!-- Current -->
-                            <div class="text-center">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Current</p>
-                                <p class="text-xl sm:text-3xl font-bold text-current">
-                                    <span id="psu-current">--</span><span class="text-sm sm:text-base text-current">A</span>
-                                </p>
-                            </div>
-                            
-                            <!-- Power -->
-                            <div class="text-center">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Power</p>
-                                <p class="text-xl sm:text-3xl font-bold text-power">
-                                    <span id="psu-power">--</span><span class="text-sm sm:text-base text-power">W</span>
-                                </p>
-                            </div>
-                            
-                            <!-- Mode -->
-                            <div class="text-center">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Mode</p>
-                                <p class="text-xl sm:text-3xl font-bold">
-                                    <span id="mode-display-value" class="text-gray-500">--</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Protection Readings (inline) -->
-                    <div class="protection-readings mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <div class="grid grid-cols-5 gap-2 sm:gap-4 text-center">
-                            <!-- OVP -->
-                            <div>
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">OVP</p>
-                                <p class="text-sm">
-                                    <span id="ovp-value" class="text-voltage">00.00</span><span class="text-voltage">V</span>
-                                </p>
-                            </div>
-                            
-                            <!-- OCP -->
-                            <div>
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">OCP</p>
-                                <p class="text-sm">
-                                    <span id="ocp-value" class="text-current">0.000</span><span class="text-current">A</span>
-                                </p>
-                            </div>
-                            
-                            <!-- OPP -->
-                            <div>
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">OPP</p>
-                                <p class="text-sm">
-                                    <span id="opp-value" class="text-power">000.0</span><span class="text-power">W</span>
-                                </p>
-                            </div>
-                            
-                            <!-- LVP -->
-                            <div>
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">LVP</p>
-                                <p class="text-sm">
-                                    <span id="lvp-value" class="text-voltage">00.00</span><span class="text-voltage">V</span>
-                                </p>
-                            </div>
-                            
-                            <!-- OTP -->
-                            <div>
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">OTP</p>
-                                <p class="text-sm">
-                                    <span id="otp-value" class="text-temperature">000.0</span><span class="text-temperature">°C</span>
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <!-- Optional hidden refresh button - only shown if auto-refresh fails -->
-                        <div class="mt-3 flex justify-end">
-                            <button id="refresh-mode-btn" onclick="updateAllStatus()" class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none" style="display: none;">
-                                Refresh Status
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- Component: Power Supply Readings Card -->
+            <div id="power-supply-readings" data-component="power-supply-readings"></div>
             
             <!-- Main content sections -->
             <div class="space-y-6">
-                <!-- Basic Controls Card - Icon alignment fixed -->
-                <div class="card basic-controls-card">
-                    <div class="card-header">
-                        <h2 class="card-title text-gray-700 dark:text-white">
-                            <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 8v8"></path>
-                                <path d="M8 12h8"></path>
-                            </svg>
-                            <span>Basic Controls</span>
-                        </h2>
-                    </div>
-                    <div class="card-body">
-                        <div>
-                            <label for="set-voltage" class="form-label">Set Voltage (V)</label>
-                            <div class="mt-1 flex rounded-md shadow-sm">
-                                <input type="number" id="set-voltage" min="0" max="30" step="0.1" class="form-input rounded-r-none">
-                                <button id="apply-voltage" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
-                                    Set
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label for="set-current" class="form-label">Set Current (A)</label>
-                            <div class="mt-1 flex rounded-md shadow-sm">
-                                <input type="number" id="set-current" min="0" max="5" step="0.01" class="form-input rounded-r-none">
-                                <button id="apply-current" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
-                                    Set
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- REMOVED: The key lock control div is now at the top by the power toggle -->
-                        
-                    </div>
-                </div>
+                <!-- Component: Basic Controls Card -->
+                <div id="basic-controls" data-component="basic-controls"></div>
                 
                 <!-- Operating Mode Controls Card - Icon alignment fixed -->
                 <div class="card operating-mode-card">
@@ -595,408 +390,62 @@
             </div>
         </main>
         
-        <!-- Footer -->
-        <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <p class="text-center text-sm text-gray-500 dark:text-gray-400">
-                    XY-SK120 Modbus RTU Power Supply Control &copy; 2023
-                </p>
-            </div>
-        </footer>
+        <!-- Component: Footer -->
+        <div id="footer" data-component="footer"></div>
     </div>
     
-    <!-- Log Viewer component placeholder -->
-    <div id="log-viewer-overlay" class="fixed inset-x-0 bottom-0 bg-white dark:bg-gray-800 shadow-lg rounded-t-lg border border-gray-200 dark:border-gray-700 p-2 transform translate-y-full transition-transform duration-300 ease-in-out z-50" style="height: 33.33vh;">
-        <div class="flex justify-between items-center mb-2">
-            <div class="flex items-center space-x-3 text-sm">
-                <h3 class="font-medium text-gray-700 dark:text-white">WebSocket Logs</h3>
-                <label class="flex items-center">
-                    <input id="show-timestamp" type="checkbox" checked class="form-checkbox h-3 w-3 text-blue-500">
-                    <span class="ml-1 text-xs text-gray-700 dark:text-gray-300">Time</span>
-                </label>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button id="log-pause" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Pause">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m-7-10a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
-                    </svg>
-                </button>
-                <button id="log-resume" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200 hidden" title="Resume">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </button>
-                <button id="log-clear" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Clear logs">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                </button>
-                <button id="log-copy" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Copy logs">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
-                    </svg>
-                </button>
-                <button id="log-close" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Close logs">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-        <div id="log-container" class="w-full overflow-auto bg-gray-100 dark:bg-gray-900 rounded p-2 text-xs font-mono" style="height: calc(33.33vh - 40px);">
-            <div id="logs" class="w-full"></div>
-        </div>
-    </div>
+    <!-- Component: Log Viewer -->
+    <div id="log-viewer" data-component="log-viewer"></div>
     
-    <!-- JavaScript files -->
+    <!-- JavaScript files - Fix loading order and prevent duplicates -->
+    <script>
+        // Define placeholder functions to prevent errors
+        if (!window.startAutoRefresh) {
+            window.startAutoRefresh = function initialPlaceholder() {
+                console.log("Initial placeholder auto-refresh called");
+            };
+        }
+        
+        if (!window.stopAutoRefresh) {
+            window.stopAutoRefresh = function initialPlaceholderStop() {};
+        }
+        
+        // Wait for components to load before running functionality
+        document.addEventListener('components-loaded', function() {
+            console.log('All components loaded, ready for final initialization');
+        });
+    </script>
+
+    <!-- Critical scripts in the correct order -->
     <script src="js/component_loader.js"></script>
+    <script src="js/auto_refresh.js"></script>
     <script src="js/core.js"></script>
-    <script src="js/connectivity_check.js"></script>
-    <script src="js/web_interface.js"></script>
+    
+    <!-- UI Components -->
     <script src="js/tab_component.js"></script>
+    <script src="js/component_initializer.js"></script>
+    <script src="js/web_interface.js"></script>
+    <script src="js/form_standardizer.js"></script>
+    <script src="js/settings_init.js"></script>
+    
+    <!-- Debug tools last -->
+    <script src="js/connectivity_check.js"></script>
     <script src="js/debug.js"></script>
     <script src="js/log_viewer.js"></script>
-    <script src="js/form_standardizer.js"></script>
-    
-    <!-- Settings tab initializer script -->
+
+    <!-- Final initialization for good measure -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add event listener programmatically instead of using inline
-            const powerToggle = document.getElementById('power-toggle');
-            if (powerToggle) {
-                powerToggle.addEventListener('change', function() {
-                    // Only call togglePower when the user actually interacts with the switch
-                    if (document.readyState === 'complete') {
-                        console.log("User toggled power switch to:", this.checked);
-                        togglePower(this.checked);
-                    }
-                });
-            }
-
-            // Add event handler for refresh status button - Simplified, always use updateAllStatus
-            const refreshStatusBtn = document.getElementById('refresh-mode-btn');
-            if (refreshStatusBtn) {
-                refreshStatusBtn.addEventListener('click', function() {
-                    console.log("Manual status refresh requested");
-                    updateAllStatus();
-                });
-            }
+        // Run a final initialization check when window is fully loaded
+        window.addEventListener('load', function() {
+            console.log('Window fully loaded, running final checks');
             
-            // Add event handler for main refresh button - Simplified, always use updateAllStatus
-            const refreshPsuBtn = document.getElementById('refresh-psu');
-            if (refreshPsuBtn) {
-                refreshPsuBtn.addEventListener('click', function() {
-                    console.log("PSU refresh requested");
-                    updateAllStatus();
-                });
-            }
-            
-            // Mode tab switcher - completely fixed to work properly
-            document.querySelectorAll('.mode-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    console.log("Mode tab clicked:", this.getAttribute('data-mode'));
-                    
-                    // Update active tab styling
-                    document.querySelectorAll('.mode-tab').forEach(t => {
-                        t.classList.remove('tab-active', 'tab-active-cv', 'tab-active-cc', 'tab-active-cp');
-                        t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-                    });
-                    
-                    // Get the mode from data attribute
-                    const mode = this.getAttribute('data-mode');
-                    this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-                    
-                    // Apply the mode-specific active class
-                    if (mode === 'cv') {
-                        this.classList.add('tab-active-cv');
-                    } else if (mode === 'cc') {
-                        this.classList.add('tab-active-cc');
-                    } else if (mode === 'cp') {
-                        this.classList.add('tab-active-cp');
-                    } else {
-                        this.classList.add('tab-active'); // fallback
-                    }
-                    
-                    // Show the corresponding settings panel
-                    document.querySelectorAll('.mode-settings').forEach(panel => {
-                        panel.classList.add('hidden');
-                    });
-                    
-                    const targetPanel = document.getElementById(`${mode}-settings`);
-                    if (targetPanel) {
-                        targetPanel.classList.remove('hidden');
-                        targetPanel.classList.add('block');
-                    } else {
-                        console.error("Could not find panel with ID:", `${mode}-settings`);
-                    }
-                    
-                    // Store the last active tab in local storage so it persists
-                    localStorage.setItem('lastActiveTab', mode);
-                });
-            });
-            
-            // Restore the last active tab from local storage when page loads
-            const lastActiveTab = localStorage.getItem('lastActiveTab') || 'cv'; // Default to CV if none stored
-            const tabToActivate = document.querySelector(`.mode-tab[data-mode="${lastActiveTab}"]`);
-            
-            if (tabToActivate) {
-                // Simulate a click on the tab to restore its state
-                tabToActivate.click();
-            }
-
-            // Add explicit initialization for auto-refresh
-            setTimeout(() => {
-                console.log("Document loaded - checking if auto-refresh needs to be started");
-                if (typeof window.startAutoRefresh === 'function' && window.websocketConnected) {
-                    console.log("Starting auto-refresh from DOMContentLoaded");
+            // Verify auto-refresh timer is running or start if needed
+            setTimeout(function() {
+                if (!window.autoRefreshTimer && typeof window.startAutoRefresh === 'function') {
+                    console.log("Auto-refresh not detected running, starting it now");
                     window.startAutoRefresh();
-                } else {
-                    console.log("Auto-refresh function not available or websocket not connected yet");
                 }
-            }, 2000);
-
-            // Add CP Mode toggle event listener
-            const cpModeToggle = document.getElementById('cp-mode-toggle');
-            if (cpModeToggle) {
-                cpModeToggle.addEventListener('change', function() {
-                    console.log("CP mode toggle changed to:", this.checked);
-                    setConstantPowerMode(this.checked);
-                });
-            }
-        
-            // Update WebSocket status with color indicator
-            document.addEventListener('websocket-message', function(event) {
-                const statusIndicator = document.getElementById('websocket-status-indicator');
-                const statusText = document.getElementById('websocket-status');
-                
-                if (statusIndicator && statusText) {
-                    statusText.textContent = 'Connected';
-                    statusIndicator.className = 'h-3 w-3 rounded-full bg-success mr-2';
-                }
-            });
-        
-            // REMOVE all the old theme toggler code referring to the nav bar button
-            // Keep just the code that initializes the theme from localStorage
-            const htmlElement = document.documentElement;
-            
-            // Check for saved theme preference or use device preference
-            const savedTheme = localStorage.getItem('theme');
-            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
-            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-                htmlElement.classList.add('dark');
-            } else {
-                htmlElement.classList.remove('dark');
-            }
-        
-            // Settings tab switcher
-            document.querySelectorAll('.settings-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    // Update active tab styling
-                    document.querySelectorAll('.settings-tab').forEach(t => {
-                        t.classList.remove('border-secondary', 'text-secondary');
-                        t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-                    });
-                    
-                    // Get the settings tab from data attribute
-                    const tabName = this.getAttribute('data-settings-tab');
-                    this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-                    this.classList.add('border-secondary', 'text-secondary');
-                    
-                    // Show the corresponding settings panel
-                    document.querySelectorAll('.settings-panel').forEach(panel => {
-                        panel.classList.add('hidden');
-                        panel.classList.remove('block');
-                    });
-                    document.getElementById(`${tabName}-settings-tab`).classList.remove('hidden');
-                    document.getElementById(`${tabName}-settings-tab`).classList.add('block');
-                    
-                    // Store the last active settings tab
-                    localStorage.setItem('lastActiveSettingsTab', tabName);
-                });
-            });
-            
-            // Restore the last active settings tab
-            const lastActiveSettingsTab = localStorage.getItem('lastActiveSettingsTab') || 'wifi';
-            const settingsTabToActivate = document.querySelector(`.settings-tab[data-settings-tab="${lastActiveSettingsTab}"]`);
-            
-            if (settingsTabToActivate) {
-                // Simulate a click on the tab to restore its state
-                settingsTabToActivate.click();
-            }
-        
-            // Setup dark mode toggle in UI settings
-            const darkModeToggle = document.getElementById('dark-mode-toggle');
-            if (darkModeToggle) {
-                // Set initial state based on current theme
-                darkModeToggle.checked = document.documentElement.classList.contains('dark');
-                
-                // Add change listener
-                darkModeToggle.addEventListener('change', function() {
-                    if (this.checked) {
-                        document.documentElement.classList.add('dark');
-                        localStorage.setItem('theme', 'dark');
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                        localStorage.setItem('theme', 'light');
-                    }
-                });
-            }
-        
-            // Setup auto-refresh toggle
-            const autoRefreshToggle = document.getElementById('auto-refresh-toggle');
-            if (autoRefreshToggle) {
-                autoRefreshToggle.addEventListener('change', function() {
-                    if (this.checked) {
-                        if (typeof window.startAutoRefresh === 'function') {
-                            window.startAutoRefresh();
-                        }
-                    } else {
-                        if (typeof window.stopAutoRefresh === 'function') {
-                            window.stopAutoRefresh();
-                        }
-                    }
-                });
-            }
-        
-            // Setup refresh interval selector
-            const refreshIntervalSelector = document.getElementById('refresh-interval');
-            if (refreshIntervalSelector) {
-                refreshIntervalSelector.addEventListener('change', function() {
-                    const interval = parseInt(this.value) * 1000;
-                    // Store the selected interval
-                    localStorage.setItem('refreshInterval', interval);
-                    
-                    // Restart auto-refresh with new interval if it's running
-                    if (typeof window.autoRefreshTimer !== 'undefined' && window.autoRefreshTimer) {
-                        if (typeof window.stopAutoRefresh === 'function' && 
-                            typeof window.startAutoRefresh === 'function') {
-                            window.stopAutoRefresh();
-                            window.startAutoRefresh();
-                        }
-                    }
-                });
-            }
-        
-            // Setup saved devices list
-            function updateSavedDevicesList() {
-                const savedDevicesList = document.getElementById('saved-devices-list');
-                if (!savedDevicesList) return;
-                
-                const devices = window.loadSavedDevices ? window.loadSavedDevices() : [];
-                if (devices.length === 0) {
-                    savedDevicesList.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">No saved devices</div>';
-                    return;
-                }
-                
-                let html = '';
-                devices.forEach((device, index) => {
-                    html += `
-                    <div class="border-b border-gray-200 dark:border-gray-700 last:border-b-0 p-3 flex justify-between items-center">
-                        <div>
-                            <span class="font-medium">${device.name || 'Unnamed Device'}</span>
-                            <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">${device.ip}</span>
-                        </div>
-                        <div>
-                            <button 
-                                onclick="connectToDevice('${device.ip}')"
-                                class="text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-opacity-90">
-                                Connect
-                            </button>
-                            <button 
-                                onclick="removeSavedDevice(${index})"
-                                class="text-xs px-2 py-1 bg-danger text-white rounded hover:bg-opacity-90 ml-1">
-                                Remove
-                            </button>
-                        </div>
-                    </div>`;
-                });
-                
-                savedDevicesList.innerHTML = html;
-            }
-        
-            // Function to remove a saved device
-            window.removeSavedDevice = function(index) {
-                if (!window.loadSavedDevices) return;
-                
-                const devices = window.loadSavedDevices();
-                devices.splice(index, 1);
-                localStorage.setItem('savedDevices', JSON.stringify(devices));
-                
-                // Update the list display
-                updateSavedDevicesList();
-                
-                // Also update the device selector
-                if (typeof setupDeviceSelector === 'function') {
-                    setupDeviceSelector();
-                }
-            };
-        
-            // Initialize the saved devices list
-            updateSavedDevicesList();
-        
-            // Save device settings button
-            const saveDeviceSettingsBtn = document.getElementById('save-device-settings');
-            if (saveDeviceSettingsBtn) {
-                saveDeviceSettingsBtn.addEventListener('click', function() {
-                    const deviceName = document.getElementById('device-name').value;
-                    const modbusId = document.getElementById('modbus-id').value;
-                    const baudrate = document.getElementById('baudrate').value;
-                    const updateInterval = document.getElementById('update-interval').value;
-                    
-                    const config = {
-                        deviceName: deviceName,
-                        modbusId: modbusId,
-                        baudRate: baudrate,
-                        updateInterval: updateInterval
-                    };
-                    
-                    // Save using the global function if available
-                    if (typeof window.saveDeviceConfig === 'function') {
-                        window.saveDeviceConfig(config);
-                    } else {
-                        alert('Device settings saved locally');
-                        localStorage.setItem('deviceConfig', JSON.stringify(config));
-                    }
-                });
-            }
-        
-            // Save UI settings button
-            const saveUiSettingsBtn = document.getElementById('save-ui-settings');
-            if (saveUiSettingsBtn) {
-                saveUiSettingsBtn.addEventListener('click', function() {
-                    const theme = document.getElementById('dark-mode-toggle').checked ? 'dark' : 'light';
-                    const autoRefresh = document.getElementById('auto-refresh-toggle').checked;
-                    const refreshInterval = document.getElementById('refresh-interval').value;
-                    
-                    const uiConfig = {
-                        theme: theme,
-                        autoRefresh: autoRefresh,
-                        refreshInterval: refreshInterval
-                    };
-                    
-                    // Save to localStorage
-                    localStorage.setItem('uiConfig', JSON.stringify(uiConfig));
-                    alert('UI settings saved');
-                    
-                    // Apply theme immediately
-                    if (theme === 'dark') {
-                        document.documentElement.classList.add('dark');
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                    }
-                });
-            }
-        
-            // Add more frequent status check for key lock specifically
-            setTimeout(() => {
-                if (typeof window.startKeyLockStatusMonitor === 'function') {
-                    window.startKeyLockStatusMonitor();
-                    console.log("Started dedicated key lock status monitor");
-                }        // Check if the UI settings tab exists
-            }, 2000);
+            }, 1500);
         });
     </script>
 </body>

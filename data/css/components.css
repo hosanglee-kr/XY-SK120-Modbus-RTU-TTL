@@ -456,3 +456,142 @@ input:checked + .key-lock-slider {
   height: 1rem;
   width: 1rem;
 }
+
+/* Component Styling */
+
+/* Card styles */
+.card {
+    @apply bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden mb-6;
+}
+
+.card-header {
+    @apply flex justify-between items-center px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600;
+}
+
+.card-title {
+    @apply text-lg font-medium flex items-center;
+}
+
+.card-icon {
+    @apply w-5 h-5 mr-2;
+}
+
+.card-body {
+    @apply p-4 space-y-4;
+}
+
+/* Form styles */
+.form-label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+}
+
+.form-input {
+    @apply block w-full shadow-sm focus:ring-secondary focus:border-secondary sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md;
+}
+
+/* Toggle switch */
+.toggle-switch {
+    @apply relative inline-block w-10 h-5;
+}
+
+.toggle-switch input {
+    @apply opacity-0 w-0 h-0;
+}
+
+.slider {
+    @apply absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 dark:bg-gray-600 transition-colors duration-200 rounded-full;
+}
+
+.slider:before {
+    @apply absolute content-[''] h-4 w-4 left-0.5 bottom-0.5 bg-white transition-transform duration-200 rounded-full;
+}
+
+input:checked + .slider {
+    @apply bg-green-500;
+}
+
+input:checked + .slider:before {
+    @apply transform translate-x-5;
+}
+
+/* Power slider has a different color */
+.power-slider:before {
+    @apply bg-white;
+}
+
+input:checked + .power-slider {
+    @apply bg-green-500;
+}
+
+/* Key lock slider */
+.key-lock-slider:before {
+    @apply bg-white;
+}
+
+input:checked + .key-lock-slider {
+    @apply bg-blue-500;
+}
+
+/* Value colors */
+.text-voltage {
+    @apply text-blue-600 dark:text-blue-400;
+}
+
+.text-current {
+    @apply text-green-600 dark:text-green-400;
+}
+
+.text-power {
+    @apply text-amber-600 dark:text-amber-400;
+}
+
+.text-temperature {
+    @apply text-red-600 dark:text-red-400;
+}
+
+/* Operating mode tabs */
+.tab-active-cv {
+    @apply text-blue-600 dark:text-blue-400 border-blue-500;
+}
+
+.tab-active-cc {
+    @apply text-green-600 dark:text-green-400 border-green-500;
+}
+
+.tab-active-cp {
+    @apply text-amber-600 dark:text-amber-400 border-amber-500;
+}
+
+/* Auto-refresh indicator */
+.auto-refresh-indicator {
+    @apply flex items-center;
+}
+
+.auto-refresh-indicator .dot {
+    @apply h-2 w-2 rounded-full bg-green-500 mr-1;
+}
+
+.auto-refresh-indicator .dot.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.3;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.3;
+    }
+}
+
+/* Status values */
+.status-value.on {
+    @apply text-green-600 dark:text-green-400;
+}
+
+.status-value.off {
+    @apply text-gray-500 dark:text-gray-400;
+}

@@ -399,3 +399,156 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 3000);
 });
+
+/**
+ * Core functionality for XY-SK120 Power Supply Control
+ */
+
+// Track WebSocket connection status for proper debugging
+window.lastWebSocketMessage = 0; 
+
+// Store the original WebSocket constructor if not already stored
+if (typeof window.OriginalWebSocket === 'undefined') {
+    window.OriginalWebSocket = WebSocket;
+    
+    // Override WebSocket constructor to track connections
+    window.WebSocket = function(url, protocols) {
+        console.log(`Creating WebSocket connection to ${url}`);
+        
+        // Create the actual WebSocket instance
+        const ws = new window.OriginalWebSocket(url, protocols);
+        
+        // Store the global reference to use for debugging
+        window.socket = ws;
+        
+        // Track the last message timestamp
+        ws.addEventListener('message', function() {
+            window.lastWebSocketMessage = Date.now();
+            
+            // Also update the UI indicator if it exists
+            const indicator = document.getElementById('websocket-status-indicator');
+            if (indicator) {
+                indicator.classList.remove('bg-gray-300', 'bg-red-500');
+                indicator.classList.add('bg-green-500');
+            }
+            
+            // Update text status if it exists
+            const statusText = document.getElementById('websocket-status');
+            if (statusText) {
+                statusText.textContent = 'Connected';
+            }
+        });
+        
+        // Handle connection open
+        ws.addEventListener('open', function() {
+            console.log('WebSocket connection established');
+            window.lastWebSocketMessage = Date.now();
+            
+            // Update UI if it exists
+            const indicator = document.getElementById('websocket-status-indicator');
+            if (indicator) {
+                indicator.classList.remove('bg-gray-300', 'bg-red-500');
+                indicator.classList.add('bg-green-500');
+            }
+            
+            // Update text status if it exists
+            const statusText = document.getElementById('websocket-status');
+            if (statusText) {
+                statusText.textContent = 'Connected';
+            }
+            
+            // Dispatch event
+            document.dispatchEvent(new CustomEvent('websocket-state-change', { detail: 'Connected' }));
+        });
+        
+        // Handle connection close
+        ws.addEventListener('close', function() {
+            console.log('WebSocket connection closed');
+            
+            // Update UI if it exists
+            const indicator = document.getElementById('websocket-status-indicator');
+            if (indicator) {
+                indicator.classList.remove('bg-gray-300', 'bg-green-500');
+                indicator.classList.add('bg-red-500');
+            }
+            
+            // Update text status if it exists
+            const statusText = document.getElementById('websocket-status');
+            if (statusText) {
+                statusText.textContent = 'Disconnected';
+            }
+            
+            // Dispatch event
+            document.dispatchEvent(new CustomEvent('websocket-state-change', { detail: 'Disconnected' }));
+        });
+        
+        // Handle errors
+        ws.addEventListener('error', function(error) {
+            console.error('WebSocket error:', error);
+            
+            // Update UI if it exists
+            const indicator = document.getElementById('websocket-status-indicator');
+            if (indicator) {
+                indicator.classList.remove('bg-gray-300', 'bg-green-500');
+                indicator.classList.add('bg-red-500');
+            }
+            
+            // Update text status if it exists
+            const statusText = document.getElementById('websocket-status');
+            if (statusText) {
+                statusText.textContent = 'Error';
+            }
+            
+            // Dispatch event
+            document.dispatchEvent(new CustomEvent('websocket-error', { detail: error }));
+        });
+        
+        return ws;
+    };
+    
+    // Copy over static properties
+    for (const prop in window.OriginalWebSocket) {
+        if (window.OriginalWebSocket.hasOwnProperty(prop)) {
+            window.WebSocket[prop] = window.OriginalWebSocket[prop];
+        }
+    }
+    
+    console.log("WebSocket tracking initialized");
+}
+
+// Initialize WebSocket connection (if not already defined)
+if (typeof window.initWebSocket !== 'function') {
+    window.initWebSocket = function() {
+        // Close existing connection if any
+        if (window.socket && window.socket.readyState < 2) {
+            window.socket.close();
+        }
+        
+        try {
+            // Determine host from current location by default
+            const host = window.location.hostname;
+            const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsURL = `${wsProtocol}//${host}:${port}/ws`;
+            
+            console.log(`Connecting to WebSocket: ${wsURL}`);
+            window.socket = new WebSocket(wsURL);
+            
+            // Already have event handlers from our WebSocket constructor override
+            return true;
+        } catch (error) {
+            console.error("Error establishing WebSocket connection:", error);
+            return false;
+        }
+    };
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Core module loaded");
+    
+    // Connect to WebSocket if not connected
+    if (!window.socket || window.socket.readyState !== 1) {
+        window.initWebSocket();
+    }
+});
