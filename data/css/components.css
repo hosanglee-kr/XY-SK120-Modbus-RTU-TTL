@@ -68,19 +68,19 @@ input:checked + .key-lock-slider {
 
 /* Reading values with specific colors */
 .text-volt {
-  color: #64ff00; /* Green for voltage */
+  color: var(--voltage-color, #64ff00);
 }
 
 .text-amp {
-  color: #fff500; /* Yellow for current */
+  color: var(--current-color, #fff500);
 }
 
 .text-watt {
-  color: #b73dff; /* Purple for power */
+  color: var(--power-color, #b73dff);
 }
 
 .text-temp {
-  color: #e74c3c; /* Red for temperature */
+  color: var(--temperature-color, #00e5ff);
 }
 
 /* Ensure dark mode works with colored text */

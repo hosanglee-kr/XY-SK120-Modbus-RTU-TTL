@@ -149,7 +149,7 @@ export function updateDeviceName(name) {
     }
 }
 
-// Update operating mode display - Modified to put mode in primary section
+// Update operating mode display - Modified to use tailwind colors
 export function updateOperatingMode(mode, data) {
     console.log("Updating operating mode:", mode, data);
     
@@ -192,13 +192,13 @@ export function updateOperatingMode(mode, data) {
         
         if (mode === 'CV') {
             modeDisplayValue.textContent = 'CV';
-            modeDisplayValue.classList.add('text-volt');
+            modeDisplayValue.classList.add('text-voltage'); // Change to text-voltage (green)
         } else if (mode === 'CC') {
             modeDisplayValue.textContent = 'CC';
-            modeDisplayValue.classList.add('text-amp');
+            modeDisplayValue.classList.add('text-current'); // Change to text-current (yellow)
         } else if (mode === 'CP') {
             modeDisplayValue.textContent = 'CP';
-            modeDisplayValue.classList.add('text-watt');
+            modeDisplayValue.classList.add('text-power'); // Change to text-power (purple)
         } else {
             modeDisplayValue.textContent = '--';
             modeDisplayValue.classList.add('text-gray-500');
@@ -211,11 +211,11 @@ export function updateOperatingMode(mode, data) {
         let displayHtml = '';
         
         if (mode === 'CV' && data && data.voltage !== undefined) {
-            displayHtml = `<span class="text-volt">CV ${parseFloat(data.voltage).toFixed(2)}V</span>`;
+            displayHtml = `<span class="text-voltage">CV ${parseFloat(data.voltage).toFixed(2)}V</span>`;
         } else if (mode === 'CC' && data && data.current !== undefined) {
-            displayHtml = `<span class="text-amp">CC ${parseFloat(data.current).toFixed(3)}A</span>`;
+            displayHtml = `<span class="text-current">CC ${parseFloat(data.current).toFixed(3)}A</span>`;
         } else if (mode === 'CP' && data && data.power !== undefined) {
-            displayHtml = `<span class="text-watt">CP ${parseFloat(data.power).toFixed(1)}W</span>`;
+            displayHtml = `<span class="text-power">CP ${parseFloat(data.power).toFixed(1)}W</span>`;
         } else {
             displayHtml = `<span class="text-gray-500">--</span>`;
         }

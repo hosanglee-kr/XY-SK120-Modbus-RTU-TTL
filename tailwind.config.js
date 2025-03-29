@@ -25,6 +25,7 @@ module.exports = {
         'voltage': '#64ff00', // Green for CV mode
         'current': '#fff500', // Yellow for CC mode
         'power': '#b73dff',   // Purple for CP mode
+        'temperature': '#00e5ff', // Cyan for temperature
       },
       fontFamily: {
         'sans': ['Arial', 'sans-serif'],
