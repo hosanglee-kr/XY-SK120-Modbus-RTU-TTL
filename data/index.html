@@ -54,7 +54,7 @@
                     <!-- Logo and title -->
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <h1 class="text-xl font-bold text-gray-800 dark:text-white">
+                            <h1 class="text-xl font-bold text-gray-700 dark:text-white">
                                 XY-SK120 <span id="device-name-display" class="text-sm text-gray-600 dark:text-gray-400"></span>
                             </h1>
                         </div>
@@ -101,7 +101,7 @@
             <!-- Power Supply Readings Card -->
             <div class="card readings-card mb-6">
                 <div class="card-header">
-                    <h2 class="card-title">
+                    <h2 class="card-title text-gray-700 dark:text-white">
                         <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
@@ -231,7 +231,7 @@
                 <!-- Basic Controls Card - Icon alignment fixed -->
                 <div class="card basic-controls-card">
                     <div class="card-header">
-                        <h2 class="card-title">
+                        <h2 class="card-title text-gray-700 dark:text-white">
                             <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <path d="M12 8v8"></path>
@@ -269,7 +269,7 @@
                 <!-- Operating Mode Controls Card - Icon alignment fixed -->
                 <div class="card operating-mode-card">
                     <div class="card-header">
-                        <h2 class="card-title">
+                        <h2 class="card-title text-gray-700 dark:text-white">
                             <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M18 20V10"></path>
                                 <path d="M12 20V4"></path>
@@ -376,7 +376,7 @@
                 <!-- Settings Card - Icon alignment fixed -->
                 <div class="card settings-card">
                     <div class="card-header">
-                        <h2 class="card-title">
+                        <h2 class="card-title text-gray-700 dark:text-white">
                             <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>
@@ -432,15 +432,15 @@
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Status</p>
-                                    <p id="wifi-status" class="text-lg font-semibold text-gray-800 dark:text-gray-200">--</p>
+                                    <p id="wifi-status" class="text-lg font-semibold text-gray-700 dark:text-gray-200">--</p>
                                 </div>
                                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">SSID</p>
-                                    <p id="wifi-ssid" class="text-lg font-semibold text-gray-800 dark:text-gray-200 truncate">--</p>
+                                    <p id="wifi-ssid" class="text-lg font-semibold text-gray-700 dark:text-gray-200 truncate">--</p>
                                 </div>
                                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">IP</p>
-                                    <p id="wifi-ip" class="text-lg font-semibold text-gray-800 dark:text-gray-200">--</p>
+                                    <p id="wifi-ip" class="text-lg font-semibold text-gray-700 dark:text-gray-200">--</p>
                                 </div>
                             </div>
                             <div class="mt-6 flex justify-end">
@@ -609,7 +609,7 @@
     <div id="log-viewer-overlay" class="fixed inset-x-0 bottom-0 bg-white dark:bg-gray-800 shadow-lg rounded-t-lg border border-gray-200 dark:border-gray-700 p-2 transform translate-y-full transition-transform duration-300 ease-in-out z-50" style="height: 33.33vh;">
         <div class="flex justify-between items-center mb-2">
             <div class="flex items-center space-x-3 text-sm">
-                <h3 class="font-medium text-gray-800 dark:text-white">WebSocket Logs</h3>
+                <h3 class="font-medium text-gray-700 dark:text-white">WebSocket Logs</h3>
                 <label class="flex items-center">
                     <input id="show-timestamp" type="checkbox" checked class="form-checkbox h-3 w-3 text-blue-500">
                     <span class="ml-1 text-xs text-gray-700 dark:text-gray-300">Time</span>

@@ -213,7 +213,7 @@
   --color-bg-card-header: var(--color-gray-200);
   --color-bg-card-body: var(--color-gray-50);
   --color-border-primary: var(--color-gray-200);
-  --color-text-primary: var(--color-gray-900);
+  --color-text-primary: var(--color-gray-800);  /* Changed from gray-900 to gray-800 */
   --color-text-secondary: var(--color-gray-600);
 }
 
@@ -263,11 +263,20 @@ html.dark {
 
 /* Card title text */
 .card-title {
-  color: var(--text-card-title);
+  color: var(--color-gray-800);
 }
 
 .dark .card-title {
   color: var(--dark-text-card-title);
+}
+
+/* Card body text - adding default text color for all card body text */
+.card-body {
+  color: var(--color-gray-700);
+}
+
+.dark .card-body {
+  color: var(--color-gray-200);
 }
 
 /* Card icon colors */
@@ -358,6 +367,33 @@ input:checked + .key-lock-slider {
   background-color: var(--color-danger);
 }
 
+/* Add a global text color reset to ensure no black text */
+body {
+  color: var(--color-gray-800);
+}
+
+.dark body {
+  color: var(--color-gray-100);
+}
+
+/* Default paragraph text */
+p {
+  color: var(--color-gray-700);
+}
+
+.dark p {
+  color: var(--color-gray-300);
+}
+
+/* Make headings slightly darker than body text but not black */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-gray-800);
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: var(--color-gray-100);
+}
+
 /* Add new documentation about the theming approach */
 /* 
   THEMING APPROACH:
@@ -366,4 +402,8 @@ input:checked + .key-lock-slider {
   3. When adding new UI elements:
      - Use Tailwind utilities first: bg-white dark:bg-gray-800
      - For custom components, use the CSS variables: var(--color-bg-primary)
+  4. Text colors should use gray-800 or gray-700 instead of black in light mode
+     - Use text-gray-800 for headings and important text
+     - Use text-gray-700 for body text
+     - Use text-gray-600 for secondary/hint text
 */

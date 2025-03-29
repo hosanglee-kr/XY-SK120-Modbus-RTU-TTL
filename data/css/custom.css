@@ -20,6 +20,42 @@ body {
   background-color: var(--color-gray-900) !important; /* Use CSS variable */
 }
 
+/* Adjust all default text to use dark gray instead of black */
+body, p, span, button, input, select, textarea {
+  color: var(--color-gray-800);
+}
+
+.dark body, .dark p, .dark span, .dark button, .dark input, .dark select, .dark textarea {
+  color: var(--color-gray-200);
+}
+
+/* Default text color override */
+.text-black {
+  color: var(--color-gray-800) !important;
+}
+
+.dark .text-black {
+  color: var(--color-gray-200) !important;
+}
+
+/* Make labels slightly darker but not pure black */
+label {
+  color: var(--color-gray-800);
+}
+
+.dark label {
+  color: var(--color-gray-200);
+}
+
+/* Default heading color override */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-gray-800);
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: var(--color-gray-200);
+}
+
 /* Main application wrapper needs proper background and full height */
 .min-h-full {
   min-height: 100vh !important;
