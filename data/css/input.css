@@ -2,11 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom base styles that extend Tailwind */
+/* Base styles that extend Tailwind */
 @layer base {
   html, body {
-    @apply h-full m-0 p-0 bg-background text-text;
-    @apply font-sans;
+    @apply h-full m-0 p-0 bg-background dark:bg-background-dark text-text dark:text-text-dark font-sans;
   }
   
   body.popup-open {
