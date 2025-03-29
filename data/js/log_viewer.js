@@ -121,31 +121,23 @@ function adjustLogViewerSize() {
     const logViewerHeight = Math.floor(viewportHeight * 0.3333);
     
     logViewer.style.height = `${logViewerHeight}px`;
-    logViewer.style.width = '100%';
     
     // Adjust log container height accordingly
     const headerHeight = logViewer.querySelector('.flex.justify-between').offsetHeight;
     logContainer.style.height = `${logViewerHeight - headerHeight - 16}px`; // 16px for padding
     
-    // Ensure background colors are applied - Fix for dark mode
-    // Use CSS variables instead of hardcoded colors
+    // Apply Tailwind's dark mode classes instead of CSS variables
     if (document.documentElement.classList.contains('dark')) {
-        document.documentElement.style.setProperty('--log-viewer-bg', '#1f2937');
-        document.documentElement.style.setProperty('--log-container-bg', '#111827');
+        logViewer.classList.add('bg-gray-800');
+        logViewer.classList.remove('bg-white');
+        logContainer.classList.add('bg-gray-900');
+        logContainer.classList.remove('bg-gray-100');
     } else {
-        document.documentElement.style.setProperty('--log-viewer-bg', '#ffffff');
-        document.documentElement.style.setProperty('--log-container-bg', '#f3f4f6');
+        logViewer.classList.add('bg-white');
+        logViewer.classList.remove('bg-gray-800');
+        logContainer.classList.add('bg-gray-100');
+        logContainer.classList.remove('bg-gray-900');
     }
-    
-    // Apply the CSS variables - this ensures consistency
-    logViewer.style.backgroundColor = 'var(--log-viewer-bg)';
-    logContainer.style.backgroundColor = 'var(--log-container-bg)';
-    
-    // Force immediate repaint to avoid white flashing
-    requestAnimationFrame(() => {
-        logViewer.style.backgroundColor = 'var(--log-viewer-bg)';
-        logContainer.style.backgroundColor = 'var(--log-container-bg)';
-    });
 }
 
 // Set up window resize listener to adjust log viewer dimensions
@@ -168,54 +160,55 @@ window.setupLogViewer = function() {
         // Create and append the log viewer to the body if it doesn't exist
         const logViewer = document.createElement('div');
         logViewer.id = 'log-viewer-overlay';
-        logViewer.className = 'fixed inset-x-0 bottom-0 bg-white dark:bg-gray-800 shadow-lg rounded-t-lg border border-gray-200 dark:border-gray-700 p-2 transform translate-y-full transition duration-300 ease-in-out z-50';
-        logViewer.style.height = '33.33vh';
+        // Use Tailwind classes instead of CSS variables and custom styles
+        logViewer.className = 'fixed inset-x-0 bottom-0 w-full bg-white dark:bg-gray-800 shadow-lg rounded-t-lg border border-gray-200 dark:border-gray-700 p-2 transform translate-y-full transition-transform duration-300 ease-in-out z-50';
+        logViewer.style.height = '33.33vh'; // Still need inline style for percentage height
         
         logViewer.innerHTML = `
             <div class="flex justify-between items-center mb-2">
                 <div class="flex items-center space-x-3 text-sm">
                     <h3 class="font-medium text-gray-800 dark:text-white">Logs</h3>
                     <label class="flex items-center">
-                        <input id="show-timestamp" type="checkbox" checked class="form-checkbox h-3 w-3 text-secondary">
+                        <input id="show-timestamp" type="checkbox" checked class="form-checkbox h-3 w-3 text-blue-500">
                         <span class="ml-1 text-xs text-gray-700 dark:text-gray-300">Time</span>
                     </label>
                     <label class="flex items-center">
-                        <input id="show-ip" type="checkbox" checked class="form-checkbox h-3 w-3 text-secondary">
+                        <input id="show-ip" type="checkbox" checked class="form-checkbox h-3 w-3 text-blue-500">
                         <span class="ml-1 text-xs text-gray-700 dark:text-gray-300">IPs</span>
                     </label>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <button id="log-pause" class="p-1 text-secondary" title="Pause">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m-7-10a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
+                    <button id="log-pause" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Pause">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m-7-10a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
                         </svg>
                     </button>
-                    <button id="log-resume" class="p-1 text-secondary hidden" title="Resume">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <button id="log-resume" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200 hidden" title="Resume">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </button>
-                    <button id="log-clear" class="p-1 text-gray-500" title="Clear logs">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    <button id="log-clear" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Clear logs">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
                     </button>
-                    <button id="log-copy" class="p-1 text-secondary" title="Copy logs">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                    <button id="log-copy" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Copy logs">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
                         </svg>
                     </button>
-                    <button id="log-close" class="p-1 text-gray-500" title="Close logs">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    <button id="log-close" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Close logs">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>
             </div>
-            <div id="log-container" class="overflow-auto bg-gray-100 dark:bg-gray-900 rounded p-2 text-xs font-mono" style="height: calc(33.33vh - 40px);">
-                <div id="logs"></div>
+            <div id="log-container" class="w-full overflow-auto bg-gray-100 dark:bg-gray-900 rounded p-2 text-xs font-mono" style="height: calc(33.33vh - 40px);">
+                <div id="logs" class="w-full"></div>
             </div>
         `;
         

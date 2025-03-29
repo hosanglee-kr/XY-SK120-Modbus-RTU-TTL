@@ -180,3 +180,134 @@ input:checked + .key-lock-slider {
 .dark .readings-separator::after {
   background-color: #374151;
 }
+
+/* Tailwind components using @apply */
+
+/* Card component - Redesigned with Meraki UI inspired styling and rounded corners */
+.card {
+    @apply bg-white dark:bg-gray-800 overflow-hidden mb-6 border border-gray-100 dark:border-gray-700;
+    border-radius: 0.75rem; /* Ensure consistent rounded corners for all cards */
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+    @apply px-6 py-4 border-b border-gray-200 dark:border-gray-700;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f9fafb;
+    margin-bottom: 0;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+}
+
+.dark .card-header {
+    background-color: #374151;
+}
+
+.card-title {
+    @apply text-lg font-medium text-gray-900 dark:text-white;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+    margin: 0;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+    border-bottom: 2px solid transparent;
+}
+
+.card-title svg {
+    @apply h-5 w-5 text-secondary flex-shrink-0;
+    margin-right: 0.5rem;
+}
+
+/* New card-label class */
+.card-label {
+    @apply text-sm font-medium text-gray-700 dark:text-gray-300;
+    display: block;
+    margin-bottom: 0.5rem;
+    padding: 0;
+}
+
+.card-body {
+    @apply space-y-4;
+    padding: 1.5rem;
+    border-top: 1px solid transparent;
+}
+
+/* Form input group */
+.input-group {
+    @apply mt-1 flex rounded-md shadow-sm;
+}
+
+.input-field {
+    @apply appearance-none flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-secondary focus:border-secondary;
+}
+
+.input-button {
+    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none;
+}
+
+/* Reading item in power supply status */
+.reading-block {
+    @apply text-xl sm:text-3xl font-bold;
+}
+
+/* Tab navigation */
+.tab-nav {
+    @apply flex overflow-x-auto overflow-y-hidden border-b border-gray-200 dark:border-gray-700 whitespace-nowrap;
+}
+
+.tab-button {
+    @apply inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 whitespace-nowrap focus:outline-none;
+}
+
+.tab-button-active {
+    @apply border-blue-500 dark:text-blue-300 dark:border-blue-400 text-blue-600;
+}
+
+.tab-button-inactive {
+    @apply text-gray-700 dark:text-white hover:border-gray-400 dark:hover:border-gray-500;
+}
+
+/* Toggle switch */
+.toggle-container {
+    @apply flex items-center justify-between;
+}
+
+/* Line with Icons Tab Style - based on Meraki UI */
+.line-tabs {
+    @apply flex overflow-x-auto overflow-y-hidden border-b border-gray-200 dark:border-gray-700 whitespace-nowrap;
+}
+
+.line-tab {
+    @apply inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500;
+}
+
+.line-tab-active {
+    @apply text-blue-600 border-blue-500 dark:text-blue-300 dark:border-blue-400;
+}
+
+.line-tab-inactive {
+    @apply text-gray-700 dark:text-white;
+}
+
+.line-tab svg {
+    @apply w-4 h-4 mx-1 sm:w-6 sm:h-6;
+}
+
+.line-tab span {
+    @apply mx-1 text-sm sm:text-base;
+}
+
+/* Apply tab styles to existing mode tabs */
+.mode-tab {
+    @apply inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500;
+}

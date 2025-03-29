@@ -160,28 +160,18 @@ function initSettingsTabs() {
 // Initialize mode tabs functionality (legacy method)
 function initModeTabs() {
     // Mode tab switcher
-    document.querySelectorAll('.mode-tab').forEach(tab => {
+    document.querySelectorAll('.mode-tab, [data-mode]').forEach(tab => {
         tab.addEventListener('click', function() {
             // Update active tab styling
-            document.querySelectorAll('.mode-tab').forEach(t => {
-                t.classList.remove('tab-active', 'tab-active-cv', 'tab-active-cc', 'tab-active-cp');
-                t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            document.querySelectorAll('[data-mode]').forEach(t => {
+                t.classList.remove('text-blue-600', 'border-blue-500', 'dark:text-blue-300', 'dark:border-blue-400');
+                t.classList.add('text-gray-700', 'border-transparent', 'dark:text-white');
             });
             
             // Get the mode from data attribute
             const mode = this.getAttribute('data-mode');
-            this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-            
-            // Apply the mode-specific active class
-            if (mode === 'cv') {
-                this.classList.add('tab-active-cv');
-            } else if (mode === 'cc') {
-                this.classList.add('tab-active-cc');
-            } else if (mode === 'cp') {
-                this.classList.add('tab-active-cp');
-            } else {
-                this.classList.add('tab-active'); // fallback
-            }
+            this.classList.remove('text-gray-700', 'border-transparent', 'dark:text-white');
+            this.classList.add('text-blue-600', 'border-blue-500', 'dark:text-blue-300', 'dark:border-blue-400');
             
             // Show the corresponding settings panel
             document.querySelectorAll('.mode-settings').forEach(panel => {
@@ -203,7 +193,7 @@ function initModeTabs() {
     
     // Restore the last active tab from local storage when page loads
     const lastActiveTab = localStorage.getItem('lastActiveTab') || 'cv'; // Default to CV if none stored
-    const tabToActivate = document.querySelector(`.mode-tab[data-mode="${lastActiveTab}"]`);
+    const tabToActivate = document.querySelector(`[data-mode="${lastActiveTab}"]`);
     
     if (tabToActivate) {
         // Simulate a click on the tab to restore its state

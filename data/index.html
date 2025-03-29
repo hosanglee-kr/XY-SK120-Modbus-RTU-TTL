@@ -8,7 +8,7 @@
     <!-- Meta theme color for browsers -->
     <meta id="theme-color" name="theme-color" content="#2c3e50">
     
-    <!-- Add this script to apply the theme immediately before page renders -->
+    <!-- Theme initialization script -->
     <script>
         // Apply theme immediately to prevent flash of wrong theme
         (function() {
@@ -23,9 +23,10 @@
         })();
     </script>
     
-    <!-- Replace old CSS references with tailwind.css -->
+    <!-- CSS files -->
     <link rel="stylesheet" href="css/tailwind.css">
-    <!-- Add the custom CSS file for overrides -->
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/colors.css">
     <link rel="stylesheet" href="css/custom.css">
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 h-full transition-colors duration-200">
@@ -34,6 +35,7 @@
         <nav class="bg-white dark:bg-gray-800 shadow-md">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
+                    <!-- Logo and title -->
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             <h1 class="text-xl font-bold text-gray-800 dark:text-white">
@@ -48,6 +50,7 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Device selector -->
                     <div class="flex items-center">
                         <!-- WebSocket Status Indicator -->
                         <div class="mr-4 hidden md:block">
@@ -80,7 +83,7 @@
         <!-- Main Content -->
         <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-gray-100 dark:bg-gray-900">
             <!-- Power Supply Readings Card -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden compact-readings">
+            <div class="card mb-6 compact-readings">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
@@ -215,19 +218,19 @@
                 </div>
             </div>
             
-            <!-- Main content sections - simple stacked layout instead of swiper -->
+            <!-- Main content sections -->
             <div class="space-y-6">
                 <!-- Basic Controls Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                            <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="card basic-controls-card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
                             </svg>
                             Basic Controls
                         </h2>
                     </div>
-                    <div class="px-4 py-5 sm:p-6 space-y-6">
+                    <div class="card-body">
                         <div>
                             <label for="set-voltage" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Set Voltage (V)</label>
                             <div class="mt-1 flex rounded-md shadow-sm">
@@ -252,37 +255,38 @@
                         
                     </div>
                 </div>
+                
                 <!-- Operating Mode Controls Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                            <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="card operating-mode-card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
                             </svg>
                             Operating Mode
                         </h2>
                     </div>
-                    <!-- Mode tabs - updated to show both abbreviation and full name -->
+                    <!-- Mode tabs - updated to follow Meraki UI "Line with Icons" pattern -->
                     <div class="border-b border-gray-200 dark:border-gray-700">
                         <nav class="flex overflow-x-auto overflow-y-hidden whitespace-nowrap">
-                            <button data-mode="cv" class="mode-tab flex-1 inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500 dark:text-gray-400 text-gray-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <button data-mode="cv" class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
                                 <span class="mx-1 text-sm sm:text-base">
                                     <span class="font-medium">CV</span> <span class="hidden sm:inline">- Constant Voltage</span>
                                 </span>
                             </button>
-                            <button data-mode="cc" class="mode-tab flex-1 inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500 dark:text-gray-400 text-gray-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <button data-mode="cc" class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
                                 <span class="mx-1 text-sm sm:text-base">
                                     <span class="font-medium">CC</span> <span class="hidden sm:inline">- Constant Current</span>
                                 </span>
                             </button>
-                            <button data-mode="cp" class="mode-tab flex-1 inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500 dark:text-gray-400 text-gray-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <button data-mode="cp" class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                                 </svg>
@@ -357,11 +361,11 @@
                     </div>
                 </div>
                 
-                <!-- Settings Card - New unified settings interface -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                            <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Settings Card -->
+                <div class="card settings-card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             </svg>
@@ -369,12 +373,12 @@
                         </h2>
                     </div>
                     
-                    <!-- Settings tabs - New tab component implementation -->
+                    <!-- Settings tabs - Updated with Meraki UI "Line with Icons" style -->
                     <div id="settings-tabs-container" data-tabs="settings">
                         <div class="flex overflow-x-auto overflow-y-hidden border-b border-gray-200 whitespace-nowrap dark:border-gray-700" role="tablist" id="settings-tablist" aria-label="Settings tabs">
                             <button id="tab-device" role="tab" aria-selected="false" aria-controls="device-settings-tab" 
-                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 -px-1 dark:text-white text-gray-700 whitespace-nowrap focus:outline-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                                 </svg>
                                 <span class="mx-1 text-sm sm:text-base">
@@ -382,8 +386,8 @@
                                 </span>
                             </button>
                             <button id="tab-ui" role="tab" aria-selected="false" aria-controls="ui-settings-tab" 
-                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 -px-1 dark:text-white text-gray-700 whitespace-nowrap focus:outline-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                                 </svg>
                                 <span class="mx-1 text-sm sm:text-base">
@@ -391,8 +395,8 @@
                                 </span>
                             </button>
                             <button id="tab-wifi" role="tab" aria-selected="true" aria-controls="wifi-settings-tab" 
-                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-blue-500 sm:px-4 -px-1 dark:text-blue-300 dark:border-blue-400 text-blue-600 whitespace-nowrap focus:outline-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-blue-600 bg-transparent border-b-2 border-blue-500 sm:px-4 dark:text-blue-300 dark:border-blue-400 whitespace-nowrap focus:outline-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
                                 </svg>
                                 <span class="mx-1 text-sm sm:text-base">
@@ -400,8 +404,8 @@
                                 </span>
                             </button>
                             <button id="tab-manager" role="tab" aria-selected="false" aria-controls="manager-settings-tab" 
-                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center bg-transparent border-b-2 border-transparent sm:px-4 -px-1 dark:text-white text-gray-700 whitespace-nowrap focus:outline-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                 </svg>
                                 <span class="mx-1 text-sm sm:text-base">
@@ -536,18 +540,6 @@
                                         <option value="30">30 seconds</option>
                                     </select>
                                 </div>
-
-                                <!-- Add Show Logs option -->
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <label for="show-logs-toggle" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Show Logs</label>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">Display WebSocket communication logs</p>
-                                    </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="show-logs-toggle">
-                                        <span class="slider"></span>
-                                    </label>
-                                </div>
                                 
                                 <div class="flex justify-end pt-4">
                                     <button id="save-ui-settings" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
@@ -601,25 +593,19 @@
         </footer>
     </div>
     
-    <!-- Core JS -->
+    <!-- Log Viewer component placeholder -->
+    <div data-component="log_viewer"></div>
+    
+    <!-- JavaScript files -->
+    <script src="js/component_loader.js"></script>
     <script src="js/core.js"></script>
-    
-    <!-- Add Connectivity Checker -->
     <script src="js/connectivity_check.js"></script>
-    
-    <!-- Add Web Interface (renamed from menu_interface.js) -->
     <script src="js/web_interface.js"></script>
-    
-    <!-- Add Settings Tabs -->
     <script src="js/tab_component.js"></script>
-    
-    <!-- Add Debug Script -->
     <script src="js/debug.js"></script>
-    
-    <!-- Add Log Viewer -->
     <script src="js/log_viewer.js"></script>
     
-    <!-- Simple tab switcher -->
+    <!-- Settings tab initializer script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Add event listener programmatically instead of using inline
@@ -956,73 +942,6 @@
                     console.log("Started dedicated key lock status monitor");
                 }        // Check if the UI settings tab exists
             }, 2000);
-        });
-    </script>
-    
-    <!-- Log Viewer Overlay - Initially hidden and properly structured -->
-    <div id="log-viewer-overlay" class="fixed inset-x-0 bottom-0 bg-white dark:bg-gray-800 shadow-lg rounded-t-lg border border-gray-200 dark:border-gray-700 p-2 transform translate-y-full transition duration-300 ease-in-out z-50" style="height: 33.33vh;">
-        <div class="flex justify-between items-center mb-2">
-            <div class="flex items-center space-x-3 text-sm">
-                <h3 class="font-medium text-gray-800 dark:text-white">Logs</h3>
-                <label class="flex items-center">
-                    <input id="show-timestamp" type="checkbox" checked class="form-checkbox h-3 w-3 text-secondary">
-                    <span class="ml-1 text-xs text-gray-700 dark:text-gray-300">Time</span>
-                </label>
-                <label class="flex items-center">
-                    <input id="show-ip" type="checkbox" checked class="form-checkbox h-3 w-3 text-secondary">
-                    <span class="ml-1 text-xs text-gray-700 dark:text-gray-300">IPs</span>
-                </label>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button id="log-pause" class="p-1 text-secondary" title="Pause">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m-7-10a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
-                    </svg>
-                </button>
-                <button id="log-resume" class="p-1 text-secondary hidden" title="Resume">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </button>
-                <button id="log-clear" class="p-1 text-gray-500" title="Clear logs">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                </button>
-                <button id="log-copy" class="p-1 text-secondary" title="Copy logs">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
-                    </svg>
-                </button>
-                <button id="log-close" class="p-1 text-gray-500" title="Close logs">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-        <div id="log-container" class="overflow-auto bg-gray-100 dark:bg-gray-900 rounded p-2 text-xs font-mono" style="height: calc(33.33vh - 40px);">
-            <div id="logs"></div>
-        </div>
-    </div>
-
-    <!-- Add script for settings tab initializer -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add fallback initialization for settings tabs if they fail to initialize
-            setTimeout(function() {
-                const activeTabs = document.querySelectorAll('.settings-tab.border-secondary');
-                if (activeTabs.length === 0) {
-                    console.log("No active settings tabs detected, attempting recovery...");
-                    if (typeof window.initSettingsTabs === 'function') {
-                        window.initSettingsTabs();
-                    } else {
-                        console.error("Settings tabs initialization function not available");
-                    }
-                }
-            }, 3000);
         });
     </script>
 </body>

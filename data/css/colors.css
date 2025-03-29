@@ -1,0 +1,127 @@
+/* Additional color definitions for Tailwind CSS */
+
+/* Custom gray colors for dark mode */
+.dark .bg-gray-750 {
+  background-color: rgb(40, 46, 56);
+}
+
+.dark .bg-gray-850 {
+  background-color: rgb(26, 32, 44);
+}
+
+/* Remove gradient backgrounds and replace with solid colors for cleaner look */
+.card {
+  background-color: #ffffff;
+  border-color: #f3f4f6;
+}
+
+.dark .card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.card-header {
+  background-color: #f9fafb;
+  border-bottom-color: #e5e7eb;
+}
+
+.dark .card-header {
+  background-color: #2a3441;
+  border-bottom-color: #374151;
+}
+
+/* Remove left border accent styling */
+/* We're removing these blocks completely:
+.card {
+  position: relative;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: #3498db;
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+
+.card.basic-controls-card::before {
+  background-color: #3498db; 
+}
+
+.card.operating-mode-card::before {
+  background-color: #9333ea; 
+}
+
+.card.settings-card::before {
+  background-color: #10b981; 
+}
+*/
+
+/* Make card title text more contrasting and cleaner */
+.card-title {
+  color: #111827;
+  font-weight: 600;
+}
+
+.dark .card-title {
+  color: #f9fafb;
+}
+
+/* Remove text shadows for cleaner text */
+.dark .card-title {
+  text-shadow: none;
+}
+
+/* Set icon colors to match theme instead of left accent */
+.card-title svg {
+  color: #3498db; /* Use a consistent blue color for all icons */
+}
+
+/* Ensure icon has good contrast too */
+.card-title svg {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.05));
+}
+
+.dark .card-title svg {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* Adjust card body top border for consistent styling */
+.card-body {
+  border-top-color: #f3f4f6;
+}
+
+.dark .card-body {
+  border-top-color: #374151;
+}
+
+/* Line with Icons tab colors */
+.line-tab-active {
+  color: #3b82f6; /* blue-500 */
+  border-bottom-color: #3b82f6;
+}
+
+.dark .line-tab-active {
+  color: #93c5fd; /* blue-300 */
+  border-bottom-color: #60a5fa; /* blue-400 */
+}
+
+.line-tab-inactive {
+  color: #374151; /* gray-700 */
+}
+
+.dark .line-tab-inactive {
+  color: #ffffff;
+}
+
+.line-tab:hover:not(.line-tab-active) {
+  border-bottom-color: #9ca3af; /* gray-400 */
+}
+
+.dark .line-tab:hover:not(.line-tab-active) {
+  border-bottom-color: #6b7280; /* gray-500 */
+}
