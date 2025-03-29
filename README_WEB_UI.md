@@ -254,5 +254,4 @@ The Web UI uses SVG icons for a consistent look. When adding new icons:
 - `core.js` - Core functionality for device communication
 - `web_interface.js` - Main UI interaction logic
 - `connectivity_check.js` - Connection monitoring
-- `debug.js` - Debug utilities
 - `log_viewer.js` - WebSocket log viewer functionality
