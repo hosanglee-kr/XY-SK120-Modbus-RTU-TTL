@@ -2,12 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import merged CSS files */
-/* These files contain only extracted CSS, so they don't need to be imported */
-/* @import 'merged_core.css'; */
-/* @import 'merged_log_viewer.css'; */
-/* @import 'merged_modes.css'; */
-
 /* Base styles that extend Tailwind */
 @layer base {
   html, body {
