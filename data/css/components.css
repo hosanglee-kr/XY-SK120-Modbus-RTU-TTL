@@ -367,3 +367,92 @@ input:checked + .key-lock-slider {
 .readings-card .card-icon {
   color: #e74c3c; /* Red color for power status icon */
 }
+
+/* Standardized Form Controls */
+.form-input,
+.form-select,
+.form-textarea {
+  @apply appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
+  text-gray-700 bg-white 
+  dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200
+  focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary;
+  height: auto; /* Override default heights */
+  min-height: 38px; /* Consistent height for all inputs */
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+/* Enhanced Form Select styling - Fix inconsistencies */
+.form-select {
+  @apply appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
+  text-gray-700 bg-white 
+  dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200
+  focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary;
+  height: auto !important; /* Override default heights with !important */
+  min-height: 38px !important; /* Consistent height for all inputs */
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  padding-right: 2.5rem !important; /* Make room for custom arrow */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+  background-position: right 0.5rem center !important;
+  background-repeat: no-repeat !important;
+  background-size: 1.5em 1.5em !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Special styling for key select elements */
+#device-selector, #refresh-interval {
+  @apply form-select;
+  background-position: right 0.5rem center !important;
+  background-repeat: no-repeat !important;
+  background-size: 1.5em 1.5em !important;
+}
+
+.dark .form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23d1d5db' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+}
+
+/* Make sure custom arrows are properly visible */
+.form-select::-ms-expand {
+  display: none;
+}
+
+/* Remove browser default focus styling */
+.form-select:focus {
+  outline: none !important;
+}
+
+/* Remove Firefox custom arrow */
+.form-select::-moz-focus-inner {
+  border: 0;
+}
+
+/* Remove custom pointer-events-none div that might be overlaying selects */
+.form-select + div.pointer-events-none {
+  display: none !important;
+}
+
+/* Form label styling */
+.form-label {
+  @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+}
+
+/* Select specific tweaks to avoid browser default arrow */
+.form-select {
+  @apply pr-10; /* Make room for custom arrow */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+}
+
+.dark .form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23d1d5db' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+/* Checkbox styling */
+.form-checkbox {
+  @apply rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700;
+  height: 1rem;
+  width: 1rem;
+}

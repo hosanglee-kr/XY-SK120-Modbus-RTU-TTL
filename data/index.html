@@ -78,7 +78,7 @@
                         
                         <!-- Device Selector -->
                         <div class="relative mr-4">
-                            <select id="device-selector" class="appearance-none block w-40 py-2 px-3 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-700 dark:text-gray-200">
+                            <select id="device-selector" class="form-select w-40">
                                 <!-- Options will be populated by JavaScript -->
                             </select>
                             <!-- Add custom dropdown arrow indicator -->
@@ -242,9 +242,9 @@
                     </div>
                     <div class="card-body">
                         <div>
-                            <label for="set-voltage" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Set Voltage (V)</label>
+                            <label for="set-voltage" class="form-label">Set Voltage (V)</label>
                             <div class="mt-1 flex rounded-md shadow-sm">
-                                <input type="number" id="set-voltage" min="0" max="30" step="0.1" class="appearance-none flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-secondary focus:border-secondary">
+                                <input type="number" id="set-voltage" min="0" max="30" step="0.1" class="form-input rounded-r-none">
                                 <button id="apply-voltage" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
                                     Set
                                 </button>
@@ -252,9 +252,9 @@
                         </div>
                         
                         <div>
-                            <label for="set-current" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Set Current (A)</label>
+                            <label for="set-current" class="form-label">Set Current (A)</label>
                             <div class="mt-1 flex rounded-md shadow-sm">
-                                <input type="number" id="set-current" min="0" max="5" step="0.01" class="appearance-none flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-secondary focus:border-secondary">
+                                <input type="number" id="set-current" min="0" max="5" step="0.01" class="form-input rounded-r-none">
                                 <button id="apply-current" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
                                     Set
                                 </button>
@@ -658,6 +658,7 @@
     <script src="js/tab_component.js"></script>
     <script src="js/debug.js"></script>
     <script src="js/log_viewer.js"></script>
+    <script src="js/form_standardizer.js"></script>
     
     <!-- Settings tab initializer script -->
     <script>
