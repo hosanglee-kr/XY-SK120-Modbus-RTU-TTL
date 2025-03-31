@@ -13,6 +13,7 @@ let toggleHeartbeatIndicator = function(visible) {
 };
 
 // Auto-refresh timer reference - declare once at the top level
+// KEEP THIS DECLARATION - this will be our only declaration
 let autoRefreshTimer = null;
 
 // Use dynamic import to get the actual implementations
@@ -62,8 +63,10 @@ document.addEventListener('DOMContentLoaded', function() {
  * Start auto-refresh
  */
 function startAutoRefresh() {
-    if (autoRefreshTimer) {
-        clearInterval(autoRefreshTimer);
+    // Clear any existing timer
+    if (window.autoRefreshTimer) {
+        clearInterval(window.autoRefreshTimer);
+        window.autoRefreshTimer = null;
     }
     
     // Get the refresh interval from settings, or use default (5000ms)
@@ -79,8 +82,8 @@ function startAutoRefresh() {
         toggleHeartbeatIndicator(true);
     }
     
-    // Start the auto-refresh timer
-    autoRefreshTimer = setInterval(() => {
+    // Start the auto-refresh timer - use global variable
+    window.autoRefreshTimer = setInterval(() => {
         updateAllStatus();
     }, interval);
     
@@ -93,9 +96,9 @@ function startAutoRefresh() {
  * Stop auto-refresh
  */
 function stopAutoRefresh() {
-    if (autoRefreshTimer) {
-        clearInterval(autoRefreshTimer);
-        autoRefreshTimer = null;
+    if (window.autoRefreshTimer) {
+        clearInterval(window.autoRefreshTimer);
+        window.autoRefreshTimer = null;
         
         // Hide the heartbeat indicator - check if function is available
         if (typeof toggleHeartbeatIndicator === 'function') {

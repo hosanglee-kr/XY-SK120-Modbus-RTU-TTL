@@ -1,7 +1,5 @@
-// ...existing code...
-
-// Remove or rename the duplicate autoRefreshTimer variable
-// If there are two declarations, keep only one
+// Add global variables at the top
+let autoRefreshTimer = null; // Global declaration for autoRefreshTimer
 let wsReconnectTimer = null;
 const MAX_RECONNECT_DELAY = 5000;
 let reconnectAttempts = 0;

@@ -64,11 +64,8 @@ export function initBasicControls() {
     }, 3000);
 }
 
-// Auto-refresh timer variable
-let autoRefreshTimer = null;
-
-// Make autoRefreshTimer globally accessible for debugging
-window.autoRefreshTimer = null;
+// NO REDECLARATION - use global variable instead
+// let autoRefreshTimer = null;
 
 // Setup timer reference object properly at the top of the file
 let timers = {
@@ -79,31 +76,48 @@ let timers = {
 // Expose timers globally for debugging
 window.psuTimers = timers;
 
-// Start auto-refresh timer to update status every second
+// Start auto-refresh timer to update status every second - Improved with better error handling
 function startAutoRefresh() {
     console.log("🔄 Starting auto-refresh (5-second interval)");
     
     // Clear any existing timer first
     stopAutoRefresh();
     
-    // First make sure we're really connected
-    if (!window.websocketConnected) {
-        console.log("⚠️ Can't start auto-refresh - WebSocket not connected");
+    // First check if we're connected - or try to reconnect
+    if (!window.websocketConnected || 
+        !window.websocket || 
+        window.websocket.readyState !== WebSocket.OPEN) {
         
-        // Show manual refresh buttons since auto-refresh won't work
-        showManualRefreshButtons();
+        console.log("⚠️ WebSocket not connected, attempting to reconnect before starting auto-refresh");
         
-        // Try reconnecting
         if (typeof window.initWebSocket === 'function') {
-            console.log("Attempting to reconnect WebSocket");
+            // Try to reconnect
             window.initWebSocket();
+            
+            // Check if we managed to connect after a short delay
+            setTimeout(() => {
+                if (window.websocketConnected) {
+                    console.log("WebSocket reconnected successfully, starting auto-refresh");
+                    startAutoRefresh(); // Call ourselves again now that we're connected
+                } else {
+                    console.log("⚠️ Could not reconnect WebSocket, auto-refresh disabled");
+                    showManualRefreshButtons();
+                }
+            }, 1000);
+        } else {
+            console.log("⚠️ initWebSocket function not available, cannot reconnect");
+            showManualRefreshButtons();
         }
         
         return;
     }
     
     // First do an immediate status update
-    updateAllStatus();
+    try {
+        updateAllStatus();
+    } catch (err) {
+        console.error("Error in initial status update:", err);
+    }
     
     // Set up new timer for auto-refresh - Use our timer object structure
     timers.autoRefresh = setInterval(() => {
@@ -111,7 +125,7 @@ function startAutoRefresh() {
         console.log("⏱️ Auto-refresh tick - checking connection status:", window.websocketConnected);
         
         // Double-check that websocket is defined and connected
-        if (typeof window.websocket !== 'undefined' && window.websocket && window.websocket.readyState === 1) {
+        if (window.websocket && window.websocket.readyState === WebSocket.OPEN) {
             console.log("Sending status update via auto-refresh");
             try {
                 updateAllStatus();
@@ -128,10 +142,33 @@ function startAutoRefresh() {
             if (typeof window.initWebSocket === 'function') {
                 console.log("Attempting to reconnect WebSocket");
                 window.initWebSocket();
+                
+                // Restart auto-refresh after a delay if reconnection succeeds
+                setTimeout(() => {
+                    if (window.websocketConnected) {
+                        startAutoRefresh();
+                    }
+                }, 2000);
             }
         } else {
             console.log("❌ WebSocket disconnected, pausing auto-refresh");
             stopAutoRefresh();
+            
+            // Show manual refresh buttons
+            showManualRefreshButtons();
+            
+            // Try to reconnect
+            if (typeof window.initWebSocket === 'function') {
+                console.log("Attempting to reconnect WebSocket");
+                window.initWebSocket();
+                
+                // Restart auto-refresh after a delay if reconnection succeeds
+                setTimeout(() => {
+                    if (window.websocketConnected) {
+                        startAutoRefresh();
+                    }
+                }, 2000);
+            }
         }
     }, 5000); // Update every 5 seconds
     
@@ -147,18 +184,24 @@ function startAutoRefresh() {
         console.log("Making auto-refresh indicator visible");
         indicator.style.display = 'flex';
     } else {
-        console.error("Auto-refresh indicator element not found");
+        console.warn("Auto-refresh indicator element not found");
     }
 }
 
 // Stop auto-refresh timer - updated to handle all timers
 function stopAutoRefresh() {
-    if (timers.autoRefresh) {
+    if (timers.autoRefresh || window.autoRefreshTimer) {
         console.log("⏹️ Stopping all auto-refresh timers");
         
-        clearInterval(timers.autoRefresh);
-        timers.autoRefresh = null;
-        window.autoRefreshTimer = null;
+        if (timers.autoRefresh) {
+            clearInterval(timers.autoRefresh);
+            timers.autoRefresh = null;
+        }
+        
+        if (window.autoRefreshTimer) {
+            clearInterval(window.autoRefreshTimer);
+            window.autoRefreshTimer = null;
+        }
         
         // Also clear the key lock monitor
         stopKeyLockStatusMonitor();
@@ -492,8 +535,8 @@ function handleBasicMessages(event) {
                     module.updateOperatingMode(mode, data);
                 }
             }).catch(err => console.error('Error importing status.js:', err));
+            }
         }
-    }
     
     // Handle CP mode toggle responses
     if (data.action === 'setConstantPowerModeResponse' && data.success === true) {
@@ -711,13 +754,26 @@ export function togglePower(isOn) {
     }
 }
 
-// Add missing updateAllStatus function
+// Add missing updateAllStatus function - improved with better error handling
 export function updateAllStatus() {
     console.log("Updating all PSU status");
     
     try {
+        // Check if WebSocket is connected first
+        if (!window.websocket || window.websocket.readyState !== WebSocket.OPEN) {
+            console.error("WebSocket not connected. Current state:", 
+                          window.websocket ? window.websocket.readyState : "undefined");
+            
+            // Try to reconnect
+            if (typeof window.initWebSocket === 'function') {
+                window.initWebSocket();
+            }
+            
+            return false;
+        }
+        
         // Request complete status update
-        return sendCommand({ action: 'getStatus' });
+        return window.sendCommand({ action: 'getStatus' });
     } catch (err) {
         console.error("Exception in updateAllStatus:", err);
         return false;

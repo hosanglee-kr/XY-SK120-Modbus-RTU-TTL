@@ -3,12 +3,15 @@
  * Handles WebSocket communication and module loading
  */
 
-// WebSocket connection variables
+// WebSocket connection variables - CENTRAL DECLARATION
 let websocket = null;
 let websocketConnected = false;
+let autoRefreshTimer = null; // SINGLE GLOBAL DECLARATION - all modules should use this
 
-// Global for tracking auto-refresh timer
-let autoRefreshTimer = null;
+// Declare global connection management functions
+window.websocket = null;
+window.websocketConnected = false;
+window.autoRefreshTimer = null;
 
 // Default control settings
 const DEFAULT_CONTROL_SETTINGS = {
@@ -153,7 +156,7 @@ function initializeModules() {
     // Note: Each module should handle its own initialization
 }
 
-// WebSocket connection functions
+// WebSocket connection functions - improved with better error handling
 function initWebSocket() {
     // Get device IP - with fallback to current hostname
     let deviceIP = localStorage.getItem('selectedDeviceIP') || window.location.hostname;
@@ -168,8 +171,11 @@ function initWebSocket() {
     // Close existing connection if any
     if (websocket) {
         try {
-            websocket.close();
+            if (websocket.readyState < 2) { // Only close if not already closing or closed
+                websocket.close();
+            }
             websocket = null;
+            window.websocket = null;
         } catch (e) {
             console.error('Error closing WebSocket:', e);
         }
@@ -181,17 +187,20 @@ function initWebSocket() {
     
     try {
         // Create new WebSocket connection
-        console.log(`Connecting to WebSocket at: ${wsUrl}`);
+        console.log(`Creating central WebSocket at: ${wsUrl}`);
         updateStatus('connecting', deviceIP);
         
         websocket = new WebSocket(wsUrl);
         
+        // Make it globally available immediately
+        window.websocket = websocket;
+        window.socket = websocket; // For compatibility
+        
         // Setup event handlers
         websocket.onopen = function() {
-            console.log('WebSocket connected');
+            console.log('🟢 WebSocket connected');
             websocketConnected = true;
             window.websocketConnected = true; // Make sure global flag is set
-            window.websocket = websocket; // Make the websocket globally available
             
             updateStatus('connected', deviceIP);
             
@@ -200,33 +209,63 @@ function initWebSocket() {
             
             // Request initial status
             if (typeof window.updateAllStatus === 'function') {
-                setTimeout(() => window.updateAllStatus(), 500);
+                setTimeout(() => {
+                    try {
+                        window.updateAllStatus();
+                    } catch (e) {
+                        console.error("Error in updateAllStatus:", e);
+                    }
+                }, 500);
             }
         };
         
-        websocket.onclose = function() {
-            console.log('WebSocket disconnected');
+        websocket.onclose = function(event) {
+            console.log('🔴 WebSocket disconnected, code:', event.code);
             websocketConnected = false;
             window.websocketConnected = false;
             updateStatus('disconnected', deviceIP);
             
             // Broadcast disconnection event
             document.dispatchEvent(new CustomEvent('websocket-disconnected'));
+            
+            // Attempt automatic reconnection after a delay
+            setTimeout(() => {
+                if (!websocketConnected && !window.manualDisconnect) {
+                    console.log("Attempting automatic reconnection...");
+                    initWebSocket();
+                }
+            }, 3000);
         };
         
         websocket.onerror = function(error) {
-            console.error('WebSocket error:', error);
+            console.error('⚠️ WebSocket error:', error);
             websocketConnected = false;
             window.websocketConnected = false;
             updateStatus('error', deviceIP);
+            
+            // Don't attempt immediate reconnection - let onclose handler do it
         };
         
         websocket.onmessage = function(event) {
             handleMessage(event);
         };
+        
+        return true;
     } catch (error) {
         console.error('Error creating WebSocket:', error);
         updateStatus('error', deviceIP);
+        websocketConnected = false;
+        window.websocketConnected = false;
+        
+        // Attempt reconnection after a delay
+        setTimeout(() => {
+            if (!websocketConnected) {
+                console.log("Attempting reconnection after error...");
+                initWebSocket();
+            }
+        }, 5000);
+        
+        return false;
     }
 }
 
@@ -318,32 +357,32 @@ function handleMessage(event) {
     }
 }
 
-// Send a command to the device - available globally - IMPROVED VERSION
+// Send a command to the device with improved error handling
 window.sendCommand = function(command) {
     // Log all commands for debugging
     console.log('Attempting to send command:', command);
     
-    if (!websocket) {
-        console.error('WebSocket not initialized');
-        return false;
-    }
-    
-    if (websocket.readyState !== WebSocket.OPEN) {
-        console.error('WebSocket not connected. Current state:', websocket.readyState);
+    if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+        console.error('WebSocket not connected. Current state:', websocket ? websocket.readyState : 'undefined');
         
-        // Special handling for critical commands like power toggle
-        if (command.action === 'setOutputState') {
-            console.log('Attempting to reconnect before sending power command...');
+        // Special handling for critical commands - reconnect first
+        if (command.action === 'setOutputState' || command.action === 'getStatus' || 
+            command.action === 'powerOutput') {
+            console.log('Critical command - attempting to reconnect first...');
             
-            // Try to reconnect first
+            // Try to reconnect first and queue the command for retry
+            window.pendingCommand = command;
             initWebSocket();
             
-            // Alert user about connection issues
+            // Schedule command retry after reconnection attempt
             setTimeout(() => {
-                if (websocket.readyState !== WebSocket.OPEN) {
-                    alert('Connection to device lost. Please check your connection and try again.');
+                if (websocket && websocket.readyState === WebSocket.OPEN && window.pendingCommand) {
+                    console.log('Retrying command after reconnection:', window.pendingCommand);
+                    const cmd = window.pendingCommand;
+                    window.pendingCommand = null;
+                    window.sendCommand(cmd);
                 }
-            }, 500);
+            }, 1500);
         }
         
         return false;
@@ -358,11 +397,6 @@ window.sendCommand = function(command) {
         document.dispatchEvent(new CustomEvent('websocket-sent', { 
             detail: command 
         }));
-        
-        // For power commands, log additional info
-        if (command.action === 'setOutputState') {
-            console.log('Sent power state change to:', command.enabled ? 'ON' : 'OFF');
-        }
         
         return true;
     } catch (e) {

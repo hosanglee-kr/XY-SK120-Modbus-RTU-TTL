@@ -4,8 +4,8 @@
  */
 
 // Make sure to define functions immediately in the global scope
-window.autoRefreshTimer = null;
-window.autoRefreshInterval = 5000;
+// AVOID REDECLARING GLOBAL VARIABLES
+window.autoRefreshInterval = window.autoRefreshInterval || 5000;
 
 // Define the auto-refresh function in the global scope immediately
 window.startAutoRefresh = function() {
@@ -35,7 +35,7 @@ window.startAutoRefresh = function() {
         }
     }
     
-    // Start the auto-refresh timer
+    // Start the auto-refresh timer - USE GLOBAL VARIABLE
     window.autoRefreshTimer = setInterval(() => {
         // Call the update function if it exists
         if (typeof window.updateAllStatus === 'function') {

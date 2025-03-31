@@ -25,8 +25,7 @@ function displayConnectionError() {
 
 // Fix any duplicate autoRefreshTimer declarations
 // If you have autoRefreshTimer defined in multiple places, make sure it's only defined once
-let autoRefreshTimer; // Keep only one declaration
-// ...existing code...
+// let autoRefreshTimer; // KEEP THIS COMMENTED OUT
 
 // Make sure auto-refresh function checks connection status
 function startAutoRefresh() {

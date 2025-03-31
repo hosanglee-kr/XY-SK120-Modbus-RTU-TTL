@@ -1,13 +1,13 @@
 import { updateUI, updatePsuUI, updateOutputStatus } from './menu_display.js';
 
-// Make WebSocket available globally for debugging
-let websocket = null;
+// REMOVE LOCAL WEBSOCKET VARIABLE - use the global one instead
+// let websocket = null;
 let reconnectTimeout = null;
 let isConnecting = false;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 5;
 const reconnectDelay = 5000;
-let websocketConnected = false;
+// let websocketConnected = false; - REMOVE LOCAL VARIABLE
 
 // Add operating mode enum constants to match backend
 const OperatingMode = {
@@ -46,111 +46,16 @@ function getWebSocketIP() {
   return selectedDevice;
 }
 
-// Initialize WebSocket connection with device selection support
+// Redefine this function to use the central WebSocket connection
 function initWebSocket() {
-  // Show connection debug information
-  console.log("🔌 WEBSOCKET CONNECTION ATTEMPT");
-  console.log("Protocol:", window.location.protocol);
-  console.log("Host:", window.location.hostname);
-  console.log("Port:", window.location.port);
-  
-  // Don't reconnect if already connecting
-  if (isConnecting) {
-    console.log("Already attempting to connect WebSocket, skipping duplicate request");
-    return;
-  }
-  
-  // Reset state
-  isConnecting = true;
-  clearTimeout(reconnectTimeout);
-  
-  // Close existing connection if any
-  if (websocket) {
-    try { 
-      websocket.close(); 
-      websocket = null;
-    } catch (e) { 
-      console.error('Error closing WebSocket:', e); 
+    console.log("🔄 Using central WebSocket connection (from core.js)");
+    
+    // Call the central initialization function
+    if (typeof window.initWebSocket === 'function') {
+        window.initWebSocket();
+    } else {
+        console.error("Central WebSocket initialization function not available");
     }
-  }
-  
-  try {
-    // Get the configured WebSocket IP
-    const deviceIP = getWebSocketIP();
-    
-    // Determine protocol (ws:// or wss://)
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    
-    // Build WebSocket URL with configured IP
-    const wsUrl = `${wsProtocol}//${deviceIP}/ws`;
-    console.log(`Connecting to WebSocket at: ${wsUrl} (Device: ${deviceIP})`);
-    
-    // Create new WebSocket with the URL
-    websocket = new WebSocket(wsUrl);
-    
-    // Make websocket available globally for debugging
-    window.websocket = websocket;
-    
-    // Update the connection status display
-    updateConnectionStatusDisplay('connecting', deviceIP);
-    
-    // Set up event handlers
-    websocket.onopen = function() {
-      console.log("✅ WebSocket connected successfully!");
-      isConnecting = false;
-      reconnectAttempts = 0;
-      websocketConnected = true;
-      window.websocketConnected = true; // Global flag for debugging
-      window.websocket = websocket; // Make sure it's globally available
-      
-      // Update connection status display
-      updateConnectionStatusDisplay('connected', deviceIP);
-      
-      // Dispatch connected event
-      try {
-        const wsEvent = new CustomEvent('websocket-connected');
-        document.dispatchEvent(wsEvent);
-        console.log("Dispatched websocket-connected event");
-      } catch (err) {
-        console.error("Error dispatching connect event:", err);
-      }
-      
-      // Request initial data
-      requestPsuStatus();
-      setTimeout(requestOperatingMode, 500);
-      
-      // Also explicitly start the auto-refresh as a backup
-      if (typeof window.startAutoRefresh === 'function') {
-        console.log("Calling startAutoRefresh from onopen event");
-        setTimeout(() => window.startAutoRefresh(), 1000);
-      } else {
-        console.error("window.startAutoRefresh function not available");
-      }
-    };
-    
-    websocket.onclose = function(event) {
-      console.log(`WebSocket closed with code: ${event.code}`);
-      updateConnectionStatusDisplay('disconnected', deviceIP);
-      handleDisconnect();
-    };
-    
-    websocket.onerror = function(error) {
-      console.error("❌ WebSocket error:", error);
-      updateConnectionStatusDisplay('error', deviceIP);
-      handleError(error);
-    };
-    
-    websocket.onmessage = function(event) {
-      handleMessage(event);
-    };
-  } catch (error) {
-    console.error("⚠️ Error creating WebSocket:", error);
-    updateConnectionStatusDisplay('error', getWebSocketIP());
-    handleDisconnect();
-    
-    // Show detailed error
-    alert(`Failed to connect to ${getWebSocketIP()}: ${error.message}`);
-  }
 }
 
 // Handle WebSocket disconnection
@@ -293,73 +198,64 @@ function requestOperatingMode() {
 
 // Modified sendCommand with improved error handling and request tracking
 function sendCommand(command) {
-  // Check if we need to remap action names for backward compatibility
-  if (command.action === 'getOutputState') {
-    console.log("Remapping deprecated action 'getOutputState' to 'powerOutput'");
-    command.action = 'powerOutput';
-  }
-  
-  // Generate a unique ID for this command
-  const commandId = new Date().getTime();
-  const commandWithId = {...command, _id: commandId};
-  
-  // Debug which command is being sent
-  console.log(`🔼 Sending command #${commandId}:`, JSON.stringify(commandWithId));
-  
-  if (!websocket) {
-    console.error("❌ WebSocket not initialized");
-    // Set the connected flag to false since there's no websocket
-    websocketConnected = false;
-    window.websocketConnected = false;
-    
-    // Try to connect
-    initWebSocket();
-    return false;
-  }
-  
-  if (websocket.readyState === WebSocket.OPEN) {
-    try {
-      // Track when the command was sent
-      const commandStr = JSON.stringify(command); // Don't send the ID to the server
-      websocket.send(commandStr);
-      
-      // Ensure the connected flag is set correctly
-      websocketConnected = true;
-      window.websocketConnected = true;
-      
-      // Log success
-      console.log(`✅ Command #${commandId} sent successfully`);
-      return true;
-    } catch (e) {
-      console.error(`❌ Error sending command #${commandId}:`, e);
-      websocketConnected = false;
-      window.websocketConnected = false;
-      return false;
-    }
-  } else {
-    console.log(`⚠️ WebSocket not ready (state: ${websocket.readyState}) for command #${commandId}`);
-    
-    // Update the connection status
-    websocketConnected = false;
-    window.websocketConnected = false;
-    
-    // Also show manual refresh buttons since auto-refresh won't work
-    if (typeof window.showManualRefreshButtons === 'function') {
-      window.showManualRefreshButtons();
+    // Check if we need to remap action names for backward compatibility
+    if (command.action === 'getOutputState') {
+        console.log("Remapping deprecated action 'getOutputState' to 'powerOutput'");
+        command.action = 'powerOutput';
     }
     
-    // Try HTTP fallback for important commands
-    if (command.action !== 'getStatus' && command.action !== 'getOperatingMode') {
-      useFallbackHttp(command);
+    // Use the central sendCommand function if available
+    if (typeof window.sendCommand === 'function') {
+        return window.sendCommand(command);
     }
     
-    // If closed, try to reconnect
-    if (websocket.readyState === WebSocket.CLOSED) {
-      console.log("⚠️ WebSocket closed, attempting to reconnect");
-      initWebSocket();
+    // Fallback implementation if central function not available
+    console.log('Using fallback sendCommand implementation');
+    
+    // Generate a unique ID for this command
+    const commandId = new Date().getTime();
+    const commandWithId = {...command, _id: commandId};
+    
+    // Debug which command is being sent
+    console.log(`🔼 Sending command #${commandId}:`, JSON.stringify(commandWithId));
+    
+    // Use window.websocket instead of local websocket
+    if (!window.websocket) {
+        console.error("❌ WebSocket not initialized");
+        return false;
     }
-    return false;
-  }
+    
+    if (window.websocket.readyState === WebSocket.OPEN) {
+        try {
+            // Track when the command was sent
+            const commandStr = JSON.stringify(command);
+            window.websocket.send(commandStr);
+            
+            // Log success
+            console.log(`✅ Command #${commandId} sent successfully`);
+            return true;
+        } catch (e) {
+            console.error(`❌ Error sending command #${commandId}:`, e);
+            return false;
+        }
+    } else {
+        console.log(`⚠️ WebSocket not ready (state: ${window.websocket.readyState}) for command #${commandId}`);
+        
+        // Try HTTP fallback for important commands
+        if (command.action !== 'getStatus' && command.action !== 'getOperatingMode') {
+            useFallbackHttp(command);
+        }
+        
+        // If closed, try to reconnect
+        if (window.websocket.readyState === WebSocket.CLOSED) {
+            console.log("⚠️ WebSocket closed, attempting to reconnect");
+            // Use the central initWebSocket function
+            if (typeof window.initWebSocket === 'function') {
+                window.initWebSocket();
+            }
+        }
+        return false;
+    }
 }
 
 // Fallback to HTTP API when WebSocket fails

@@ -86,32 +86,111 @@ function initializeKeyLockToggle() {
 function initializeAutoRefresh() {
     console.log("Setting up auto-refresh");
     
-    // Simple implementation that always works
+    // More thorough check for auto-refresh function in global scope
     if (typeof window.startAutoRefresh === 'function') {
+        console.log("Found global startAutoRefresh function");
         setTimeout(window.startAutoRefresh, 1000);
-    } else {
-        console.warn("Auto-refresh function not available");
+        return;
+    }
+    
+    // Check if auto-refresh is already running (by checking the timer)
+    if (window.autoRefreshTimer) {
+        console.log("Auto-refresh timer already exists, no need to initialize");
+        return;
+    }
+    
+    console.log("Auto-refresh function not found in global scope, trying to load module");
+    
+    // Because modules might not support ES module exports, use script tag approach
+    // for more reliable loading across browsers
+    const scriptElement = document.createElement('script');
+    scriptElement.src = 'js/auto_refresh.js';
+    scriptElement.onload = function() {
+        console.log("Auto-refresh script loaded successfully");
+        if (typeof window.startAutoRefresh === 'function') {
+            setTimeout(window.startAutoRefresh, 500);
+        } else {
+            console.error("startAutoRefresh function not found after script load");
+            implementFallbackAutoRefresh();
+        }
+    };
+    scriptElement.onerror = function() {
+        console.error("Failed to load auto_refresh.js");
+        fallbackToOtherModules();
+    };
+    
+    document.head.appendChild(scriptElement);
+    
+    // Try other modules if the primary one fails
+    function fallbackToOtherModules() {
+        console.log("Trying to find auto-refresh in other modules");
         
-        // Provide a basic implementation
+        // Try to load from basic_control.js next
+        Promise.all([
+            import('./basic_control.js').catch(() => null),
+            import('./web_interface.js').catch(() => null)
+        ]).then(modules => {
+            // Check each module for the startAutoRefresh function
+            for (const module of modules) {
+                if (module && typeof module.startAutoRefresh === 'function') {
+                    window.startAutoRefresh = module.startAutoRefresh;
+                    console.log("Auto-refresh function found in imported module");
+                    setTimeout(window.startAutoRefresh, 500);
+                    return;
+                }
+            }
+            
+            // If still not found, provide a basic implementation
+            implementFallbackAutoRefresh();
+        }).catch(error => {
+            console.error("Failed to import modules:", error);
+            implementFallbackAutoRefresh();
+        });
+    }
+    
+    // Fallback implementation if no module provides the function
+    function implementFallbackAutoRefresh() {
+        console.warn("Creating fallback auto-refresh implementation");
+        
         window.startAutoRefresh = function() {
-            console.log("Basic auto-refresh started");
+            console.log("Fallback auto-refresh started");
             
             if (window.autoRefreshTimer) {
                 clearInterval(window.autoRefreshTimer);
             }
             
             window.autoRefreshTimer = setInterval(function() {
+                console.log("Fallback auto-refresh tick");
+                
+                // Try each possible update function
                 if (typeof window.updateAllStatus === 'function') {
                     window.updateAllStatus();
+                } else if (typeof window.refreshPsuStatus === 'function') {
+                    window.refreshPsuStatus();
+                } else if (typeof window.requestPsuStatus === 'function') {
+                    window.requestPsuStatus();
+                } else if (window.sendCommand) {
+                    window.sendCommand({ action: 'getStatus' });
+                } else {
+                    console.warn("No suitable update function found for auto-refresh");
                 }
             }, 5000);
             
-            // Update UI
+            // Define stop function as well
+            window.stopAutoRefresh = function() {
+                if (window.autoRefreshTimer) {
+                    clearInterval(window.autoRefreshTimer);
+                    window.autoRefreshTimer = null;
+                    console.log("Fallback auto-refresh stopped");
+                }
+            };
+            
+            // Update UI indicator
             const indicator = document.getElementById('heartbeat-indicator');
             if (indicator) indicator.classList.remove('hidden');
         };
         
-        // Start it after a delay
+        // Start the fallback auto-refresh after a delay
         setTimeout(window.startAutoRefresh, 1500);
     }
 }
