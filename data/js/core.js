@@ -13,6 +13,23 @@ window.websocket = null;
 window.websocketConnected = false;
 window.autoRefreshTimer = null;
 
+// Add a connection ready promise that other modules can await
+window.websocketReadyPromise = new Promise((resolve) => {
+    window.resolveWebsocketReady = resolve;
+});
+
+// Expose a safe way to use the websocket
+window.whenWebsocketReady = function(callback) {
+    if (window.websocketConnected && window.websocket && 
+        window.websocket.readyState === WebSocket.OPEN) {
+        // If already connected, execute immediately
+        callback();
+    } else {
+        // Otherwise wait for connection
+        window.websocketReadyPromise.then(callback);
+    }
+};
+
 // Default control settings
 const DEFAULT_CONTROL_SETTINGS = {
     voltage: 0,
@@ -26,23 +43,20 @@ let controlSettings = { ...DEFAULT_CONTROL_SETTINGS };
 // Add error handling for importing modules
 window.moduleImportErrors = {};
 
-// Load basic controls with better error handling - make key functions available early
+// Load basic controls with better error handling
 function loadBasicControls() {
     try {
         // Define default versions of key functions to prevent errors until modules load
         window.togglePower = window.togglePower || function(isOn) {
             console.log("Placeholder togglePower called with:", isOn);
-            // Will be replaced when module loads
         };
         
         window.updateAllStatus = window.updateAllStatus || function() {
             console.log("Placeholder updateAllStatus called");
-            // Will be replaced when module loads
         };
         
         window.requestPsuStatus = window.requestPsuStatus || function() {
             console.log("Placeholder requestPsuStatus called");
-            // Will be replaced when module loads
         };
         
         // Load the actual module
@@ -89,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 30000); // Send a ping every 30 seconds
 });
 
-// Improved initializeModules function - provide default implementations
+// Initialize modules
 function initializeModules() {
     // Define placeholders for critical functions
     window.togglePower = function(isOn) {
@@ -145,18 +159,13 @@ function initializeModules() {
         if(module.initSettings) module.initSettings();
     }).catch(err => console.error('Failed to load settings:', err));
     
-    // Import device manager - name remains the same
+    // Import device manager
     import('./device_manager.js').then(module => {
         if(module.initDeviceManager) module.initDeviceManager();
     }).catch(err => console.error('Failed to load device manager:', err));
-    
-    // Remove status_monitor.js import - already commented out
-    
-    // Import other modules as needed
-    // Note: Each module should handle its own initialization
 }
 
-// WebSocket connection functions - improved with better error handling
+// WebSocket connection function
 function initWebSocket() {
     // Get device IP - with fallback to current hostname
     let deviceIP = localStorage.getItem('selectedDeviceIP') || window.location.hostname;
@@ -187,7 +196,7 @@ function initWebSocket() {
     
     try {
         // Create new WebSocket connection
-        console.log(`Creating central WebSocket at: ${wsUrl}`);
+        console.log(`Creating WebSocket connection to ${wsUrl}`);
         updateStatus('connecting', deviceIP);
         
         websocket = new WebSocket(wsUrl);
@@ -198,11 +207,16 @@ function initWebSocket() {
         
         // Setup event handlers
         websocket.onopen = function() {
-            console.log('🟢 WebSocket connected');
+            console.log('WebSocket connected');
             websocketConnected = true;
-            window.websocketConnected = true; // Make sure global flag is set
+            window.websocketConnected = true;
             
             updateStatus('connected', deviceIP);
+            
+            // Resolve the ready promise
+            if (window.resolveWebsocketReady) {
+                window.resolveWebsocketReady();
+            }
             
             // Broadcast connection event to modules
             document.dispatchEvent(new CustomEvent('websocket-connected'));
@@ -220,7 +234,7 @@ function initWebSocket() {
         };
         
         websocket.onclose = function(event) {
-            console.log('🔴 WebSocket disconnected, code:', event.code);
+            console.log('WebSocket disconnected, code:', event.code);
             websocketConnected = false;
             window.websocketConnected = false;
             updateStatus('disconnected', deviceIP);
@@ -238,12 +252,10 @@ function initWebSocket() {
         };
         
         websocket.onerror = function(error) {
-            console.error('⚠️ WebSocket error:', error);
+            console.error('WebSocket error:', error);
             websocketConnected = false;
             window.websocketConnected = false;
             updateStatus('error', deviceIP);
-            
-            // Don't attempt immediate reconnection - let onclose handler do it
         };
         
         websocket.onmessage = function(event) {
@@ -269,7 +281,7 @@ function initWebSocket() {
     }
 }
 
-// Enhanced update status function
+// Update connection status
 function updateStatus(status, deviceIP) {
     const statusElement = document.getElementById('websocket-status');
     const statusIndicator = document.getElementById('websocket-status-indicator');
@@ -317,18 +329,11 @@ function updateStatus(status, deviceIP) {
     }
 }
 
-// Handle incoming messages and route to appropriate modules - IMPROVED VERSION
+// Handle incoming messages
 function handleMessage(event) {
     try {
         const data = JSON.parse(event.data);
         console.log('Received message:', data);
-        
-        // REMOVED: Don't automatically highlight tabs on status updates
-        // if (data.action === 'statusResponse' && data.operatingMode) {
-        //     if (typeof window.highlightActiveOperatingMode === 'function') {
-        //         window.highlightActiveOperatingMode(data.operatingMode);
-        //     }
-        // }
         
         // Special handling for power commands to ensure UI is updated
         if (data.action === 'setOutputStateResponse' || data.action === 'powerOutputResponse') {
@@ -357,10 +362,10 @@ function handleMessage(event) {
     }
 }
 
-// Send a command to the device with improved error handling
+// Send a command to the device
 window.sendCommand = function(command) {
     // Log all commands for debugging
-    console.log('Attempting to send command:', command);
+    console.log('Sending command:', command);
     
     if (!websocket || websocket.readyState !== WebSocket.OPEN) {
         console.error('WebSocket not connected. Current state:', websocket ? websocket.readyState : 'undefined');
@@ -408,9 +413,7 @@ window.sendCommand = function(command) {
 // Expose key functions globally
 window.initWebSocket = initWebSocket;
 
-// Add this check at the end of the file to ensure auto-refresh starts
-
-// Fallback initialization for auto-refresh - updated import path
+// Fallback initialization for auto-refresh
 document.addEventListener('DOMContentLoaded', function() {
     // Check for auto-refresh after 3 seconds
     setTimeout(() => {
@@ -419,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.startAutoRefresh();
             }
         } else {
-            // Try to manually import the basic_control.js module (renamed)
+            // Try to manually import the basic_control.js module
             import('./basic_control.js')
                 .then(module => {
                     if (typeof module.startAutoRefresh === 'function') {
@@ -434,148 +437,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 3000);
 });
 
-/**
- * Core functionality for XY-SK120 Power Supply Control
- */
-
-// Track WebSocket connection status for proper debugging
+// Track WebSocket connection status
 window.lastWebSocketMessage = 0; 
-
-// Store the original WebSocket constructor if not already stored
-if (typeof window.OriginalWebSocket === 'undefined') {
-    window.OriginalWebSocket = WebSocket;
-    
-    // Override WebSocket constructor to track connections
-    window.WebSocket = function(url, protocols) {
-        console.log(`Creating WebSocket connection to ${url}`);
-        
-        // Create the actual WebSocket instance
-        const ws = new window.OriginalWebSocket(url, protocols);
-        
-        // Store the global reference to use for debugging
-        window.socket = ws;
-        
-        // Track the last message timestamp
-        ws.addEventListener('message', function() {
-            window.lastWebSocketMessage = Date.now();
-            
-            // Also update the UI indicator if it exists
-            const indicator = document.getElementById('websocket-status-indicator');
-            if (indicator) {
-                indicator.classList.remove('bg-gray-300', 'bg-red-500');
-                indicator.classList.add('bg-green-500');
-            }
-            
-            // Update text status if it exists
-            const statusText = document.getElementById('websocket-status');
-            if (statusText) {
-                statusText.textContent = 'Connected';
-            }
-        });
-        
-        // Handle connection open
-        ws.addEventListener('open', function() {
-            console.log('WebSocket connection established');
-            window.lastWebSocketMessage = Date.now();
-            
-            // Update UI if it exists
-            const indicator = document.getElementById('websocket-status-indicator');
-            if (indicator) {
-                indicator.classList.remove('bg-gray-300', 'bg-red-500');
-                indicator.classList.add('bg-green-500');
-            }
-            
-            // Update text status if it exists
-            const statusText = document.getElementById('websocket-status');
-            if (statusText) {
-                statusText.textContent = 'Connected';
-            }
-            
-            // Dispatch event
-            document.dispatchEvent(new CustomEvent('websocket-state-change', { detail: 'Connected' }));
-        });
-        
-        // Handle connection close
-        ws.addEventListener('close', function() {
-            console.log('WebSocket connection closed');
-            
-            // Update UI if it exists
-            const indicator = document.getElementById('websocket-status-indicator');
-            if (indicator) {
-                indicator.classList.remove('bg-gray-300', 'bg-green-500');
-                indicator.classList.add('bg-red-500');
-            }
-            
-            // Update text status if it exists
-            const statusText = document.getElementById('websocket-status');
-            if (statusText) {
-                statusText.textContent = 'Disconnected';
-            }
-            
-            // Dispatch event
-            document.dispatchEvent(new CustomEvent('websocket-state-change', { detail: 'Disconnected' }));
-        });
-        
-        // Handle errors
-        ws.addEventListener('error', function(error) {
-            console.error('WebSocket error:', error);
-            
-            // Update UI if it exists
-            const indicator = document.getElementById('websocket-status-indicator');
-            if (indicator) {
-                indicator.classList.remove('bg-gray-300', 'bg-green-500');
-                indicator.classList.add('bg-red-500');
-            }
-            
-            // Update text status if it exists
-            const statusText = document.getElementById('websocket-status');
-            if (statusText) {
-                statusText.textContent = 'Error';
-            }
-            
-            // Dispatch event
-            document.dispatchEvent(new CustomEvent('websocket-error', { detail: error }));
-        });
-        
-        return ws;
-    };
-    
-    // Copy over static properties
-    for (const prop in window.OriginalWebSocket) {
-        if (window.OriginalWebSocket.hasOwnProperty(prop)) {
-            window.WebSocket[prop] = window.OriginalWebSocket[prop];
-        }
-    }
-    
-    console.log("WebSocket tracking initialized");
-}
-
-// Initialize WebSocket connection (if not already defined)
-if (typeof window.initWebSocket !== 'function') {
-    window.initWebSocket = function() {
-        // Close existing connection if any
-        if (window.socket && window.socket.readyState < 2) {
-            window.socket.close();
-        }
-        
-        try {
-            // Determine host from current location by default
-            const host = window.location.hostname;
-            const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
-            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsURL = `${wsProtocol}//${host}:${port}/ws`;
-            
-            console.log(`Connecting to WebSocket: ${wsURL}`);
-            window.socket = new WebSocket(wsURL);
-            
-            // Already have event handlers from our WebSocket constructor override
-            return true;
-        } catch (error) {
-            console.error("Error establishing WebSocket connection:", error);
-            return false;
-        }
-    };
-}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {

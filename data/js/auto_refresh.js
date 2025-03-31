@@ -7,6 +7,11 @@
 // AVOID REDECLARING GLOBAL VARIABLES
 window.autoRefreshInterval = window.autoRefreshInterval || 5000;
 
+// Check if variable already exists before declaring
+if (typeof window.autoRefreshTimer === 'undefined') {
+    window.autoRefreshTimer = null;
+}
+
 // Define the auto-refresh function in the global scope immediately
 window.startAutoRefresh = function() {
     // Check if auto-refresh is already running

@@ -62,7 +62,6 @@ function initWebSocket() {
 function handleDisconnect() {
   console.log('WebSocket disconnected');
   isConnecting = false;
-  websocketConnected = false;
   window.websocketConnected = false;
   
   // Make sure websocket object is also nulled in the window
@@ -399,7 +398,7 @@ function startPeriodicUpdates() {
     console.log("⏱️ Starting periodic updates");
     
     // Initially try HTTP if WebSocket isn't connected
-    if (!websocketConnected) {
+    if (!window.websocketConnected) {
         console.log("ℹ️ WebSocket not connected, using HTTP for initial data");
         fetch('/api/data')
             .then(response => response.json())
@@ -412,7 +411,7 @@ function startPeriodicUpdates() {
     
     // Set up recurring updates with WebSocket or HTTP fallback
     setInterval(() => {
-        if (websocketConnected) {
+        if (window.websocketConnected) {
             // Always use the unified status update function
             window.updateAllStatus();
         } else {
@@ -423,7 +422,7 @@ function startPeriodicUpdates() {
             }
             
             // Use HTTP fallback if not connected
-            if (!websocketConnected) {
+            if (!window.websocketConnected) {
                 console.log("ℹ️ Using HTTP fallback for status update");
                 fetch('/api/data')
                     .then(response => response.json())
@@ -543,7 +542,6 @@ export {
   requestOperatingMode, 
   updateOperatingModeDisplay, 
   updateModeSettingsDisplay,
-  websocketConnected,
   startPeriodicUpdates,
   connectToDevice,
   getWebSocketIP

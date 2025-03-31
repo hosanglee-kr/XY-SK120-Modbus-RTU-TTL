@@ -76,116 +76,92 @@ let timers = {
 // Expose timers globally for debugging
 window.psuTimers = timers;
 
-// Start auto-refresh timer to update status every second - Improved with better error handling
+// Start auto-refresh timer to update status every second - Improved with better connection readiness check
 function startAutoRefresh() {
-    console.log("🔄 Starting auto-refresh (5-second interval)");
+    console.log("🔄 Attempting to start auto-refresh");
     
     // Clear any existing timer first
     stopAutoRefresh();
     
-    // First check if we're connected - or try to reconnect
-    if (!window.websocketConnected || 
-        !window.websocket || 
-        window.websocket.readyState !== WebSocket.OPEN) {
+    // Use our new connection readiness check
+    window.whenWebsocketReady(() => {
+        console.log("WebSocket ready, starting auto-refresh timer");
         
-        console.log("⚠️ WebSocket not connected, attempting to reconnect before starting auto-refresh");
+        // First do an immediate status update
+        try {
+            updateAllStatus();
+        } catch (err) {
+            console.error("Error in initial status update:", err);
+        }
         
-        if (typeof window.initWebSocket === 'function') {
-            // Try to reconnect
-            window.initWebSocket();
+        // Set up new timer for auto-refresh - Use our timer object structure
+        timers.autoRefresh = setInterval(() => {
+            // Debug in case the timer is running but updates aren't happening
+            console.log("⏱️ Auto-refresh tick - checking connection status:", window.websocketConnected);
             
-            // Check if we managed to connect after a short delay
-            setTimeout(() => {
-                if (window.websocketConnected) {
-                    console.log("WebSocket reconnected successfully, starting auto-refresh");
-                    startAutoRefresh(); // Call ourselves again now that we're connected
-                } else {
-                    console.log("⚠️ Could not reconnect WebSocket, auto-refresh disabled");
-                    showManualRefreshButtons();
+            // Double-check that websocket is defined and connected
+            if (window.websocket && window.websocket.readyState === WebSocket.OPEN) {
+                console.log("Sending status update via auto-refresh");
+                try {
+                    updateAllStatus();
+                } catch (err) {
+                    console.error("Error in auto-refresh status update:", err);
                 }
-            }, 1000);
-        } else {
-            console.log("⚠️ initWebSocket function not available, cannot reconnect");
-            showManualRefreshButtons();
-        }
-        
-        return;
-    }
-    
-    // First do an immediate status update
-    try {
-        updateAllStatus();
-    } catch (err) {
-        console.error("Error in initial status update:", err);
-    }
-    
-    // Set up new timer for auto-refresh - Use our timer object structure
-    timers.autoRefresh = setInterval(() => {
-        // Debug in case the timer is running but updates aren't happening
-        console.log("⏱️ Auto-refresh tick - checking connection status:", window.websocketConnected);
-        
-        // Double-check that websocket is defined and connected
-        if (window.websocket && window.websocket.readyState === WebSocket.OPEN) {
-            console.log("Sending status update via auto-refresh");
-            try {
-                updateAllStatus();
-            } catch (err) {
-                console.error("Error in auto-refresh status update:", err);
-            }
-        } else if (window.websocketConnected) {
-            // If flag says connected but socket doesn't exist or isn't open
-            console.log("⚠️ websocketConnected flag is true but socket is not ready");
-            window.websocketConnected = false;
-            stopAutoRefresh();
-            
-            // Try to re-initialize websocket
-            if (typeof window.initWebSocket === 'function') {
-                console.log("Attempting to reconnect WebSocket");
-                window.initWebSocket();
+            } else if (window.websocketConnected) {
+                // If flag says connected but socket doesn't exist or isn't open
+                console.log("⚠️ websocketConnected flag is true but socket is not ready");
+                window.websocketConnected = false;
+                stopAutoRefresh();
                 
-                // Restart auto-refresh after a delay if reconnection succeeds
-                setTimeout(() => {
-                    if (window.websocketConnected) {
-                        startAutoRefresh();
-                    }
-                }, 2000);
-            }
-        } else {
-            console.log("❌ WebSocket disconnected, pausing auto-refresh");
-            stopAutoRefresh();
-            
-            // Show manual refresh buttons
-            showManualRefreshButtons();
-            
-            // Try to reconnect
-            if (typeof window.initWebSocket === 'function') {
-                console.log("Attempting to reconnect WebSocket");
-                window.initWebSocket();
+                // Try to re-initialize websocket
+                if (typeof window.initWebSocket === 'function') {
+                    console.log("Attempting to reconnect WebSocket");
+                    window.initWebSocket();
+                    
+                    // Restart auto-refresh after a delay if reconnection succeeds
+                    setTimeout(() => {
+                        if (window.websocketConnected) {
+                            startAutoRefresh();
+                        }
+                    }, 2000);
+                }
+            } else {
+                console.log("❌ WebSocket disconnected, pausing auto-refresh");
+                stopAutoRefresh();
                 
-                // Restart auto-refresh after a delay if reconnection succeeds
-                setTimeout(() => {
-                    if (window.websocketConnected) {
-                        startAutoRefresh();
-                    }
-                }, 2000);
+                // Show manual refresh buttons
+                showManualRefreshButtons();
+                
+                // Try to reconnect
+                if (typeof window.initWebSocket === 'function') {
+                    console.log("Attempting to reconnect WebSocket");
+                    window.initWebSocket();
+                    
+                    // Restart auto-refresh after a delay if reconnection succeeds
+                    setTimeout(() => {
+                        if (window.websocketConnected) {
+                            startAutoRefresh();
+                        }
+                    }, 2000);
+                }
             }
+        }, 5000); // Update every 5 seconds
+        
+        // Also store in window for backward compatibility
+        window.autoRefreshTimer = timers.autoRefresh;
+        
+        // Hide manual refresh buttons since we don't need them anymore
+        hideManualRefreshButtons();
+        
+        // Show the auto-refresh indicator
+        const indicator = document.querySelector('.auto-refresh-indicator');
+        if (indicator) {
+            console.log("Making auto-refresh indicator visible");
+            indicator.style.display = 'flex';
+        } else {
+            console.warn("Auto-refresh indicator element not found");
         }
-    }, 5000); // Update every 5 seconds
-    
-    // Also store in window for backward compatibility
-    window.autoRefreshTimer = timers.autoRefresh;
-    
-    // Hide manual refresh buttons since we don't need them anymore
-    hideManualRefreshButtons();
-    
-    // Show the auto-refresh indicator
-    const indicator = document.querySelector('.auto-refresh-indicator');
-    if (indicator) {
-        console.log("Making auto-refresh indicator visible");
-        indicator.style.display = 'flex';
-    } else {
-        console.warn("Auto-refresh indicator element not found");
-    }
+    });
 }
 
 // Stop auto-refresh timer - updated to handle all timers
