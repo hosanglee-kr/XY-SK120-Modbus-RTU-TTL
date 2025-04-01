@@ -217,10 +217,15 @@ function addAdvancedAnimationElements() {
             particle.setAttribute('r', 0.8 + Math.random() * 0.5);
             particle.setAttribute('fill', i % 2 === 0 ? '#64ff00' : '#fff500');
             particle.setAttribute('opacity', '0');
+            
+            // Fix: Add particle to the group
             particlesGroup.appendChild(particle);
         }
         
-        boltIcon.appendChild(particlesGroup);
+        // Fix: Add the group to the SVG
+        if (boltIcon) {
+            boltIcon.appendChild(particlesGroup);
+        }
     }
     
     // Check if power circles exist

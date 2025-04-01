@@ -213,15 +213,18 @@ function showManualRefreshButtons() {
     });
 }
 
-// Set up power toggle functionality - FIXED VERSION
+// Set up power toggle functionality - CONSOLIDATED VERSION
 function setupPowerToggle() {
     const powerToggle = document.getElementById('power-toggle');
     if (powerToggle) {
         console.log("Found power toggle element, setting up event handler");
         
-        // Fix: Explicitly add the change event listener
-        powerToggle.addEventListener('change', function() {
-            // Only call togglePower when the user actually interacts with the switch
+        // Remove existing listeners to prevent duplicates
+        const newPowerToggle = powerToggle.cloneNode(true);
+        powerToggle.parentNode.replaceChild(newPowerToggle, powerToggle);
+        
+        // Add the change event listener
+        newPowerToggle.addEventListener('change', function() {
             console.log("Power toggle changed by user to:", this.checked);
             togglePower(this.checked);
         });
@@ -230,6 +233,30 @@ function setupPowerToggle() {
         setTimeout(syncPowerToggleWithActualState, 1000);
     } else {
         console.error("Power toggle element not found in the DOM");
+    }
+}
+
+// Central implementation of togglePower - All code should use this
+export function togglePower(isOn) {
+    console.log("togglePower called with:", isOn);
+    
+    try {
+        const command = { 
+            action: 'powerOutput',
+            enable: isOn
+        };
+        console.log("Sending power command:", JSON.stringify(command));
+        
+        // Send the command
+        const result = sendCommand(command);
+        
+        // Update UI for immediate feedback
+        updateOutputStatusDisplay(isOn);
+        
+        return result;
+    } catch (error) {
+        console.error("Error in togglePower:", error);
+        return false;
     }
 }
 
@@ -704,30 +731,6 @@ export function requestPsuStatus() {
 export function requestOperatingMode() {
     console.log("Requesting operating mode status");
     return sendCommand({ action: 'getOperatingMode' });
-}
-
-// Add missing togglePower function
-export function togglePower(isOn) {
-    console.log("togglePower called with:", isOn);
-    
-    try {
-        const command = { 
-            action: 'powerOutput',
-            enable: isOn
-        };
-        console.log("Sending power command:", JSON.stringify(command));
-        
-        // Send the command
-        const result = sendCommand(command);
-        
-        // Update UI for immediate feedback
-        updateOutputStatusDisplay(isOn);
-        
-        return result;
-    } catch (error) {
-        console.error("Error in togglePower:", error);
-        return false;
-    }
 }
 
 // Add missing updateAllStatus function - improved with better error handling

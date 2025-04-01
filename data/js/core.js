@@ -362,7 +362,7 @@ function handleMessage(event) {
     }
 }
 
-// Send a command to the device
+// Send a command to the device - CONSOLIDATED VERSION
 window.sendCommand = function(command) {
     // Log all commands for debugging
     console.log('Sending command:', command);
@@ -410,8 +410,9 @@ window.sendCommand = function(command) {
     }
 }
 
-// Expose key functions globally
+// Expose key functions globally (consolidated exports)
 window.initWebSocket = initWebSocket;
+window.sendCommand = window.sendCommand || sendCommand;
 
 // Fallback initialization for auto-refresh
 document.addEventListener('DOMContentLoaded', function() {

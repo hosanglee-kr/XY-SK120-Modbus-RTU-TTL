@@ -57,7 +57,7 @@ window.addLogMessage = function(message, type = "info", data = null) {
             formattedMessage = message;
     }
     
-    // Build log entry HTML
+    // Always include timestamp in the log entry
     logEntry.innerHTML = `
         <span class="text-xs text-gray-500 dark:text-gray-400">${timestamp}</span>
         <span class="${messageClass}">${formattedMessage}</span>
@@ -122,15 +122,7 @@ window.setupLogViewer = function() {
         logViewer.innerHTML = `
             <div class="flex justify-between items-center mb-2">
                 <div class="flex items-center space-x-3 text-sm">
-                    <h3 class="font-medium text-gray-800 dark:text-white">Logs</h3>
-                    <label class="flex items-center">
-                        <input id="show-timestamp" type="checkbox" checked class="form-checkbox h-3 w-3 text-secondary">
-                        <span class="ml-1 text-xs text-gray-700 dark:text-gray-300">Time</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input id="show-ip" type="checkbox" checked class="form-checkbox h-3 w-3 text-secondary">
-                        <span class="ml-1 text-xs text-gray-700 dark:text-gray-300">IPs</span>
-                    </label>
+                    <h3 class="font-medium text-gray-800 dark:text-white">WebSocket Logs</h3>
                 </div>
                 <div class="flex items-center space-x-2">
                     <button id="log-pause" class="p-1 text-secondary" title="Pause">
@@ -147,12 +139,6 @@ window.setupLogViewer = function() {
                     <button id="log-clear" class="p-1 text-gray-500" title="Clear logs">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                    </button>
-                    <button id="log-copy" class="p-1 text-secondary" title="Copy logs">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
                         </svg>
                     </button>
                     <button id="log-close" class="p-1 text-gray-500" title="Close logs">
@@ -184,7 +170,6 @@ window.setupLogViewer = function() {
     const clearBtn = document.getElementById('log-clear');
     const pauseBtn = document.getElementById('log-pause');
     const resumeBtn = document.getElementById('log-resume');
-    const copyBtn = document.getElementById('log-copy');
     
     if (closeBtn) {
         closeBtn.addEventListener('click', function() {
@@ -214,21 +199,6 @@ window.setupLogViewer = function() {
             window.logsPaused = false;
             resumeBtn.classList.add('hidden');
             pauseBtn.classList.remove('hidden');
-        });
-    }
-    
-    if (copyBtn) {
-        copyBtn.addEventListener('click', function() {
-            const logText = logs.innerText;
-            navigator.clipboard.writeText(logText)
-                .then(() => {
-                    console.log('Logs copied to clipboard');
-                    alert('Logs copied to clipboard');
-                })
-                .catch(err => {
-                    console.error('Error copying logs: ', err);
-                    alert('Failed to copy logs: ' + err);
-                });
         });
     }
     

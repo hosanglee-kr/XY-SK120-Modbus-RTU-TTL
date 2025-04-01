@@ -44,21 +44,13 @@ function initializeUIComponents() {
 
 // Initialize power toggle functionality
 function initializePowerToggle() {
-    const powerToggle = document.getElementById('power-toggle');
-    if (powerToggle) {
-        console.log("Power toggle found, setting up event listener");
-        
-        // Add the new event handler
-        powerToggle.addEventListener('change', function() {
-            console.log("Power toggle changed to:", this.checked);
-            if (typeof togglePower === 'function') {
-                togglePower(this.checked);
-            } else {
-                console.error("togglePower function not found");
-            }
-        });
+    // This is now just a wrapper around the setupPowerToggle function in basic_control.js
+    // to avoid duplicating the event listener setup logic
+    if (typeof window.setupPowerToggle === 'function') {
+        window.setupPowerToggle();
     } else {
-        console.warn("Power toggle element not found in DOM");
+        console.log("Deferring power toggle setup to basic_control.js");
+        // Will be handled by basic_control.js when it loads
     }
 }
 

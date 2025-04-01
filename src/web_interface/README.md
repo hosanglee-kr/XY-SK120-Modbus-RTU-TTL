@@ -91,12 +91,11 @@ The interface provides a built-in WebSocket communication logger for debugging:
 2. The log viewer shows:
    - Messages sent from browser to device (blue)
    - Messages received from device (green)
-   - Timestamps and IP addresses (optional)
+   - Timestamps are automatically included
    
 3. Controls:
    - Pause/Resume: Temporarily halt logging
    - Clear: Remove all current logs
-   - Copy: Copy logs to clipboard
    - Close: Hide the log viewer
 
 ### Browser Console Debugging

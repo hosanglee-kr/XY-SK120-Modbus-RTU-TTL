@@ -330,7 +330,6 @@ window.setupLogViewer = function() {
     const clearBtn = document.getElementById('log-clear');
     const pauseBtn = document.getElementById('log-pause');
     const resumeBtn = document.getElementById('log-resume');
-    const copyBtn = document.getElementById('log-copy');
     
     if (closeBtn) {
         closeBtn.addEventListener('click', function() {
@@ -363,21 +362,6 @@ window.setupLogViewer = function() {
         });
     }
     
-    if (copyBtn) {
-        copyBtn.addEventListener('click', function() {
-            const logText = logs.innerText;
-            navigator.clipboard.writeText(logText)
-                .then(() => {
-                    console.log('Logs copied to clipboard');
-                    alert('Logs copied to clipboard');
-                })
-                .catch(err => {
-                    console.error('Error copying logs: ', err);
-                    alert('Failed to copy logs: ' + err);
-                });
-        });
-    }
-    
     // Check localStorage for previous state
     const showLogs = localStorage.getItem('showLogs') === 'true';
     if (showLogs) {
@@ -397,7 +381,26 @@ function populateSettingsTabs() {
 
 // Add a global function to apply the theme from localStorage (called on page load)
 window.applyThemeFromStorage = function() {
-    // ...existing code...
+    // Check for saved theme preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Apply the appropriate theme
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.documentElement.classList.add('dark');
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#111827');
+    } else {
+        document.documentElement.classList.remove('dark');
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#ffffff');
+    }
+    
+    // Update any toggle elements
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (darkModeToggle) {
+        darkModeToggle.checked = document.documentElement.classList.contains('dark');
+    }
+    
+    console.log("Theme applied from storage:", document.documentElement.classList.contains('dark') ? 'dark' : 'light');
 };
 
 // Call the function to apply theme when the script loads
