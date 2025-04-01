@@ -88,11 +88,21 @@ function loadBasicControls() {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Import and initialize all modules
+    console.log('DOM loaded, initializing core functionality');
+    
+    // Listen for splash screen completion
+    document.addEventListener('splash-screen-hidden', function() {
+        console.log('Splash screen animation complete, initializing UI');
+        if (typeof window.initializeUI === 'function') {
+            window.initializeUI();
+        }
+    });
+
+    // Initialize core functionality
     initializeModules();
     
-    // Setup base WebSocket connection
-    setTimeout(initWebSocket, 500);
+    // Setup base WebSocket connection with a delay
+    setTimeout(initWebSocket, 1000);
     
     // Add a ping mechanism to keep the connection alive
     setInterval(() => {

@@ -162,8 +162,29 @@
       })();
     </script>
     
-    <!-- anime.js - Animation library -->
+    <!-- anime.js - Animation library needs to be loaded as a regular script first -->
     <script src="js/lib/anime.min.js"></script>
+    
+    <!-- Then import the splash module as a module after anime.js is loaded -->
+    <script type="module">
+        import { initSplashAnimation, updateSplashProgress } from '/js/splash.js';
+        
+        // Make functions globally available
+        window.splashAnimation = {
+            init: initSplashAnimation,
+            updateProgress: updateSplashProgress
+        };
+        
+        // Track loading progress
+        window.addEventListener('load', () => {
+            updateSplashProgress(100, 'Application loaded!');
+        });
+        
+        // Initialize the splash animation after a very short delay
+        setTimeout(() => {
+            initSplashAnimation();
+        }, 50);
+    </script>
     
     <!-- CSS files loaded after splash is displayed -->
     <link rel="stylesheet" href="css/tailwind.css">
