@@ -1,10 +1,22 @@
 /**
  * Animated Splash Screen using anime.js
  * Creates dynamic loading animations for the XY-SK120 splash screen
+ * This is the ONLY splash animation file - consolidating all functionality
  */
 
 // Define the bolt animation globally so it can be referenced later
 let boltAnimation = null;
+
+// Configuration for splash animation
+const SPLASH_CONFIG = {
+    minDisplayTime: 2000,      // Minimum time splash is shown (ms)
+    fadeOutDuration: 500,      // Duration of fade out animation (ms)
+    progressStartWidth: 30,    // Starting width for progress bar (%)
+    progressEndWidth: 100      // Final width for progress bar (%)
+};
+
+// Track when the splash screen was first shown
+const splashStartTime = Date.now();
 
 // Setup splash animation immediately
 (function() {
@@ -16,6 +28,20 @@ let boltAnimation = null;
         splashScreen.style.opacity = '1';
         splashScreen.style.visibility = 'visible';
     }
+    
+    // Make sure global app loading state object exists
+    window.appLoadingState = window.appLoadingState || {
+        componentsLoaded: false,
+        coreScriptsLoaded: false,
+        connectionEstablished: false,
+        animationComplete: false
+    };
+
+    // Track when the splash screen was first shown
+    window.splashStartTime = Date.now();
+    
+    // Minimum display time in milliseconds
+    window.splashMinDisplayTime = 3000;
 })();
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -25,17 +51,49 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof anime === 'undefined') {
         console.error('Anime.js is not loaded! Using fallback animations');
         setupFallbackAnimations();
+    } else {
+        // Initialize the animations
+        initSplashAnimation();
     }
+    
+    // Listen for component loading completion
+    document.addEventListener('components-loaded', function() {
+        console.log('All components loaded, updating splash screen');
+        updateSplashStatus("UI components loaded");
+        window.appLoadingState.componentsLoaded = true;
+        updateProgress();
+        checkAndHideSplashScreen();
+    });
+    
+    // Listen for core script loading completion
+    document.addEventListener('core-scripts-loaded', function() {
+        console.log('Core scripts loaded, updating splash screen');
+        updateSplashStatus("Core scripts loaded");
+        window.appLoadingState.coreScriptsLoaded = true;
+        updateProgress();
+        checkAndHideSplashScreen();
+    });
+    
+    // Listen for WebSocket connection
+    document.addEventListener('websocket-connected', function() {
+        console.log('WebSocket connected, updating splash screen');
+        updateSplashStatus("Connected to device");
+        window.appLoadingState.connectionEstablished = true;
+        updateProgress();
+    });
 });
 
 // Setup fallback animations using CSS if anime.js fails to load
 function setupFallbackAnimations() {
     // Add fallback CSS classes to the elements
-    document.getElementById('bolt-icon').classList.add('fallback-fade-in');
-    document.getElementById('splash-status').classList.add('fallback-fade-in');
+    const boltIcon = document.getElementById('bolt-icon');
+    const statusText = document.getElementById('splash-status');
+    const progressBar = document.getElementById('progress-bar');
+    
+    if (boltIcon) boltIcon.classList.add('fallback-fade-in');
+    if (statusText) statusText.classList.add('fallback-fade-in');
     
     // Add basic CSS animation for progress bar
-    const progressBar = document.getElementById('progress-bar');
     if (progressBar) {
         progressBar.classList.add('fallback-progress');
     }
@@ -43,6 +101,7 @@ function setupFallbackAnimations() {
     // Still dispatch the animation complete event
     setTimeout(() => {
         document.dispatchEvent(new CustomEvent('splash-animation-complete'));
+        window.appLoadingState.animationComplete = true;
     }, 1000);
 }
 
@@ -87,7 +146,7 @@ function animateBolt() {
     return boltAnimation;
 }
 
-// Initialize the splash screen animation - this function will be called by splash_screen.js
+// Initialize the splash screen animation
 function initSplashAnimation() {
     console.log("Initializing splash animations with anime.js");
     
@@ -189,6 +248,8 @@ function initSplashAnimation() {
             console.log('Initial splash animation complete');
             // Dispatch event that splash animation is ready for content to load
             document.dispatchEvent(new CustomEvent('splash-animation-complete'));
+            window.appLoadingState.animationComplete = true;
+            updateProgress();
         }
     });
     
@@ -402,37 +463,135 @@ function updateSplashStatus(message) {
     }
 }
 
+// Update progress based on loading state
+function updateProgress() {
+    let progress = 30; // Start at 30% (initial animation already showed this)
+    
+    // Calculate progress based on loading state
+    if (window.appLoadingState.animationComplete) progress += 10;
+    if (window.appLoadingState.componentsLoaded) progress += 30;
+    if (window.appLoadingState.coreScriptsLoaded) progress += 20;
+    if (window.appLoadingState.connectionEstablished) progress += 10;
+    
+    // Cap at 100%
+    progress = Math.min(progress, 100);
+    
+    const progressBar = document.getElementById('progress-bar');
+    if (progressBar && typeof anime !== 'undefined') {
+        anime({
+            targets: progressBar,
+            width: progress + '%',
+            easing: 'easeInOutQuad',
+            duration: 300
+        });
+    } else if (progressBar) {
+        progressBar.style.width = progress + '%';
+    }
+}
+
+// Check conditions and hide splash screen if appropriate
+function checkAndHideSplashScreen() {
+    if (window.appLoadingState.componentsLoaded && 
+        window.appLoadingState.coreScriptsLoaded) {
+        
+        updateSplashStatus("Application ready!");
+        
+        // Calculate how long the splash screen has been displayed
+        const currentTime = Date.now();
+        const elapsedTime = currentTime - window.splashStartTime;
+        
+        // If we haven't displayed for minimum time, wait until we have
+        if (elapsedTime < window.splashMinDisplayTime) {
+            const remainingTime = window.splashMinDisplayTime - elapsedTime;
+            console.log(`Splash screen displayed for ${elapsedTime}ms, waiting another ${remainingTime}ms to meet minimum time`);
+            setTimeout(hideSplashScreen, remainingTime);
+        } else {
+            // We've already shown the splash screen for the minimum time
+            console.log(`Splash screen already displayed for ${elapsedTime}ms, can hide now`);
+            setTimeout(hideSplashScreen, 200); // Small delay for visual smoothness
+        }
+    }
+}
+
 // Function to hide splash screen with animation
-function hideSplashScreenWithAnimation() {
+function hideSplashScreen() {
     const splashScreen = document.getElementById('splash-screen');
     if (!splashScreen) return;
     
-    // If anime.js is not available, use CSS transition
-    if (typeof anime === 'undefined') {
-        splashScreen.classList.add('splash-hidden');
-        return;
-    }
+    console.log("Hiding splash screen");
     
-    // Create a slick exit animation
-    anime({
-        targets: splashScreen,
-        opacity: [1, 0],
-        scale: [1, 1.05],
-        easing: 'easeInOutQuad',
-        duration: 600,
-        complete: function() {
-            splashScreen.style.display = 'none';
-            
-            // Stop bolt animation if it exists
-            if (boltAnimation) {
-                boltAnimation.pause();
-            }
+    // Use anime.js for a more elegant exit animation if available
+    if (typeof anime !== 'undefined') {
+        // Pause any running animations
+        if (window.splashAnimations && typeof window.splashAnimations.pauseAll === 'function') {
+            window.splashAnimations.pauseAll();
         }
-    });
+        
+        // Final animation sequence
+        anime({
+            targets: splashScreen,
+            opacity: [1, 0],
+            scale: [1, 1.05],
+            easing: 'easeOutQuad',
+            duration: 600,
+            complete: function() {
+                splashScreen.style.display = 'none';
+                
+                // Fire an event indicating splash screen is hidden
+                document.dispatchEvent(new CustomEvent('splash-screen-hidden'));
+            }
+        });
+    } else {
+        // Fallback to CSS transitions
+        splashScreen.style.transition = `opacity ${SPLASH_CONFIG.fadeOutDuration}ms ease-out`;
+        splashScreen.style.opacity = "0";
+        
+        // Hide completely after animation finishes
+        setTimeout(() => {
+            splashScreen.style.display = "none";
+            // Fire an event indicating splash screen is hidden
+            document.dispatchEvent(new CustomEvent('splash-screen-hidden'));
+        }, SPLASH_CONFIG.fadeOutDuration);
+    }
 }
 
-// Export functions
+// Function to update splash progress percentage
+function updateSplashProgress(percent, message) {
+    const progressBar = document.getElementById('progress-bar');
+    const statusText = document.getElementById('splash-status');
+    
+    // Validate percentage
+    const validPercent = Math.min(Math.max(percent, 0), 100);
+    
+    // Update progress bar width
+    if (progressBar) {
+        if (typeof anime !== 'undefined') {
+            anime({
+                targets: progressBar,
+                width: `${validPercent}%`,
+                easing: 'easeInOutQuad',
+                duration: 300
+            });
+        } else {
+            progressBar.style.transition = "width 0.3s ease-out";
+            progressBar.style.width = `${validPercent}%`;
+        }
+    }
+    
+    // Update status message if provided
+    if (statusText && message) {
+        statusText.textContent = message;
+    }
+}
+
+// Skip the splash animation
+function skipSplashAnimation() {
+    hideSplashScreen();
+}
+
+// Make functions globally available
 window.initSplashAnimation = initSplashAnimation;
-window.hideSplashScreenWithAnimation = hideSplashScreenWithAnimation;
-window.animateBolt = animateBolt;
-window.updateSplashStatusWithAnimation = updateSplashStatus;
+window.updateSplashStatus = updateSplashStatus;
+window.hideSplashScreen = hideSplashScreen;
+window.updateSplashProgress = updateSplashProgress;
+window.skipSplashAnimation = skipSplashAnimation;

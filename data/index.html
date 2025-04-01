@@ -165,26 +165,8 @@
     <!-- anime.js - Animation library needs to be loaded as a regular script first -->
     <script src="js/lib/anime.min.js"></script>
     
-    <!-- Then import the splash module as a module after anime.js is loaded -->
-    <script type="module">
-        import { initSplashAnimation, updateSplashProgress } from '/js/splash.js';
-        
-        // Make functions globally available
-        window.splashAnimation = {
-            init: initSplashAnimation,
-            updateProgress: updateSplashProgress
-        };
-        
-        // Track loading progress
-        window.addEventListener('load', () => {
-            updateSplashProgress(100, 'Application loaded!');
-        });
-        
-        // Initialize the splash animation after a very short delay
-        setTimeout(() => {
-            initSplashAnimation();
-        }, 50);
-    </script>
+    <!-- Only load splash_animation.js - which has the circles animation -->
+    <script src="js/splash_animation.js"></script>
     
     <!-- CSS files loaded after splash is displayed -->
     <link rel="stylesheet" href="css/tailwind.css">
@@ -633,10 +615,6 @@
         });
     </script>
 
-    <!-- Load splash scripts first -->
-    <script src="js/splash_animation.js"></script>
-    <script src="js/splash_screen.js"></script>
-    
     <!-- JavaScript files - Fix loading order and prevent duplicates -->
     <script>
         // Immediately start simple animation for the bolt
