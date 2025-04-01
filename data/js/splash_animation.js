@@ -3,6 +3,9 @@
  * Creates dynamic loading animations for the XY-SK120 splash screen
  */
 
+// Define the bolt animation globally so it can be referenced later
+let boltAnimation = null;
+
 // Setup splash animation immediately
 (function() {
     console.log("Splash animation immediate setup");
@@ -43,9 +46,53 @@ function setupFallbackAnimations() {
     }, 1000);
 }
 
+// Initialize bolt animation with power colors
+function animateBolt() {
+    // Only run if anime.js is available
+    if (typeof anime === 'undefined') {
+        console.warn('anime.js not available, skipping bolt animation');
+        return null;
+    }
+    
+    // Create the bolt animation timeline
+    boltAnimation = anime.timeline({
+        easing: 'easeInOutSine',
+        loop: true,
+        direction: 'alternate'
+    });
+    
+    // Add animation sequences
+    boltAnimation
+        .add({
+            targets: '#bolt-path',
+            strokeWidth: [1.5, 2.5],
+            fill: [
+                { value: 'url(#boltGradient)' },
+                { value: '#b73dff', duration: 800 }
+            ],
+            stroke: [
+                { value: '#b73dff' },
+                { value: '#64ff00', duration: 1200 }
+            ],
+            opacity: [0.8, 1],
+            scale: [1, 1.05],
+            duration: 3000
+        })
+        .add({
+            targets: '#bolt-icon',
+            rotate: [-5, 5],
+            duration: 3000
+        }, '-=3000');
+    
+    return boltAnimation;
+}
+
 // Initialize the splash screen animation - this function will be called by splash_screen.js
 function initSplashAnimation() {
     console.log("Initializing splash animations with anime.js");
+    
+    // Start the bolt animation
+    const animation = animateBolt();
     
     // Don't animate the bolt path again - it was already animated in the initial inline script
     // Just animate the extra details
@@ -355,5 +402,37 @@ function updateSplashStatus(message) {
     }
 }
 
-// Export the update status function for use by the main splash screen module
+// Function to hide splash screen with animation
+function hideSplashScreenWithAnimation() {
+    const splashScreen = document.getElementById('splash-screen');
+    if (!splashScreen) return;
+    
+    // If anime.js is not available, use CSS transition
+    if (typeof anime === 'undefined') {
+        splashScreen.classList.add('splash-hidden');
+        return;
+    }
+    
+    // Create a slick exit animation
+    anime({
+        targets: splashScreen,
+        opacity: [1, 0],
+        scale: [1, 1.05],
+        easing: 'easeInOutQuad',
+        duration: 600,
+        complete: function() {
+            splashScreen.style.display = 'none';
+            
+            // Stop bolt animation if it exists
+            if (boltAnimation) {
+                boltAnimation.pause();
+            }
+        }
+    });
+}
+
+// Export functions
+window.initSplashAnimation = initSplashAnimation;
+window.hideSplashScreenWithAnimation = hideSplashScreenWithAnimation;
+window.animateBolt = animateBolt;
 window.updateSplashStatusWithAnimation = updateSplashStatus;
