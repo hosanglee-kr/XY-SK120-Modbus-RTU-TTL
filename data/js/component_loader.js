@@ -58,16 +58,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     const html = await response.text();
                     placeholder.innerHTML = html;
                     
-                    // Execute any scripts that might be in the component
-                    const scripts = placeholder.querySelectorAll('script');
-                    scripts.forEach(script => {
-                        const newScript = document.createElement('script');
-                        Array.from(script.attributes).forEach(attr => {
-                            newScript.setAttribute(attr.name, attr.value);
+                    // SIMPLIFIED: Just use eval approach for scripts - more compatible
+                    try {
+                        // Convert the scripts to text and eval them directly
+                        // This is more reliable than the dynamic script creation
+                        const scripts = placeholder.querySelectorAll('script');
+                        scripts.forEach(script => {
+                            // Don't try to reexecute external scripts with src
+                            if (!script.src && script.textContent) {
+                                // Create a global wrapper to avoid immediate execution problems
+                                const wrappedCode = `(function() { ${script.textContent} })();`;
+                                // Execute within try-catch to isolate errors
+                                try {
+                                    eval(wrappedCode);
+                                } catch (scriptError) {
+                                    console.warn(`Script execution error in ${componentName}:`, scriptError);
+                                }
+                            }
                         });
-                        newScript.textContent = script.textContent;
-                        script.parentNode.replaceChild(newScript, script);
-                    });
+                    } catch (scriptExecError) {
+                        console.error(`Failed to process scripts for ${componentName}:`, scriptExecError);
+                    }
                     
                     loadedComponents++;
                     updateLoadingProgress();
