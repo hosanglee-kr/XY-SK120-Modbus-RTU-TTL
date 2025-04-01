@@ -64,11 +64,8 @@ export function initBasicControls() {
     }, 3000);
 }
 
-// Auto-refresh timer variable
-let autoRefreshTimer = null;
-
-// Make autoRefreshTimer globally accessible for debugging
-window.autoRefreshTimer = null;
+// NO REDECLARATION - use global variable instead
+// let autoRefreshTimer = null;
 
 // Setup timer reference object properly at the top of the file
 let timers = {
@@ -79,86 +76,108 @@ let timers = {
 // Expose timers globally for debugging
 window.psuTimers = timers;
 
-// Start auto-refresh timer to update status every second
+// Start auto-refresh timer to update status every second - Improved with better connection readiness check
 function startAutoRefresh() {
-    console.log("🔄 Starting auto-refresh (5-second interval)");
+    console.log("🔄 Attempting to start auto-refresh");
     
     // Clear any existing timer first
     stopAutoRefresh();
     
-    // First make sure we're really connected
-    if (!window.websocketConnected) {
-        console.log("⚠️ Can't start auto-refresh - WebSocket not connected");
+    // Use our new connection readiness check
+    window.whenWebsocketReady(() => {
+        console.log("WebSocket ready, starting auto-refresh timer");
         
-        // Show manual refresh buttons since auto-refresh won't work
-        showManualRefreshButtons();
-        
-        // Try reconnecting
-        if (typeof window.initWebSocket === 'function') {
-            console.log("Attempting to reconnect WebSocket");
-            window.initWebSocket();
+        // First do an immediate status update
+        try {
+            updateAllStatus();
+        } catch (err) {
+            console.error("Error in initial status update:", err);
         }
         
-        return;
-    }
-    
-    // First do an immediate status update
-    updateAllStatus();
-    
-    // Set up new timer for auto-refresh - Use our timer object structure
-    timers.autoRefresh = setInterval(() => {
-        // Debug in case the timer is running but updates aren't happening
-        console.log("⏱️ Auto-refresh tick - checking connection status:", window.websocketConnected);
-        
-        // Double-check that websocket is defined and connected
-        if (typeof window.websocket !== 'undefined' && window.websocket && window.websocket.readyState === 1) {
-            console.log("Sending status update via auto-refresh");
-            try {
-                updateAllStatus();
-            } catch (err) {
-                console.error("Error in auto-refresh status update:", err);
-            }
-        } else if (window.websocketConnected) {
-            // If flag says connected but socket doesn't exist or isn't open
-            console.log("⚠️ websocketConnected flag is true but socket is not ready");
-            window.websocketConnected = false;
-            stopAutoRefresh();
+        // Set up new timer for auto-refresh - Use our timer object structure
+        timers.autoRefresh = setInterval(() => {
+            // Debug in case the timer is running but updates aren't happening
+            console.log("⏱️ Auto-refresh tick - checking connection status:", window.websocketConnected);
             
-            // Try to re-initialize websocket
-            if (typeof window.initWebSocket === 'function') {
-                console.log("Attempting to reconnect WebSocket");
-                window.initWebSocket();
+            // Double-check that websocket is defined and connected
+            if (window.websocket && window.websocket.readyState === WebSocket.OPEN) {
+                console.log("Sending status update via auto-refresh");
+                try {
+                    updateAllStatus();
+                } catch (err) {
+                    console.error("Error in auto-refresh status update:", err);
+                }
+            } else if (window.websocketConnected) {
+                // If flag says connected but socket doesn't exist or isn't open
+                console.log("⚠️ websocketConnected flag is true but socket is not ready");
+                window.websocketConnected = false;
+                stopAutoRefresh();
+                
+                // Try to re-initialize websocket
+                if (typeof window.initWebSocket === 'function') {
+                    console.log("Attempting to reconnect WebSocket");
+                    window.initWebSocket();
+                    
+                    // Restart auto-refresh after a delay if reconnection succeeds
+                    setTimeout(() => {
+                        if (window.websocketConnected) {
+                            startAutoRefresh();
+                        }
+                    }, 2000);
+                }
+            } else {
+                console.log("❌ WebSocket disconnected, pausing auto-refresh");
+                stopAutoRefresh();
+                
+                // Show manual refresh buttons
+                showManualRefreshButtons();
+                
+                // Try to reconnect
+                if (typeof window.initWebSocket === 'function') {
+                    console.log("Attempting to reconnect WebSocket");
+                    window.initWebSocket();
+                    
+                    // Restart auto-refresh after a delay if reconnection succeeds
+                    setTimeout(() => {
+                        if (window.websocketConnected) {
+                            startAutoRefresh();
+                        }
+                    }, 2000);
+                }
             }
+        }, 5000); // Update every 5 seconds
+        
+        // Also store in window for backward compatibility
+        window.autoRefreshTimer = timers.autoRefresh;
+        
+        // Hide manual refresh buttons since we don't need them anymore
+        hideManualRefreshButtons();
+        
+        // Show the auto-refresh indicator
+        const indicator = document.querySelector('.auto-refresh-indicator');
+        if (indicator) {
+            console.log("Making auto-refresh indicator visible");
+            indicator.style.display = 'flex';
         } else {
-            console.log("❌ WebSocket disconnected, pausing auto-refresh");
-            stopAutoRefresh();
+            console.warn("Auto-refresh indicator element not found");
         }
-    }, 5000); // Update every 5 seconds
-    
-    // Also store in window for backward compatibility
-    window.autoRefreshTimer = timers.autoRefresh;
-    
-    // Hide manual refresh buttons since we don't need them anymore
-    hideManualRefreshButtons();
-    
-    // Show the auto-refresh indicator
-    const indicator = document.querySelector('.auto-refresh-indicator');
-    if (indicator) {
-        console.log("Making auto-refresh indicator visible");
-        indicator.style.display = 'flex';
-    } else {
-        console.error("Auto-refresh indicator element not found");
-    }
+    });
 }
 
 // Stop auto-refresh timer - updated to handle all timers
 function stopAutoRefresh() {
-    if (timers.autoRefresh) {
+    if (timers.autoRefresh || window.autoRefreshTimer) {
         console.log("⏹️ Stopping all auto-refresh timers");
         
-        clearInterval(timers.autoRefresh);
-        timers.autoRefresh = null;
-        window.autoRefreshTimer = null;
+        if (timers.autoRefresh) {
+            clearInterval(timers.autoRefresh);
+            timers.autoRefresh = null;
+        }
+        
+        if (window.autoRefreshTimer) {
+            clearInterval(window.autoRefreshTimer);
+            window.autoRefreshTimer = null;
+        }
         
         // Also clear the key lock monitor
         stopKeyLockStatusMonitor();
@@ -194,15 +213,18 @@ function showManualRefreshButtons() {
     });
 }
 
-// Set up power toggle functionality - FIXED VERSION
+// Set up power toggle functionality - CONSOLIDATED VERSION
 function setupPowerToggle() {
     const powerToggle = document.getElementById('power-toggle');
     if (powerToggle) {
         console.log("Found power toggle element, setting up event handler");
         
-        // Fix: Explicitly add the change event listener
-        powerToggle.addEventListener('change', function() {
-            // Only call togglePower when the user actually interacts with the switch
+        // Remove existing listeners to prevent duplicates
+        const newPowerToggle = powerToggle.cloneNode(true);
+        powerToggle.parentNode.replaceChild(newPowerToggle, powerToggle);
+        
+        // Add the change event listener
+        newPowerToggle.addEventListener('change', function() {
             console.log("Power toggle changed by user to:", this.checked);
             togglePower(this.checked);
         });
@@ -211,6 +233,30 @@ function setupPowerToggle() {
         setTimeout(syncPowerToggleWithActualState, 1000);
     } else {
         console.error("Power toggle element not found in the DOM");
+    }
+}
+
+// Central implementation of togglePower - All code should use this
+export function togglePower(isOn) {
+    console.log("togglePower called with:", isOn);
+    
+    try {
+        const command = { 
+            action: 'powerOutput',
+            enable: isOn
+        };
+        console.log("Sending power command:", JSON.stringify(command));
+        
+        // Send the command
+        const result = sendCommand(command);
+        
+        // Update UI for immediate feedback
+        updateOutputStatusDisplay(isOn);
+        
+        return result;
+    } catch (error) {
+        console.error("Error in togglePower:", error);
+        return false;
     }
 }
 
@@ -492,8 +538,8 @@ function handleBasicMessages(event) {
                     module.updateOperatingMode(mode, data);
                 }
             }).catch(err => console.error('Error importing status.js:', err));
+            }
         }
-    }
     
     // Handle CP mode toggle responses
     if (data.action === 'setConstantPowerModeResponse' && data.success === true) {
@@ -687,37 +733,26 @@ export function requestOperatingMode() {
     return sendCommand({ action: 'getOperatingMode' });
 }
 
-// Add missing togglePower function
-export function togglePower(isOn) {
-    console.log("togglePower called with:", isOn);
-    
-    try {
-        const command = { 
-            action: 'powerOutput',
-            enable: isOn
-        };
-        console.log("Sending power command:", JSON.stringify(command));
-        
-        // Send the command
-        const result = sendCommand(command);
-        
-        // Update UI for immediate feedback
-        updateOutputStatusDisplay(isOn);
-        
-        return result;
-    } catch (error) {
-        console.error("Error in togglePower:", error);
-        return false;
-    }
-}
-
-// Add missing updateAllStatus function
+// Add missing updateAllStatus function - improved with better error handling
 export function updateAllStatus() {
     console.log("Updating all PSU status");
     
     try {
+        // Check if WebSocket is connected first
+        if (!window.websocket || window.websocket.readyState !== WebSocket.OPEN) {
+            console.error("WebSocket not connected. Current state:", 
+                          window.websocket ? window.websocket.readyState : "undefined");
+            
+            // Try to reconnect
+            if (typeof window.initWebSocket === 'function') {
+                window.initWebSocket();
+            }
+            
+            return false;
+        }
+        
         // Request complete status update
-        return sendCommand({ action: 'getStatus' });
+        return window.sendCommand({ action: 'getStatus' });
     } catch (err) {
         console.error("Exception in updateAllStatus:", err);
         return false;

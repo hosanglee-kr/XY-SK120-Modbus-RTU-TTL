@@ -1,12 +1,17 @@
+/* Main Tailwind CSS input file */
+
+/* Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Custom base styles that extend Tailwind */
+/* Import custom component styles */
+@import 'components.css';
+
+/* Base styles that extend Tailwind */
 @layer base {
   html, body {
-    @apply h-full m-0 p-0 bg-background text-text;
-    @apply font-sans;
+    @apply h-full m-0 p-0 bg-background dark:bg-background-dark text-text dark:text-text-dark font-sans;
   }
   
   body.popup-open {
@@ -147,9 +152,86 @@
     @apply bg-secondary transform scale-110 shadow-md;
   }
 
-  /* Basic utilities needed for the minimal interface */
-  .card {
-    @apply bg-card rounded p-4 mb-4 border border-border;
+  /* Toggle switch component */
+  .toggle-switch {
+    @apply relative inline-block w-10 h-5 align-middle select-none;
+  }
+
+  .toggle-switch input {
+    @apply opacity-0 w-0 h-0;
+  }
+
+  .slider {
+    @apply absolute cursor-pointer inset-0 bg-gray-300 dark:bg-gray-600 rounded-full transition-all duration-300;
+  }
+
+  .slider:before {
+    @apply absolute h-4 w-4 left-0.5 bottom-0.5 bg-white rounded-full transition-all duration-300;
+    content: "";
+  }
+
+  input:checked + .slider {
+    @apply bg-secondary;
+  }
+
+  input:focus + .slider {
+    @apply ring-2 ring-secondary;
+  }
+
+  input:checked + .slider:before {
+    @apply transform translate-x-5;
+  }
+
+  .power-slider:before {
+    @apply bg-white;
+  }
+
+  input:checked + .power-slider {
+    @apply bg-success;
+  }
+
+  .key-lock-slider:before {
+    @apply bg-white;
+  }
+
+  input:checked + .key-lock-slider {
+    @apply bg-danger;
+  }
+
+  /* Tab active states */
+  .tab-active {
+    @apply border-secondary text-secondary;
+  }
+
+  .tab-active-cv {
+    @apply border-voltage text-voltage;
+  }
+
+  .tab-active-cc {
+    @apply border-current text-current;
+  }
+
+  .tab-active-cp {
+    @apply border-power text-power;
+  }
+
+  /* Add auto-refresh indicator */
+  .auto-refresh-indicator {
+    @apply flex items-center text-xs text-gray-500 dark:text-gray-400;
+  }
+
+  .auto-refresh-indicator .dot {
+    @apply h-2 w-2 rounded-full bg-success mr-1 opacity-60;
+    transition: opacity 0.4s ease-in-out, background-color 0.5s ease;
+  }
+
+  .auto-refresh-indicator.slow .dot {
+    animation: slowPulse 3s infinite;
+  }
+
+  @keyframes slowPulse {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.6; }
   }
 }
 
@@ -205,7 +287,7 @@
     
     .tw-dot::before {
       content: "";
-      @apply absolute -inset-5 z-[1]; /* Using arbitrary value syntax */
+      @apply absolute -inset-5 z-[1];
     }
     
     /* Mobile card animations */
@@ -248,6 +330,53 @@
       @apply text-center min-w-[100px] m-1 flex flex-col items-center;
     }
   }
+
+  /* Responsive sizing for readings display */
+  .readings-row {
+    @apply flex items-center justify-between;
+  }
+
+  .reading-item {
+    @apply text-center flex-1 px-1;
+  }
+
+  .readings-separator {
+    @apply relative;
+  }
+
+  .readings-separator::after {
+    content: "";
+    @apply absolute right-0 top-1/2 -translate-y-1/2 h-8 w-px bg-gray-200 dark:bg-gray-700;
+  }
+
+  /* Log viewer overlay utilities */
+  #log-viewer-overlay {
+    @apply shadow-lg z-[9999] bottom-0 left-0 right-0 fixed p-2;
+    height: 33.33vh !important;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  #log-viewer-overlay.active {
+    transform: translateY(0) !important;
+  }
+
+  #log-container {
+    @apply overflow-auto bg-gray-100 dark:bg-gray-900 rounded p-2 text-xs font-mono;
+    height: calc(33.33vh - 40px);
+  }
+
+  /* Ensure settings tab active state is clearly visible - FIXED CIRCULAR DEPENDENCY */
+  .settings-tab.border-secondary {
+    border-bottom-color: #3498db !important;
+    border-bottom-width: 2px !important;
+    opacity: 1 !important;
+  }
+
+  .settings-tab.text-secondary {
+    color: #3498db !important;
+    opacity: 1 !important;
+  }
 }
 
 /* Special styles for PWA mode */
@@ -259,4 +388,135 @@
   .tw-popup-overlay {
     @apply z-overlay;
   }
+}
+
+/* Add custom heartbeat styles to override the animation in the HTML */
+.auto-refresh-indicator .dot {
+    transition: opacity 0.4s ease-in-out, background-color 0.5s ease;
+    opacity: 0.4;
+    animation: none; /* Disable the automatic animation */
+}
+
+/* When the connection is slow, add a slow pulse instead */
+.auto-refresh-indicator.slow .dot {
+    animation: slowPulse 3s infinite;
+}
+
+@keyframes slowPulse {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.6; }
+}
+
+/* Responsive sizing for readings display */
+.readings-row {
+    padding: 0;
+    margin: 0;
+}
+
+/* Make the units slightly smaller than the readings */
+.reading-unit {
+    font-size: 0.7em;
+    vertical-align: middle;
+}
+
+/* Ensure consistent height for all values */
+.reading-value {
+    line-height: 1.2;
+    min-height: 2.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Responsive font sizes that scale with viewport width */
+@media (max-width: 480px) {
+    .readings-row {
+        font-size: 80%;
+    }
+    
+    .readings-row .text-xl {
+        font-size: 1.1rem;
+    }
+    
+    .reading-item p:first-child {
+        margin-bottom: 2px;
+    }
+}
+
+/* Extremely small screens like phones in portrait orientation */
+@media (max-width: 360px) {
+    .readings-row {
+        font-size: 70%;
+    }
+    
+    .readings-row .text-xl {
+        font-size: 1rem;
+    }
+    
+    .reading-item {
+        padding: 0.125rem;
+    }
+}
+
+/* Override any existing padding in main section */
+.compact-readings {
+    padding: 0.5rem 0.25rem;
+}
+
+.compact-readings .px-6 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.compact-readings .py-4 {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+/* Log Viewer Overlay Fixes - ensure it appears properly and DOUBLE the height */
+#log-viewer-overlay {
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 9999 !important; /* Ensure it appears on top */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    position: fixed !important; /* Force fixed position */
+    height: 33.33vh !important; /* Double the height from 16.67vh to 33.33vh (1/3 of viewport) */
+    transform: translateY(100%);
+    transition: transform 0.3s ease-in-out;
+    padding: 8px !important; /* Reduce padding for more compact layout */
+    -webkit-transform: translateY(100%);
+    -webkit-transition: -webkit-transform 0.3s ease-in-out;
+}
+
+#log-viewer-overlay.active {
+    transform: translateY(0) !important;
+    -webkit-transform: translateY(0) !important;
+}
+
+/* Make sure the log content scrolls properly - adjust height to match the doubled overlay height */
+#log-container {
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    line-height: 1.4;
+    max-height: calc(33.33vh - 40px) !important; /* Reduce from 60px to 40px for header */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overflow-y: scroll !important;
+}
+
+/* Ensure settings tab active state is clearly visible */
+.settings-tab.border-secondary {
+    border-bottom-color: #3498db !important;
+    border-bottom-width: 2px !important;
+    opacity: 1 !important;
+}
+
+.settings-tab.text-secondary {
+    color: #3498db !important;
+    opacity: 1 !important;
+}
+
+/* Make hidden elements truly hidden */
+.hidden {
+    display: none !important;
 }

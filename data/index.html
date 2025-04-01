@@ -8,774 +8,230 @@
     <!-- Meta theme color for browsers -->
     <meta id="theme-color" name="theme-color" content="#2c3e50">
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#2c3e50',
-                        secondary: '#3498db',
-                        success: '#2ecc71',
-                        danger: '#e74c3c',
-                        voltage: '#64ff00',
-                        current: '#fff500',
-                        power: '#b73dff',
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <!-- Add this script to apply the theme immediately before page renders -->
-    <script>
-        // Apply theme immediately to prevent flash of wrong theme
-        (function() {
-            const savedTheme = localStorage.getItem('theme');
-            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
-            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        })();
-    </script>
-    
-    <!-- Add this line in the head section -->
-    <link rel="stylesheet" href="style.css">
-
+    <!-- Splash screen styles moved to <head> for immediate application -->
     <style>
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.7;
-            }
-        }
-        .animate-pulse-slow {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        /* Toggle Switch */
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
+        #splash-screen {
+            position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: #2ecc71;
-        }
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-        
-        /* Reading values */
-        .reading-value {
-            font-variant-numeric: tabular-nums;
-        }
-        .voltage-value { color: #64ff00; }
-        .current-value { color: #fff500; }
-        .power-value { color: #b73dff; }
-        
-        /* Mode display backgrounds with consistent text colors - fixed to prevent overrides */
-        .mode-cv-bg {
-            background-color: #64ff00;
-            color: #000000 !important; /* Black text for bright background */
-            font-weight: bold;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            transition: all 0.3s ease;
-        }
-        .mode-cc-bg {
-            background-color: #fff500;
-            color: #000000 !important; /* Black text for bright background */
-            font-weight: bold;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            transition: all 0.3s ease;
-        }
-        .mode-cp-bg {
-            background-color: #b73dff;
-            color: #ffffff !important; /* White text for dark background */
-            font-weight: bold;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            transition: all 0.3s ease;
-        }
-        
-        /* Output status display styling to match mode display */
-        .output-on-bg {
-            background-color: #2ecc71; /* Success green */
-            color: #ffffff !important; /* White text */
-            font-weight: bold;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            transition: all 0.3s ease;
-        }
-        .output-off-bg {
-            background-color: #e74c3c; /* Danger red */
-            color: #ffffff !important; /* White text */
-            font-weight: bold;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            transition: all 0.3s ease;
-        }
-        
-        /* Ensure no Tailwind override on our custom styles */
-        .mode-cv-bg, .mode-cc-bg, .mode-cp-bg, .output-on-bg, .output-off-bg {
-            --tw-text-opacity: 1 !important;
-            text-align: center;
-            display: inline-block;
-            min-width: 85px;
-        }
-        
-        /* Status display row alignment */
-        .status-display-item {
-            display: flex;
-            flex-direction: column;
-        }
-        .status-display-item p:first-child {
-            margin-bottom: 0.25rem;
-        }
-        
-        /* Dark mode overrides */
-        .dark .dark\:voltage-value { color: #64ff00; }
-        .dark .dark\:current-value { color: #fff500; }
-        .dark .dark\:power-value { color: #b73dff; }
-        
-        /* Separator for readings */
-        .readings-separator:not(:last-child)::after {
-            content: "";
-            position: absolute;
-            right: 0;
-            top: 20%;
-            height: 60%;
-            width: 1px;
-            background-color: #e5e7eb;
-        }
-        .dark .readings-separator:not(:last-child)::after {
-            background-color: #4b5563;
-        }
-        
-        /* Compact readings styles */
-        .compact-readings {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background-color: #fff;
-            border-bottom: 1px solid #e5e7eb;
-            padding: 0.5rem;
-            margin: -1px;
-            border-radius: 0.5rem 0.5rem 0 0;
-        }
-        
-        .dark .compact-readings {
-            background-color: #1e293b;
-            border-color: #475569;
-        }
-        
-        /* Mode tab styling - updated with mode-specific colors */
-        .tab-active {
-            border-bottom-color: #3498db;
-            color: #3498db;
-        }
-        
-        /* Mode-specific tab active states */
-        .tab-active-cv {
-            border-bottom-color: var(--voltage-color, #64ff00) !important;
-            color: var(--voltage-color, #64ff00) !important;
-        }
-        .tab-active-cc {
-            border-bottom-color: var(--current-color, #fff500) !important;
-            color: var(--current-color, #fff500) !important;
-        }
-        .tab-active-cp {
-            border-bottom-color: var(--power-color, #b73dff) !important;
-            color: var(--power-color, #b73dff) !important;
-        }
-        
-        /* To fix overrides from Tailwind */
-        .mode-tab.tab-active-cv, .mode-tab.tab-active-cc, .mode-tab.tab-active-cp {
-            border-bottom-width: 2px;
-            opacity: 1;
-        }
-        
-        /* Add a subtle glow effect to active tab */
-        .tab-active-cv, .tab-active-cc, .tab-active-cp {
-            text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-        }
-
-        /* Unified status pill styling - simplify by using classes only */
-        .status-pill {
-            @apply font-bold px-2 py-1 rounded-md inline-block text-center min-w-[85px] transition-colors duration-100;
-        }
-        
-        /* Output status specific styles */
-        .status-on {
-            @apply bg-success text-white;
-        }
-        .status-off {
-            @apply bg-danger text-white;
-        }
-        .status-unknown {
-            @apply bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200;
-        }
-        
-        /* Mode status specific styles - ensure consistent text colors */
-        .mode-cv {
-            @apply bg-voltage text-black;
-        }
-        .mode-cc {
-            @apply bg-current text-black;
-        }
-        .mode-cp {
-            @apply bg-power text-white;
-        }
-        .mode-unknown {
-            @apply bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200;
-        }
-        
-        /* Loading state */
-        .status-loading {
-            @apply bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 animate-pulse;
-        }
-        
-        /* Status display layout - ensure consistent layout and alignment */
-        .status-grid {
-            @apply grid grid-cols-3 gap-x-4 gap-y-2 md:grid-cols-6;
-        }
-        
-        .status-item {
-            @apply flex flex-col;
-        }
-        
-        .status-label {
-            @apply text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-1;
-        }
-        
-        .status-value {
-            @apply text-base;
-        }
-
-        /* Color coding for status values */
-        .text-volt {
-            color: #64ff00;
-        }
-        .text-amp {
-            color: #fff500;
-        }
-        .text-watt {
-            color: #b73dff;
-        }
-        .text-temp {
-            color: #00c8ff;
-        }
-        
-        .dark .text-volt {
-            color: #64ff00;
-        }
-        .dark .text-amp {
-            color: #fff500;
-        }
-        .dark .text-watt {
-            color: #b73dff;
-        }
-        .dark .text-temp {
-            color: #00c8ff;
-        }
-
-        /* Auto-refresh indicator */
-        .auto-refresh-indicator {
-            display: flex;
-            align-items: center;
-            font-size: 0.75rem;
-            color: #3498db;
-            margin-left: auto;
-        }
-        
-        .auto-refresh-indicator .dot {
-            width: 6px;
-            height: 6px;
-            background-color: #3498db;
-            border-radius: 50%;
-            margin-right: 6px;
-            animation: pulse 1s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.4; }
-            50% { opacity: 1; }
-            100% { opacity: 0.4; }
-        }
-
-        /* Settings tab styling - enhanced to ensure proper blue color */
-        .settings-tab.border-secondary {
-            border-bottom-color: #3498db !important;
-            border-bottom-width: 2px !important;
-        }
-        
-        .settings-tab.text-secondary {
-            color: #3498db !important;
-        }
-        
-        /* Override Tailwind for dark mode tab styles */
-        .dark .settings-tab.text-secondary {
-            color: #3498db !important;
-        }
-
-        /* Ensure mode tab colors are strongly defined (add these at the end of your style section) */
-        .mode-tab.tab-active-cv {
-            border-bottom-color: #64ff00 !important;
-            color: #64ff00 !important;
-            border-bottom-width: 2px !important;
-        }
-        
-        .mode-tab.tab-active-cc {
-            border-bottom-color: #fff500 !important;
-            color: #fff500 !important;
-            border-bottom-width: 2px !important;
-        }
-        
-        .mode-tab.tab-active-cp {
-            border-bottom-color: #b73dff !important;
-            color: #b73dff !important;
-            border-bottom-width: 2px !important;
-        }
-        
-        /* Fix for dark mode */
-        .dark .mode-tab.tab-active-cv {
-            border-bottom-color: #64ff00 !important;
-            color: #64ff00 !important;
-        }
-        
-        .dark .mode-tab.tab-active-cc {
-            border-bottom-color: #fff500 !important;
-            color: #fff500 !important;
-        }
-        
-        .dark .mode-tab.tab-active-cp {
-            border-bottom-color: #b73dff !important;
-            color: #b73dff !important;
-        }
-
-        /* Responsive scaling for readings display */
-        @media (max-width: 640px) {
-            .readings-row {
-                font-size: clamp(0.7rem, 2vw, 1rem);
-            }
-            
-            .readings-row .text-2xl {
-                font-size: clamp(1.2rem, 4vw, 1.5rem);
-            }
-            
-            .readings-row .text-sm {
-                font-size: clamp(0.7rem, 2vw, 0.875rem);
-            }
-            
-            .readings-row .sm\:text-4xl {
-                font-size: clamp(1.5rem, 5vw, 2.25rem);
-            }
-            
-            .readings-row .sm\:text-xl {
-                font-size: clamp(0.8rem, 2.5vw, 1.25rem);
-            }
-            
-            .readings-row p {
-                margin-bottom: 0;
-                line-height: 1.2;
-            }
-        }
-        
-        /* Compact readings display */
-        .readings-row {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
             width: 100%;
-            gap: 4px;
-        }
-        
-        .reading-item {
+            height: 100%;
+            background-color: #ffffff;
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            padding: 0.25rem;
-            text-align: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+            opacity: 1; /* Start visible */
         }
         
-        .reading-item p:first-child {
-            margin-bottom: 0.25rem;
+        .dark #splash-screen {
+            background-color: #111827;
         }
         
-        /* Readings separators - more compact */
-        .readings-separator:not(:last-child)::after {
-            right: -2px;
-            top: 25%;
-            height: 50%;
-            width: 1px;
+        .splash-logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+        }
+        
+        .splash-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            color: #2563eb;
+        }
+        
+        .dark .splash-title {
+            color: #3b82f6;
+        }
+        
+        .splash-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .dark .splash-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #3b82f6;
+        }
+        
+        .splash-status {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .dark .splash-status {
+            color: #9ca3af;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .splash-hidden {
+            opacity: 0;
+            visibility: hidden;
         }
 
-        /* Toggle Switch - Enhanced with symbols */
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            color: #666;
-        }
-        input:checked + .slider {
-            background-color: #2ecc71;
-        }
-        input:checked + .slider:before {
-            transform: translateX(26px);
+        /* Fallback animations if anime.js fails to load */
+        .fallback-fade-in {
+            animation: simpleFadeIn 1s ease forwards;
         }
         
-        /* Power toggle specific styling */
-        .power-slider {
-            background-color: #e74c3c;  /* Red background when off */
-        }
-        .power-slider:before {
-            content: "⏻";  /* Power symbol */
-            font-size: 12px;
-        }
-        input:checked + .power-slider {
-            background-color: #2ecc71;  /* Green background when on */
+        .fallback-progress {
+            animation: progressGrow 3s ease-in-out forwards;
         }
         
-        /* Key lock toggle specific styling */
-        .key-lock-slider:before {
-            content: "🔒";  /* Lock symbol */
-            font-size: 10px;
-        }
-        input:checked + .key-lock-slider {
-            background-color: #3498db;  /* Blue background when locked */
+        @keyframes simpleFadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
         }
         
-        /* Enhanced visual feedback for key lock state */
-        .key-lock-slider.locked {
-            box-shadow: 0 0 4px #3498db; /* Add glow effect when locked */
+        @keyframes simpleFadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(1.05); }
         }
         
-        /* Animation for key lock changes */
-        @keyframes keylock-change {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        
-        .key-lock-slider.state-changing:before {
-            animation: keylock-change 0.5s ease-in-out;
+        @keyframes progressGrow {
+            from { width: 0%; }
+            to { width: 100%; }
         }
     </style>
+    
+    <!-- Immediate splash screen display - Critical for preventing FOUC -->
+    <script>
+        // Create splash screen immediately before DOM is even parsed
+        document.write(`
+            <div id="splash-screen" class="fixed inset-0 flex flex-col items-center justify-center bg-white dark:bg-gray-900 z-50">
+                <div class="relative w-48 h-48 mb-6">
+                    <svg id="bolt-icon" class="w-full h-full" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="boltGradient" x1="0.5" y1="0" x2="0.5" y2="1">
+                                <stop offset="0.37" stop-color="#64ff00"/>
+                                <stop offset="0.65" stop-color="#fff500"/>
+                            </linearGradient>
+                        </defs>
+                        <path id="bolt-path" d="M38.973,4.253C39.777,4.701,40.172,5.638,39.931,6.525L34.619,26.000L54.000,26.000C54.797,26.000,55.517,26.473,55.834,27.203C56.152,27.934,56.005,28.783,55.461,29.365L27.461,59.365C26.834,60.039,25.827,60.197,25.023,59.749C24.219,59.300,23.825,58.360,24.069,57.472L29.381,38.000L10.000,38.000C9.203,38.000,8.483,37.527,8.166,36.797C7.848,36.066,7.995,35.217,8.539,34.635L36.539,4.635C37.166,3.963,38.171,3.806,38.973,4.253Z" 
+                              fill="url(#boltGradient)" stroke="#b73dff" stroke-width="1.5"/>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">XY-SK120 <span class="text-yellow-500">Power Supply</span></h1>
+                <div class="w-64 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                    <div id="progress-bar" class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style="width: 0%"></div>
+                </div>
+                <p id="splash-status" class="text-sm text-gray-500 dark:text-gray-400">Loading application...</p>
+            </div>
+        `);
+    </script>
+    
+    <!-- Theme initialization script - after splash screen -->
+    <script>
+      // Apply theme immediately to prevent flash of wrong theme
+      (function() {
+        // Feature detection for localStorage
+        const hasStorage = (function() {
+          try {
+            localStorage.setItem('test', 'test');
+            localStorage.removeItem('test');
+            return true;
+          } catch (e) {
+            return false;
+          }
+        })();
+        
+        // Determine theme preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const savedTheme = hasStorage ? localStorage.getItem('theme') : null;
+        const isDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+        
+        // Apply theme class
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#111827');
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff');
+        }
+      })();
+    </script>
+    
+    <!-- anime.js - Animation library needs to be loaded as a regular script first -->
+    <script src="js/lib/anime.min.js"></script>
+    
+    <!-- Only load splash_animation.js - which has the circles animation -->
+    <script src="js/splash_animation.js"></script>
+    
+    <!-- CSS files loaded after splash is displayed -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/colors.css">
+    <link rel="stylesheet" href="css/log-viewer.css">
+    <link rel="stylesheet" href="css/custom.css">
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 h-full transition-colors duration-200">
+    <!-- Component: Splash Screen (hidden, will replace the inline one) -->
+    <div id="splash-screen-container" data-component="splash-screen" class="hidden"></div>
+
     <div class="min-h-full flex flex-col">
-        <!-- Top Navigation Bar -->
-        <nav class="bg-white dark:bg-gray-800 shadow-md">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <h1 class="text-xl font-bold text-gray-800 dark:text-white">
-                                XY-SK120 <span id="device-name-display" class="text-sm text-gray-600 dark:text-gray-400"></span>
-                            </h1>
-                        </div>
-                        <div class="hidden md:block">
-                            <div class="ml-10 flex items-baseline space-x-4">
-                                <span class="text-gray-600 dark:text-gray-300 px-3 py-2 text-sm font-medium">
-                                    Power Supply Control
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <!-- WebSocket Status Indicator -->
-                        <div class="mr-4 hidden md:block">
-                            <div class="flex items-center">
-                                <div id="websocket-status-indicator" class="h-3 w-3 rounded-full bg-gray-300 mr-2"></div>
-                                <span id="websocket-status" class="text-sm text-gray-600 dark:text-gray-400">Disconnected</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Device Selector -->
-                        <div class="relative mr-4">
-                            <select id="device-selector" class="appearance-none block w-40 py-2 px-3 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-700 dark:text-gray-200">
-                                <!-- Options will be populated by JavaScript -->
-                            </select>
-                            <!-- Add custom dropdown arrow indicator -->
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        
-                        <!-- Dark Mode Toggle - REMOVED -->
-                        <!-- Removed theme-toggle button here -->
-                    </div>
-                </div>
-            </div>
-        </nav>
+        <!-- Component: Top Navigation Bar -->
+        <div id="navbar" data-component="navbar"></div>
         
         <!-- Main Content -->
-        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <!-- Power Supply Readings Card -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6 overflow-hidden compact-readings">
-                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
-                                <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                </svg>
-                                <span class="hidden sm:inline">Power Supply </span>Status
-                            </h2>
-                            <!-- Auto-refresh indicator moved here -->
-                            <div id="heartbeat-indicator" class="auto-refresh-indicator ml-3" style="display:flex;">
-                                <div class="dot"></div>
-                                <span class="hidden sm:inline">Auto-updating</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Power toggle & refresh buttons -->
-                        <div class="flex items-center space-x-3">
-                            <!-- Key lock toggle with enhanced title for better UX -->
-                            <div class="flex items-center">
-                                <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Key Lock</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="key-lock" onchange="toggleKeyLock(this.checked)">
-                                    <span class="slider key-lock-slider" title="Panel Keys Unlocked - Click to lock"></span>
-                                </label>
-                            </div>
-                            
-                            <!-- Power toggle remains the same -->
-                            <div class="flex items-center">
-                                <span class="mr-2 text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Output</span>
-                                <label class="toggle-switch">
-                                    <!-- Add the input with ID -->
-                                    <input type="checkbox" id="power-toggle">
-                                    <span class="slider power-slider"></span>
-                                </label>
-                            </div>
-                            <!-- Keep but hide the refresh button -->
-                            <button id="refresh-psu" onclick="updateAllStatus()" class="flex items-center px-3 py-1.5 text-sm font-medium text-white transition-colors duration-300 bg-secondary rounded-md hover:bg-opacity-80 focus:outline-none" title="Refresh" style="display: none;">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                </svg>
-                                <span class="hidden sm:inline ml-1">Refresh</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Readings display -->
-                <div class="px-4 py-2 sm:px-6 sm:py-4">
-                    <!-- Readings Display - using grid for consistent layout -->
-                    <div class="readings-row">
-                        <div class="reading-item readings-separator">
-                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Voltage</p>
-                            <p class="text-xl sm:text-3xl font-bold voltage-value dark:dark:voltage-value">
-                                <span id="psu-voltage">--</span><span class="text-sm sm:text-base">V</span>
-                            </p>
-                        </div>
-                        <div class="reading-item readings-separator">
-                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Current</p>
-                            <p class="text-xl sm:text-3xl font-bold current-value dark:dark:current-value">
-                                <span id="psu-current">--</span><span class="text-sm sm:text-base">A</span>
-                            </p>
-                        </div>
-                        <div class="reading-item readings-separator">
-                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Power</p>
-                            <p class="text-xl sm:text-3xl font-bold power-value dark:dark:power-value">
-                                <span id="psu-power">--</span><span class="text-sm sm:text-base">W</span>
-                            </p>
-                        </div>
-                        <!-- Mode display as a primary reading -->
-                        <div class="reading-item">
-                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0">Mode</p>
-                            <p class="text-xl sm:text-3xl font-bold">
-                                <span id="mode-display-value" class="text-gray-500">--</span>
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <!-- Status display - Modified to be a 5-column grid without the mode (now moved up) -->
-                    <div class="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                        <div class="grid grid-cols-5 gap-1 sm:gap-4 text-center text-xs sm:text-sm">
-                            <!-- Protection values - Overvoltage -->
-                            <div class="relative">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OVP</p>
-                                <p>
-                                    <span id="ovp-value" class="text-volt">00.00</span><span class="text-volt">V</span>
-                                </p>
-                            </div>
-                            
-                            <!-- Protection values - Overcurrent -->
-                            <div class="relative">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OCP</p>
-                                <p>
-                                    <span id="ocp-value" class="text-amp">0.000</span><span class="text-amp">A</span>
-                                </p>
-                            </div>
-                            
-                            <!-- Protection values - Overpower -->
-                            <div class="relative">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OPP</p>
-                                <p>
-                                    <span id="opp-value" class="text-watt">000.0</span><span class="text-watt">W</span>
-                                </p>
-                            </div>
-                            
-                            <!-- Protection values - Low voltage -->
-                            <div class="relative">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">LVP</p>
-                                <p>
-                                    <span id="lvp-value" class="text-volt">00.00</span><span class="text-volt">V</span>
-                                </p>
-                            </div>
-                            
-                            <!-- Protection values - Over temperature -->
-                            <div class="relative">
-                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0 sm:mb-1">OTP</p>
-                                <p>
-                                    <span id="otp-value" class="text-temp">000.0</span><span class="text-temp">°C</span>
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="mt-3 flex justify-between">
-                            <!-- Remove the auto-refresh indicator from here as it's now in the header -->
-                            
-                            <!-- Keep the refresh button but initially hidden - it will show if auto-refresh fails -->
-                            <button id="refresh-mode-btn" onclick="updateAllStatus()" class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600" style="display: none;">
-                                Refresh Status
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-gray-100 dark:bg-gray-900">
+            <!-- Component: Power Supply Readings Card -->
+            <div id="power-supply-readings" data-component="power-supply-readings"></div>
             
-            <!-- Main content sections - simple stacked layout instead of swiper -->
+            <!-- Main content sections -->
             <div class="space-y-6">
-                <!-- Basic Controls Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                            <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                <!-- Component: Basic Controls Card -->
+                <div id="basic-controls" data-component="basic-controls"></div>
+                
+                <!-- Operating Mode Controls Card - Icon alignment fixed -->
+                <div class="card operating-mode-card">
+                    <div class="card-header">
+                        <h2 class="card-title text-gray-700 dark:text-white">
+                            <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 20V10"></path>
+                                <path d="M12 20V4"></path>
+                                <path d="M6 20v-6"></path>
                             </svg>
-                            Basic Controls
+                            <span>Operating Mode</span>
                         </h2>
                     </div>
-                    <div class="px-4 py-5 sm:p-6 space-y-6">
-                        <div>
-                            <label for="set-voltage" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Set Voltage (V)</label>
-                            <div class="mt-1 flex rounded-md shadow-sm">
-                                <input type="number" id="set-voltage" min="0" max="30" step="0.1" class="appearance-none flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-secondary focus:border-secondary">
-                                <button id="apply-voltage" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
-                                    Set
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label for="set-current" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Set Current (A)</label>
-                            <div class="mt-1 flex rounded-md shadow-sm">
-                                <input type="number" id="set-current" min="0" max="5" step="0.01" class="appearance-none flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-secondary focus:border-secondary">
-                                <button id="apply-current" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
-                                    Set
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- REMOVED: The key lock control div is now at the top by the power toggle -->
-                        
-                    </div>
-                </div>
-                <!-- Operating Mode Controls Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                            <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
-                            </svg>
-                            Operating Mode
-                        </h2>
-                    </div>
-                    <!-- Mode tabs - ensure they have proper data-mode attributes -->
+                    <!-- Mode tabs - updated to follow Meraki UI "Line with Icons" pattern -->
                     <div class="border-b border-gray-200 dark:border-gray-700">
-                        <nav class="flex -mb-px">
-                            <button data-mode="cv" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                Constant Voltage (CV)
+                        <nav class="flex overflow-x-auto overflow-y-hidden whitespace-nowrap">
+                            <button data-mode="cv" class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    <span class="font-medium">CV</span> <span class="hidden sm:inline">- Constant Voltage</span>
+                                </span>
                             </button>
-                            <button data-mode="cc" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                Constant Current (CC)
+                            <button data-mode="cc" class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    <span class="font-medium">CC</span> <span class="hidden sm:inline">- Constant Current</span>
+                                </span>
                             </button>
-                            <button data-mode="cp" class="mode-tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                Constant Power (CP)
+                            <button data-mode="cp" class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    <span class="font-medium">CP</span> <span class="hidden sm:inline">- Constant Power</span>
+                                </span>
                             </button>
                         </nav>
                     </div>
@@ -844,51 +300,74 @@
                     </div>
                 </div>
                 
-                <!-- Settings Card - New unified settings interface -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                            <svg class="h-5 w-5 mr-2 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <!-- Settings Card - Icon alignment fixed -->
+                <div class="card settings-card">
+                    <div class="card-header">
+                        <h2 class="card-title text-gray-700 dark:text-white">
+                            <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
                             </svg>
-                            Settings
+                            <span>Settings</span>
                         </h2>
                     </div>
-                    <!-- Settings tabs -->
-                    <div class="border-b border-gray-200 dark:border-gray-700">
-                        <nav class="flex -mb-px">
-                            <button data-settings-tab="device" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                Device
-                            </button>
-                            <button data-settings-tab="ui" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                Web UI
-                            </button>
-                            <button data-settings-tab="wifi" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                WiFi
-                            </button>
-                            <button data-settings-tab="manager" class="settings-tab w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500">
-                                Links
-                            </button>
-                        </nav>
-                    </div>
                     
-                    <!-- Tab Content Container -->
-                    <div class="settings-tab-content">
-                        <!-- WiFi Settings Tab Content -->
-                        <div id="wifi-settings-tab" class="settings-panel px-4 py-5 sm:p-6 block">
+                    <!-- Settings tabs - Updated with Meraki UI "Line with Icons" style -->
+                    <div id="settings-tabs-container" data-tabs="settings">
+                        <div class="flex overflow-x-auto overflow-y-hidden border-b border-gray-200 whitespace-nowrap dark:border-gray-700" role="tablist" id="settings-tablist" aria-label="Settings tabs">
+                            <button id="tab-device" role="tab" aria-selected="false" aria-controls="device-settings-tab" 
+                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    Device
+                                </span>
+                            </button>
+                            <button id="tab-ui" role="tab" aria-selected="false" aria-controls="ui-settings-tab" 
+                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    Web UI
+                                </span>
+                            </button>
+                            <button id="tab-wifi" role="tab" aria-selected="true" aria-controls="wifi-settings-tab" 
+                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-blue-600 bg-transparent border-b-2 border-blue-500 sm:px-4 dark:text-blue-300 dark:border-blue-400 whitespace-nowrap focus:outline-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    WiFi
+                                </span>
+                            </button>
+                            <button id="tab-manager" role="tab" aria-selected="false" aria-controls="manager-settings-tab" 
+                                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                </svg>
+                                <span class="mx-1 text-sm sm:text-base">
+                                    Links
+                                </span>
+                            </button>
+                        </div>
+                        
+                        <!-- Tab panel content remains the same, just add ARIA attributes -->
+                        <div id="wifi-settings-tab" role="tabpanel" aria-labelledby="tab-wifi" tabindex="0" aria-hidden="false" class="settings-panel px-4 py-5 sm:p-6">
+                            <!-- Existing Wi-Fi settings content -->
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Status</p>
-                                    <p id="wifi-status" class="text-lg font-semibold text-gray-800 dark:text-gray-200">--</p>
+                                    <p id="wifi-status" class="text-lg font-semibold text-gray-700 dark:text-gray-200">--</p>
                                 </div>
                                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">SSID</p>
-                                    <p id="wifi-ssid" class="text-lg font-semibold text-gray-800 dark:text-gray-200 truncate">--</p>
+                                    <p id="wifi-ssid" class="text-lg font-semibold text-gray-700 dark:text-gray-200 truncate">--</p>
                                 </div>
                                 <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">IP</p>
-                                    <p id="wifi-ip" class="text-lg font-semibold text-gray-800 dark:text-gray-200">--</p>
+                                    <p id="wifi-ip" class="text-lg font-semibold text-gray-700 dark:text-gray-200">--</p>
                                 </div>
                             </div>
                             <div class="mt-6 flex justify-end">
@@ -907,8 +386,8 @@
                             </div>
                         </div>
                         
-                        <!-- Device Settings Tab Content -->
-                        <div id="device-settings-tab" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                        <div id="device-settings-tab" role="tabpanel" aria-labelledby="tab-device" tabindex="0" aria-hidden="true" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                            <!-- Existing device settings content -->
                             <div class="max-w-lg mx-auto space-y-6">
                                 <div>
                                     <label for="device-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Device Name</label>
@@ -970,8 +449,8 @@
                             </div>
                         </div>
                         
-                        <!-- Web UI Settings Tab Content -->
-                        <div id="ui-settings-tab" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                        <div id="ui-settings-tab" role="tabpanel" aria-labelledby="tab-ui" tabindex="0" aria-hidden="true" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                            <!-- Existing UI settings content -->
                             <div class="max-w-lg mx-auto space-y-6">
                                 <div class="flex items-center justify-between">
                                     <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">Dark Mode</span>
@@ -1000,18 +479,6 @@
                                         <option value="30">30 seconds</option>
                                     </select>
                                 </div>
-
-                                <!-- Add Show Logs option -->
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <label for="show-logs-toggle" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Show Logs</label>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">Display WebSocket communication logs</p>
-                                    </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="show-logs-toggle">
-                                        <span class="slider"></span>
-                                    </label>
-                                </div>
                                 
                                 <div class="flex justify-end pt-4">
                                     <button id="save-ui-settings" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
@@ -1021,8 +488,8 @@
                             </div>
                         </div>
                         
-                        <!-- Device Manager Tab Content -->
-                        <div id="manager-settings-tab" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                        <div id="manager-settings-tab" role="tabpanel" aria-labelledby="tab-manager" tabindex="0" aria-hidden="true" class="settings-panel px-4 py-5 sm:p-6 hidden">
+                            <!-- Existing manager settings content -->
                             <form id="add-device-form" class="space-y-4">
                                 <div>
                                     <label for="new-device-ip" class="block text-sm font-medium text-gray-700 dark:text-gray-300">IP Address</label>
@@ -1035,9 +502,6 @@
                                 <div class="flex justify-end">
                                     <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
                                         Add Device
-                                    </button>
-                                    <button id="reconnect-btn" onclick="initWebSocket()" type="button" class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none">
-                                        Reconnect
                                     </button>
                                 </div>
                                 
@@ -1055,437 +519,246 @@
             </div>
         </main>
         
-        <!-- Footer -->
-        <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <p class="text-center text-sm text-gray-500 dark:text-gray-400">
-                    XY-SK120 Modbus RTU Power Supply Control &copy; 2023
-                </p>
-            </div>
-        </footer>
+        <!-- Component: Footer -->
+        <div id="footer" data-component="footer"></div>
     </div>
     
-    <!-- Core JS -->
-    <script src="js/core.js"></script>
+    <!-- Component: Log Viewer -->
+    <div id="log-viewer" data-component="log-viewer"></div>
     
-    <!-- Add Connectivity Checker -->
-    <script src="js/connectivity_check.js"></script>
-    
-    <!-- Add Web Interface (renamed from menu_interface.js) -->
-    <script src="js/web_interface.js"></script>
-    
-    <!-- Add Settings Tabs -->
-    <script src="js/settings_tabs.js"></script>
-    
-    <!-- Add Debug Script -->
-    <script src="js/debug.js"></script>
-    
-    <!-- Add Log Viewer -->
-    <script src="js/log_viewer.js"></script>
-    
-    <!-- Simple tab switcher -->
+    <!-- Initialize splash animations immediately -->
     <script>
+        // Track when the splash screen was first shown - immediately
+        window.splashStartTime = Date.now();
+        window.splashMinDisplayTime = 3000; // 3 seconds minimum display
+        
+        // Immediately start simple animation for the bolt
         document.addEventListener('DOMContentLoaded', function() {
-            // Add event listener programmatically instead of using inline
-            const powerToggle = document.getElementById('power-toggle');
-            if (powerToggle) {
-                powerToggle.addEventListener('change', function() {
-                    // Only call togglePower when the user actually interacts with the switch
-                    if (document.readyState === 'complete') {
-                        console.log("User toggled power switch to:", this.checked);
-                        togglePower(this.checked);
-                    }
+            if (typeof anime !== 'undefined') {
+                // Simple initial animation
+                anime({
+                    targets: '#bolt-path',
+                    opacity: [0.7, 1],
+                    easing: 'easeInOutSine',
+                    duration: 800
+                });
+                
+                // Simple progress animation
+                anime({
+                    targets: '#progress-bar',
+                    width: ['0%', '30%'],
+                    easing: 'easeInOutQuad',
+                    duration: 1000
                 });
             }
+        });
 
-            // Add event handler for refresh status button - Simplified, always use updateAllStatus
-            const refreshStatusBtn = document.getElementById('refresh-mode-btn');
-            if (refreshStatusBtn) {
-                refreshStatusBtn.addEventListener('click', function() {
-                    console.log("Manual status refresh requested");
-                    updateAllStatus();
-                });
+        // Track loading state
+        window.appLoadingState = {
+            componentsLoaded: false,
+            coreScriptsLoaded: false,
+            connectionEstablished: false
+        };
+        
+        // Update splash screen status
+        function updateSplashStatus(message) {
+            const statusEl = document.getElementById('splash-status');
+            if (statusEl) {
+                statusEl.textContent = message;
             }
-            
-            // Add event handler for main refresh button - Simplified, always use updateAllStatus
-            const refreshPsuBtn = document.getElementById('refresh-psu');
-            if (refreshPsuBtn) {
-                refreshPsuBtn.addEventListener('click', function() {
-                    console.log("PSU refresh requested");
-                    updateAllStatus();
-                });
-            }
-            
-            // Mode tab switcher - completely fixed to work properly
-            document.querySelectorAll('.mode-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    console.log("Mode tab clicked:", this.getAttribute('data-mode'));
-                    
-                    // Update active tab styling
-                    document.querySelectorAll('.mode-tab').forEach(t => {
-                        t.classList.remove('tab-active', 'tab-active-cv', 'tab-active-cc', 'tab-active-cp');
-                        t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-                    });
-                    
-                    // Get the mode from data attribute
-                    const mode = this.getAttribute('data-mode');
-                    this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-                    
-                    // Apply the mode-specific active class
-                    if (mode === 'cv') {
-                        this.classList.add('tab-active-cv');
-                    } else if (mode === 'cc') {
-                        this.classList.add('tab-active-cc');
-                    } else if (mode === 'cp') {
-                        this.classList.add('tab-active-cp');
-                    } else {
-                        this.classList.add('tab-active'); // fallback
+        }
+        
+        // Hide splash screen when everything is ready
+        function hideSplashScreen() {
+            // Check if all critical components are loaded
+            if (window.appLoadingState.componentsLoaded && 
+                window.appLoadingState.coreScriptsLoaded) {
+                
+                updateSplashStatus("Application ready!");
+                
+                // Add a slight delay before hiding the splash screen
+                setTimeout(() => {
+                    const splashScreen = document.getElementById('splash-screen');
+                    if (splashScreen) {
+                        splashScreen.classList.add('opacity-0');
+                        setTimeout(() => {
+                            splashScreen.classList.add('hidden');
+                        }, 500);
                     }
-                    
-                    // Show the corresponding settings panel
-                    document.querySelectorAll('.mode-settings').forEach(panel => {
-                        panel.classList.add('hidden');
-                    });
-                    
-                    const targetPanel = document.getElementById(`${mode}-settings`);
-                    if (targetPanel) {
-                        targetPanel.classList.remove('hidden');
-                        targetPanel.classList.add('block');
-                    } else {
-                        console.error("Could not find panel with ID:", `${mode}-settings`);
-                    }
-                    
-                    // Store the last active tab in local storage so it persists
-                    localStorage.setItem('lastActiveTab', mode);
-                });
-            });
-            
-            // Restore the last active tab from local storage when page loads
-            const lastActiveTab = localStorage.getItem('lastActiveTab') || 'cv'; // Default to CV if none stored
-            const tabToActivate = document.querySelector(`.mode-tab[data-mode="${lastActiveTab}"]`);
-            
-            if (tabToActivate) {
-                // Simulate a click on the tab to restore its state
-                tabToActivate.click();
+                }, 500);
             }
-
-            // Add explicit initialization for auto-refresh
-            setTimeout(() => {
-                console.log("Document loaded - checking if auto-refresh needs to be started");
-                if (typeof window.startAutoRefresh === 'function' && window.websocketConnected) {
-                    console.log("Starting auto-refresh from DOMContentLoaded");
-                    window.startAutoRefresh();
-                } else {
-                    console.log("Auto-refresh function not available or websocket not connected yet");
-                }
-            }, 2000);
-
-            // Add CP Mode toggle event listener
-            const cpModeToggle = document.getElementById('cp-mode-toggle');
-            if (cpModeToggle) {
-                cpModeToggle.addEventListener('change', function() {
-                    console.log("CP mode toggle changed to:", this.checked);
-                    setConstantPowerMode(this.checked);
-                });
-            }
+        }
         
-            // Update WebSocket status with color indicator
-            document.addEventListener('websocket-message', function(event) {
-                const statusIndicator = document.getElementById('websocket-status-indicator');
-                const statusText = document.getElementById('websocket-status');
-                
-                if (statusIndicator && statusText) {
-                    statusText.textContent = 'Connected';
-                    statusIndicator.className = 'h-3 w-3 rounded-full bg-success mr-2';
-                }
-            });
-        
-            // REMOVE all the old theme toggler code referring to the nav bar button
-            // Keep just the code that initializes the theme from localStorage
-            const htmlElement = document.documentElement;
-            
-            // Check for saved theme preference or use device preference
-            const savedTheme = localStorage.getItem('theme');
-            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            
-            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-                htmlElement.classList.add('dark');
-            } else {
-                htmlElement.classList.remove('dark');
-            }
-        
-            // Settings tab switcher
-            document.querySelectorAll('.settings-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    // Update active tab styling
-                    document.querySelectorAll('.settings-tab').forEach(t => {
-                        t.classList.remove('border-secondary', 'text-secondary');
-                        t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-                    });
-                    
-                    // Get the settings tab from data attribute
-                    const tabName = this.getAttribute('data-settings-tab');
-                    this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-                    this.classList.add('border-secondary', 'text-secondary');
-                    
-                    // Show the corresponding settings panel
-                    document.querySelectorAll('.settings-panel').forEach(panel => {
-                        panel.classList.add('hidden');
-                        panel.classList.remove('block');
-                    });
-                    document.getElementById(`${tabName}-settings-tab`).classList.remove('hidden');
-                    document.getElementById(`${tabName}-settings-tab`).classList.add('block');
-                    
-                    // Store the last active settings tab
-                    localStorage.setItem('lastActiveSettingsTab', tabName);
-                });
-            });
-            
-            // Restore the last active settings tab
-            const lastActiveSettingsTab = localStorage.getItem('lastActiveSettingsTab') || 'wifi';
-            const settingsTabToActivate = document.querySelector(`.settings-tab[data-settings-tab="${lastActiveSettingsTab}"]`);
-            
-            if (settingsTabToActivate) {
-                // Simulate a click on the tab to restore its state
-                settingsTabToActivate.click();
-            }
-        
-            // Setup dark mode toggle in UI settings
-            const darkModeToggle = document.getElementById('dark-mode-toggle');
-            if (darkModeToggle) {
-                // Set initial state based on current theme
-                darkModeToggle.checked = document.documentElement.classList.contains('dark');
-                
-                // Add change listener
-                darkModeToggle.addEventListener('change', function() {
-                    if (this.checked) {
-                        document.documentElement.classList.add('dark');
-                        localStorage.setItem('theme', 'dark');
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                        localStorage.setItem('theme', 'light');
-                    }
-                });
-            }
-        
-            // Setup auto-refresh toggle
-            const autoRefreshToggle = document.getElementById('auto-refresh-toggle');
-            if (autoRefreshToggle) {
-                autoRefreshToggle.addEventListener('change', function() {
-                    if (this.checked) {
-                        if (typeof window.startAutoRefresh === 'function') {
-                            window.startAutoRefresh();
-                        }
-                    } else {
-                        if (typeof window.stopAutoRefresh === 'function') {
-                            window.stopAutoRefresh();
-                        }
-                    }
-                });
-            }
-        
-            // Setup refresh interval selector
-            const refreshIntervalSelector = document.getElementById('refresh-interval');
-            if (refreshIntervalSelector) {
-                refreshIntervalSelector.addEventListener('change', function() {
-                    const interval = parseInt(this.value) * 1000;
-                    // Store the selected interval
-                    localStorage.setItem('refreshInterval', interval);
-                    
-                    // Restart auto-refresh with new interval if it's running
-                    if (typeof window.autoRefreshTimer !== 'undefined' && window.autoRefreshTimer) {
-                        if (typeof window.stopAutoRefresh === 'function' && 
-                            typeof window.startAutoRefresh === 'function') {
-                            window.stopAutoRefresh();
-                            window.startAutoRefresh();
-                        }
-                    }
-                });
-            }
-        
-            // Setup saved devices list
-            function updateSavedDevicesList() {
-                const savedDevicesList = document.getElementById('saved-devices-list');
-                if (!savedDevicesList) return;
-                
-                const devices = window.loadSavedDevices ? window.loadSavedDevices() : [];
-                if (devices.length === 0) {
-                    savedDevicesList.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">No saved devices</div>';
-                    return;
-                }
-                
-                let html = '';
-                devices.forEach((device, index) => {
-                    html += `
-                    <div class="border-b border-gray-200 dark:border-gray-700 last:border-b-0 p-3 flex justify-between items-center">
-                        <div>
-                            <span class="font-medium">${device.name || 'Unnamed Device'}</span>
-                            <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">${device.ip}</span>
-                        </div>
-                        <div>
-                            <button 
-                                onclick="connectToDevice('${device.ip}')"
-                                class="text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-opacity-90">
-                                Connect
-                            </button>
-                            <button 
-                                onclick="removeSavedDevice(${index})"
-                                class="text-xs px-2 py-1 bg-danger text-white rounded hover:bg-opacity-90 ml-1">
-                                Remove
-                            </button>
-                        </div>
-                    </div>`;
-                });
-                
-                savedDevicesList.innerHTML = html;
-            }
-        
-            // Function to remove a saved device
-            window.removeSavedDevice = function(index) {
-                if (!window.loadSavedDevices) return;
-                
-                const devices = window.loadSavedDevices();
-                devices.splice(index, 1);
-                localStorage.setItem('savedDevices', JSON.stringify(devices));
-                
-                // Update the list display
-                updateSavedDevicesList();
-                
-                // Also update the device selector
-                if (typeof setupDeviceSelector === 'function') {
-                    setupDeviceSelector();
-                }
+        // Define placeholder functions to prevent errors
+        if (!window.startAutoRefresh) {
+            window.startAutoRefresh = function initialPlaceholder() {
+                console.log("Initial placeholder auto-refresh called");
             };
+        }
         
-            // Initialize the saved devices list
-            updateSavedDevicesList();
+        if (!window.stopAutoRefresh) {
+            window.stopAutoRefresh = function initialPlaceholderStop() {};
+        }
         
-            // Save device settings button
-            const saveDeviceSettingsBtn = document.getElementById('save-device-settings');
-            if (saveDeviceSettingsBtn) {
-                saveDeviceSettingsBtn.addEventListener('click', function() {
-                    const deviceName = document.getElementById('device-name').value;
-                    const modbusId = document.getElementById('modbus-id').value;
-                    const baudrate = document.getElementById('baudrate').value;
-                    const updateInterval = document.getElementById('update-interval').value;
-                    
-                    const config = {
-                        deviceName: deviceName,
-                        modbusId: modbusId,
-                        baudRate: baudrate,
-                        updateInterval: updateInterval
-                    };
-                    
-                    // Save using the global function if available
-                    if (typeof window.saveDeviceConfig === 'function') {
-                        window.saveDeviceConfig(config);
-                    } else {
-                        alert('Device settings saved locally');
-                        localStorage.setItem('deviceConfig', JSON.stringify(config));
-                    }
-                });
-            }
+        // Wait for components to load before running functionality
+        document.addEventListener('components-loaded', function() {
+            console.log('All components loaded, ready for final initialization');
+            updateSplashStatus("UI components loaded");
+            window.appLoadingState.componentsLoaded = true;
+            hideSplashScreen();
+        });
         
-            // Save UI settings button
-            const saveUiSettingsBtn = document.getElementById('save-ui-settings');
-            if (saveUiSettingsBtn) {
-                saveUiSettingsBtn.addEventListener('click', function() {
-                    const theme = document.getElementById('dark-mode-toggle').checked ? 'dark' : 'light';
-                    const autoRefresh = document.getElementById('auto-refresh-toggle').checked;
-                    const refreshInterval = document.getElementById('refresh-interval').value;
-                    
-                    const uiConfig = {
-                        theme: theme,
-                        autoRefresh: autoRefresh,
-                        refreshInterval: refreshInterval
-                    };
-                    
-                    // Save to localStorage
-                    localStorage.setItem('uiConfig', JSON.stringify(uiConfig));
-                    alert('UI settings saved');
-                    
-                    // Apply theme immediately
-                    if (theme === 'dark') {
-                        document.documentElement.classList.add('dark');
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                    }
-                });
-            }
-        
-            // Add more frequent status check for key lock specifically
-            setTimeout(() => {
-                if (typeof window.startKeyLockStatusMonitor === 'function') {
-                    window.startKeyLockStatusMonitor();
-                    console.log("Started dedicated key lock status monitor");
-                }        // Check if the UI settings tab exists
-            }, 2000);
+        // Listen for WebSocket connection
+        document.addEventListener('websocket-connected', function() {
+            updateSplashStatus("Connected to device");
+            window.appLoadingState.connectionEstablished = true;
         });
     </script>
-    
-    <!-- Log Viewer Overlay - Initially hidden and properly structured -->
-    <div id="log-viewer-overlay" class="fixed inset-x-0 bottom-0 bg-white dark:bg-gray-800 shadow-lg rounded-t-lg border border-gray-200 dark:border-gray-700 p-2 transform translate-y-full transition duration-300 ease-in-out z-50" style="height: 33.33vh;">
-        <div class="flex justify-between items-center mb-2">
-            <div class="flex items-center space-x-3 text-sm">
-                <h3 class="font-medium text-gray-800 dark:text-white">Logs</h3>
-                <label class="flex items-center">
-                    <input id="show-timestamp" type="checkbox" checked class="form-checkbox h-3 w-3 text-secondary">
-                    <span class="ml-1 text-xs text-gray-700 dark:text-gray-300">Time</span>
-                </label>
-                <label class="flex items-center">
-                    <input id="show-ip" type="checkbox" checked class="form-checkbox h-3 w-3 text-secondary">
-                    <span class="ml-1 text-xs text-gray-700 dark:text-gray-300">IPs</span>
-                </label>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button id="log-pause" class="p-1 text-secondary" title="Pause">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m-7-10a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
-                    </svg>
-                </button>
-                <button id="log-resume" class="p-1 text-secondary hidden" title="Resume">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </button>
-                <button id="log-clear" class="p-1 text-gray-500" title="Clear logs">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                </button>
-                <button id="log-copy" class="p-1 text-secondary" title="Copy logs">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
-                    </svg>
-                </button>
-                <button id="log-close" class="p-1 text-gray-500" title="Close logs">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-        <div id="log-container" class="overflow-auto bg-gray-100 dark:bg-gray-900 rounded p-2 text-xs font-mono" style="height: calc(33.33vh - 40px);">
-            <div id="logs"></div>
-        </div>
-    </div>
 
-    <!-- Add script for settings tab initializer -->
+    <!-- JavaScript files - Fix loading order and prevent duplicates -->
     <script>
+        // Immediately start simple animation for the bolt
         document.addEventListener('DOMContentLoaded', function() {
-            // Add fallback initialization for settings tabs if they fail to initialize
-            setTimeout(function() {
-                const activeTabs = document.querySelectorAll('.settings-tab.border-secondary');
-                if (activeTabs.length === 0) {
-                    console.log("No active settings tabs detected, attempting recovery...");
-                    if (typeof window.initSettingsTabs === 'function') {
-                        window.initSettingsTabs();
-                    } else {
-                        console.error("Settings tabs initialization function not available");
+            if (typeof anime !== 'undefined') {
+                // Simple initial animation
+                anime({
+                    targets: '#bolt-path',
+                    opacity: [0, 1],
+                    easing: 'easeInOutSine',
+                    duration: 800
+                });
+                
+                // Simple progress animation
+                anime({
+                    targets: '#progress-bar',
+                    width: ['0%', '30%'],
+                    easing: 'easeInOutQuad',
+                    duration: 1000
+                });
+            }
+        });
+
+        // Track loading state
+        window.appLoadingState = {
+            componentsLoaded: false,
+            coreScriptsLoaded: false,
+            connectionEstablished: false
+        };
+        
+        // Update splash screen status
+        function updateSplashStatus(message) {
+            const statusEl = document.getElementById('splash-status');
+            if (statusEl) {
+                statusEl.textContent = message;
+            }
+        }
+        
+        // Hide splash screen when everything is ready
+        function hideSplashScreen() {
+            // Check if all critical components are loaded
+            if (window.appLoadingState.componentsLoaded && 
+                window.appLoadingState.coreScriptsLoaded) {
+                
+                updateSplashStatus("Application ready!");
+                
+                // Add a slight delay before hiding the splash screen
+                setTimeout(() => {
+                    const splashScreen = document.getElementById('splash-screen');
+                    if (splashScreen) {
+                        splashScreen.classList.add('opacity-0');
+                        setTimeout(() => {
+                            splashScreen.classList.add('hidden');
+                        }, 500);
                     }
+                }, 500);
+            }
+        }
+        
+        // Define placeholder functions to prevent errors
+        if (!window.startAutoRefresh) {
+            window.startAutoRefresh = function initialPlaceholder() {
+                console.log("Initial placeholder auto-refresh called");
+            };
+        }
+        
+        if (!window.stopAutoRefresh) {
+            window.stopAutoRefresh = function initialPlaceholderStop() {};
+        }
+        
+        // Wait for components to load before running functionality
+        document.addEventListener('components-loaded', function() {
+            console.log('All components loaded, ready for final initialization');
+            updateSplashStatus("UI components loaded");
+            window.appLoadingState.componentsLoaded = true;
+            hideSplashScreen();
+        });
+        
+        // Listen for WebSocket connection
+        document.addEventListener('websocket-connected', function() {
+            updateSplashStatus("Connected to device");
+            window.appLoadingState.connectionEstablished = true;
+        });
+    </script>
+
+    <!-- Critical scripts in the correct order - Load connectivity_check.js AFTER core.js -->
+    <script src="js/component_loader.js"></script>
+    <script src="js/auto_refresh.js"></script>
+    <script src="js/core.js" onload="window.appLoadingState.coreScriptsLoaded = true; updateSplashStatus('Core scripts loaded'); hideSplashScreen();"></script>
+    <script src="js/connectivity_check.js"></script>
+
+    <!-- Connection handler for device change requests -->
+    <script>
+        // Check if there's a pending connection request from a page reload
+        document.addEventListener('DOMContentLoaded', function() {
+            const pendingConnection = sessionStorage.getItem('connectingToDevice');
+            if (pendingConnection) {
+                console.log('Resuming connection to', pendingConnection);
+                // Clear the flag
+                sessionStorage.removeItem('connectingToDevice');
+                
+                // Wait for the page to fully load before attempting connection
+                setTimeout(() => {
+                    if (typeof window.connectToDevice === 'function') {
+                        window.connectToDevice(pendingConnection);
+                    }
+                }, 2000);
+            }
+        });
+    </script>
+
+    <!-- UI Components -->
+    <script src="js/tab_component.js"></script>
+    <script src="js/component_initializer.js"></script>
+    <script src="js/web_interface.js"></script>
+    <script src="js/form_standardizer.js"></script>
+    <script src="js/settings_init.js"></script>
+    
+    <!-- Debug tools last -->
+    <script src="js/connectivity_check.js"></script>
+    <script src="js/log_viewer.js"></script>
+
+    <!-- Final initialization for good measure -->
+    <script>
+        // Run a final initialization check when window is fully loaded
+        window.addEventListener('load', function() {
+            console.log('Window fully loaded, running final checks');
+            updateSplashStatus("Finalizing application setup");
+            
+            // Verify auto-refresh timer is running or start if needed
+            setTimeout(function() {
+                if (!window.autoRefreshTimer && typeof window.startAutoRefresh === 'function') {
+                    console.log("Auto-refresh not detected running, starting it now");
+                    window.startAutoRefresh();
                 }
-            }, 3000);
+                
+                // Hide splash screen unconditionally after a timeout
+                setTimeout(() => {
+                    const splashScreen = document.getElementById('splash-screen');
+                    if (splashScreen) {
+                        splashScreen.classList.add('splash-hidden');
+                    }
+                }, 1000);
+            }, 1500);
         });
     </script>
 </body>

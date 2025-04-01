@@ -1,4 +1,4 @@
-# XY-SK120 Modbus RTU Control
+# XY-SK120 Power Supply Control
 
 This project allows you to control an XY-SK120 power supply (and compatible models) over Modbus RTU using a Seeed XIAO ESP32S3.
 
@@ -75,6 +75,27 @@ This project uses PlatformIO. To build and upload:
 ```
 pio run -t upload
 ```
+
+## Building the CSS
+
+The project uses Tailwind CSS for styling. To build the CSS:
+
+1. Make sure you have Node.js and npm installed
+2. Run the build script:
+   ```bash
+   # Make the script executable (first time only)
+   chmod +x build-css.sh
+   
+   # Run the build script
+   ./build-css.sh
+   ```
+
+3. For development with auto-reloading:
+   ```bash
+   npm run watch:css
+   ```
+
+This will generate the `data/css/tailwind.css` file used by the application.
 
 ## Developer Guide: Adding Features to the Library
 

@@ -39,6 +39,10 @@ export function updateUI(data) {
 
     // Update protection values if included
     updateProtectionValues(data);
+
+    // This comment suggests there was UI related to a refresh status button
+    // that's no longer needed: "Remove the code that was creating the refresh status button"
+    // Check HTML for related elements that may be unused
 }
 
 // Update PSU readings
@@ -149,7 +153,7 @@ export function updateDeviceName(name) {
     }
 }
 
-// Update operating mode display - Modified to put mode in primary section
+// Update operating mode display - Use Tailwind CSS colors
 export function updateOperatingMode(mode, data) {
     console.log("Updating operating mode:", mode, data);
     
@@ -173,18 +177,19 @@ export function updateOperatingMode(mode, data) {
         // Update text and apply appropriate class
         modeDisplay.textContent = displayText;
         
+        // Use Tailwind class names for colors instead of legacy class names
         if (mode === 'CV') {
-            modeDisplay.classList.add('mode-cv');
+            modeDisplay.classList.add('text-voltage'); // Use Tailwind voltage color class
         } else if (mode === 'CC') {
-            modeDisplay.classList.add('mode-cc');
+            modeDisplay.classList.add('text-current'); // Use Tailwind current color class
         } else if (mode === 'CP') {
-            modeDisplay.classList.add('mode-cp');
+            modeDisplay.classList.add('text-power'); // Use Tailwind power color class
         } else {
-            modeDisplay.classList.add('mode-unknown');
+            modeDisplay.classList.add('text-gray-500'); // Default Tailwind gray
         }
     }
 
-    // Update the mode display in the main readings section
+    // Update the mode display in the main readings section (already using Tailwind classes)
     const modeDisplayValue = document.getElementById('mode-display-value');
     if (modeDisplayValue) {
         // Remove all existing classes
@@ -192,30 +197,30 @@ export function updateOperatingMode(mode, data) {
         
         if (mode === 'CV') {
             modeDisplayValue.textContent = 'CV';
-            modeDisplayValue.classList.add('text-volt');
+            modeDisplayValue.classList.add('text-voltage'); // Tailwind voltage color
         } else if (mode === 'CC') {
             modeDisplayValue.textContent = 'CC';
-            modeDisplayValue.classList.add('text-amp');
+            modeDisplayValue.classList.add('text-current'); // Tailwind current color
         } else if (mode === 'CP') {
             modeDisplayValue.textContent = 'CP';
-            modeDisplayValue.classList.add('text-watt');
+            modeDisplayValue.classList.add('text-power'); // Tailwind power color
         } else {
             modeDisplayValue.textContent = '--';
-            modeDisplayValue.classList.add('text-gray-500');
+            modeDisplayValue.classList.add('text-gray-500'); // Tailwind gray
         }
     }
 
-    // Update the detailed mode display in the status area
+    // Update the detailed mode display in the status area with Tailwind classes
     const modeDisplayElement = document.getElementById('mode-display');
     if (modeDisplayElement) {
         let displayHtml = '';
         
         if (mode === 'CV' && data && data.voltage !== undefined) {
-            displayHtml = `<span class="text-volt">CV ${parseFloat(data.voltage).toFixed(2)}V</span>`;
+            displayHtml = `<span class="text-voltage">CV ${parseFloat(data.voltage).toFixed(2)}V</span>`;
         } else if (mode === 'CC' && data && data.current !== undefined) {
-            displayHtml = `<span class="text-amp">CC ${parseFloat(data.current).toFixed(3)}A</span>`;
+            displayHtml = `<span class="text-current">CC ${parseFloat(data.current).toFixed(3)}A</span>`;
         } else if (mode === 'CP' && data && data.power !== undefined) {
-            displayHtml = `<span class="text-watt">CP ${parseFloat(data.power).toFixed(1)}W</span>`;
+            displayHtml = `<span class="text-power">CP ${parseFloat(data.power).toFixed(1)}W</span>`;
         } else {
             displayHtml = `<span class="text-gray-500">--</span>`;
         }

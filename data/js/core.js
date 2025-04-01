@@ -3,12 +3,32 @@
  * Handles WebSocket communication and module loading
  */
 
-// WebSocket connection variables
+// WebSocket connection variables - CENTRAL DECLARATION
 let websocket = null;
 let websocketConnected = false;
+let autoRefreshTimer = null; // SINGLE GLOBAL DECLARATION - all modules should use this
 
-// Global for tracking auto-refresh timer
-let autoRefreshTimer = null;
+// Declare global connection management functions
+window.websocket = null;
+window.websocketConnected = false;
+window.autoRefreshTimer = null;
+
+// Add a connection ready promise that other modules can await
+window.websocketReadyPromise = new Promise((resolve) => {
+    window.resolveWebsocketReady = resolve;
+});
+
+// Expose a safe way to use the websocket
+window.whenWebsocketReady = function(callback) {
+    if (window.websocketConnected && window.websocket && 
+        window.websocket.readyState === WebSocket.OPEN) {
+        // If already connected, execute immediately
+        callback();
+    } else {
+        // Otherwise wait for connection
+        window.websocketReadyPromise.then(callback);
+    }
+};
 
 // Default control settings
 const DEFAULT_CONTROL_SETTINGS = {
@@ -23,23 +43,20 @@ let controlSettings = { ...DEFAULT_CONTROL_SETTINGS };
 // Add error handling for importing modules
 window.moduleImportErrors = {};
 
-// Load basic controls with better error handling - make key functions available early
+// Load basic controls with better error handling
 function loadBasicControls() {
     try {
         // Define default versions of key functions to prevent errors until modules load
         window.togglePower = window.togglePower || function(isOn) {
             console.log("Placeholder togglePower called with:", isOn);
-            // Will be replaced when module loads
         };
         
         window.updateAllStatus = window.updateAllStatus || function() {
             console.log("Placeholder updateAllStatus called");
-            // Will be replaced when module loads
         };
         
         window.requestPsuStatus = window.requestPsuStatus || function() {
             console.log("Placeholder requestPsuStatus called");
-            // Will be replaced when module loads
         };
         
         // Load the actual module
@@ -71,11 +88,21 @@ function loadBasicControls() {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Import and initialize all modules
+    console.log('DOM loaded, initializing core functionality');
+    
+    // Listen for splash screen completion
+    document.addEventListener('splash-screen-hidden', function() {
+        console.log('Splash screen animation complete, initializing UI');
+        if (typeof window.initializeUI === 'function') {
+            window.initializeUI();
+        }
+    });
+
+    // Initialize core functionality
     initializeModules();
     
-    // Setup base WebSocket connection
-    setTimeout(initWebSocket, 500);
+    // Setup base WebSocket connection with a delay
+    setTimeout(initWebSocket, 1000);
     
     // Add a ping mechanism to keep the connection alive
     setInterval(() => {
@@ -86,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 30000); // Send a ping every 30 seconds
 });
 
-// Improved initializeModules function - provide default implementations
+// Initialize modules
 function initializeModules() {
     // Define placeholders for critical functions
     window.togglePower = function(isOn) {
@@ -142,21 +169,21 @@ function initializeModules() {
         if(module.initSettings) module.initSettings();
     }).catch(err => console.error('Failed to load settings:', err));
     
-    // Import device manager - name remains the same
+    // Import device manager
     import('./device_manager.js').then(module => {
         if(module.initDeviceManager) module.initDeviceManager();
     }).catch(err => console.error('Failed to load device manager:', err));
-    
-    // Remove status_monitor.js import - already commented out
-    
-    // Import other modules as needed
-    // Note: Each module should handle its own initialization
 }
 
-// WebSocket connection functions
+// WebSocket connection function
 function initWebSocket() {
     // Get device IP - with fallback to current hostname
-    let deviceIP = localStorage.getItem('selectedDeviceIP') || window.location.hostname;
+    // Check for manual override first (for device manager connections)
+    let deviceIP = window.manualDeviceIP || localStorage.getItem('selectedDeviceIP') || window.location.hostname;
+    
+    // Don't clear the manual device IP so it persists for connection status checks
+    // Instead, store it directly as the currentDeviceIP
+    window.currentDeviceIP = deviceIP;
     
     // If device IP is localhost but we're accessing from a remote host, use the current hostname
     if (deviceIP === 'localhost' && 
@@ -168,8 +195,11 @@ function initWebSocket() {
     // Close existing connection if any
     if (websocket) {
         try {
-            websocket.close();
+            if (websocket.readyState < 2) { // Only close if not already closing or closed
+                websocket.close();
+            }
             websocket = null;
+            window.websocket = null;
         } catch (e) {
             console.error('Error closing WebSocket:', e);
         }
@@ -179,39 +209,72 @@ function initWebSocket() {
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${wsProtocol}//${deviceIP}/ws`;
     
+    console.log(`Creating WebSocket connection to ${wsUrl}`);
+    updateStatus('connecting', deviceIP);
+    
     try {
         // Create new WebSocket connection
-        console.log(`Connecting to WebSocket at: ${wsUrl}`);
-        updateStatus('connecting', deviceIP);
-        
         websocket = new WebSocket(wsUrl);
+        
+        // Make it globally available immediately
+        window.websocket = websocket;
+        window.socket = websocket; // For compatibility
         
         // Setup event handlers
         websocket.onopen = function() {
-            console.log('WebSocket connected');
+            console.log('WebSocket connected to', deviceIP);
             websocketConnected = true;
-            window.websocketConnected = true; // Make sure global flag is set
-            window.websocket = websocket; // Make the websocket globally available
+            window.websocketConnected = true;
             
             updateStatus('connected', deviceIP);
             
-            // Broadcast connection event to modules
-            document.dispatchEvent(new CustomEvent('websocket-connected'));
-            
-            // Request initial status
-            if (typeof window.updateAllStatus === 'function') {
-                setTimeout(() => window.updateAllStatus(), 500);
+            // Resolve the ready promise
+            if (window.resolveWebsocketReady) {
+                window.resolveWebsocketReady();
             }
+            
+            // Test connection with a ping - but be gentler on ESP32
+            setTimeout(() => {
+                // Request initial status - safer than ping test
+                if (typeof window.requestDeviceStatus === 'function') {
+                    window.requestDeviceStatus();
+                }
+                
+                // Broadcast connection event to modules
+                document.dispatchEvent(new CustomEvent('websocket-connected', {
+                    detail: { deviceIP: deviceIP }
+                }));
+                
+                // Update saved devices list to reflect new connection
+                if (typeof window.updateSavedDevicesList === 'function') {
+                    setTimeout(() => window.updateSavedDevicesList(), 500);
+                }
+            }, 500);
         };
         
-        websocket.onclose = function() {
-            console.log('WebSocket disconnected');
+        websocket.onclose = function(event) {
+            console.log('WebSocket disconnected, code:', event.code);
             websocketConnected = false;
             window.websocketConnected = false;
             updateStatus('disconnected', deviceIP);
             
             // Broadcast disconnection event
-            document.dispatchEvent(new CustomEvent('websocket-disconnected'));
+            document.dispatchEvent(new CustomEvent('websocket-disconnected', {
+                detail: { deviceIP: deviceIP }
+            }));
+            
+            // Update saved devices list to reflect disconnection
+            if (typeof window.updateSavedDevicesList === 'function') {
+                setTimeout(() => window.updateSavedDevicesList(), 500);
+            }
+            
+            // Attempt automatic reconnection after a delay
+            setTimeout(() => {
+                if (!websocketConnected && !window.manualDisconnect) {
+                    console.log("Attempting automatic reconnection...");
+                    initWebSocket();
+                }
+            }, 3000);
         };
         
         websocket.onerror = function(error) {
@@ -224,16 +287,53 @@ function initWebSocket() {
         websocket.onmessage = function(event) {
             handleMessage(event);
         };
+        
+        return true;
     } catch (error) {
         console.error('Error creating WebSocket:', error);
         updateStatus('error', deviceIP);
+        websocketConnected = false;
+        window.websocketConnected = false;
+        
+        // Attempt reconnection after a delay
+        setTimeout(() => {
+            if (!websocketConnected) {
+                console.log("Attempting reconnection after error...");
+                initWebSocket();
+            }
+        }, 5000);
+        
+        return false;
     }
 }
 
-// Enhanced update status function
+// Add a more reliable WebSocket setup function that other code can use
+window.setupWebSocket = function(ip) {
+    window.manualDeviceIP = ip;
+    
+    // Also store it in localStorage to be consistent
+    if (ip) {
+        localStorage.setItem('selectedDeviceIP', ip);
+    }
+    
+    return initWebSocket();
+};
+
+// Update connection status with enhanced UI
 function updateStatus(status, deviceIP) {
     const statusElement = document.getElementById('websocket-status');
     const statusIndicator = document.getElementById('websocket-status-indicator');
+    const activeDeviceName = document.getElementById('active-device-name');
+    
+    // Also update popup elements if they exist
+    const popupStatus = document.getElementById('popup-status');
+    const popupDeviceIP = document.getElementById('popup-device-ip');
+    
+    // Get the device name if available
+    let deviceName = '';
+    if (typeof window.getDeviceName === 'function') {
+        deviceName = window.getDeviceName(deviceIP) || '';
+    }
     
     if (statusElement) {
         switch(status) {
@@ -272,24 +372,80 @@ function updateStatus(status, deviceIP) {
         }
     }
     
+    // Update active device name display
+    if (activeDeviceName) {
+        if (deviceName) {
+            activeDeviceName.textContent = deviceName;
+        } else {
+            activeDeviceName.textContent = deviceIP;
+        }
+        
+        // Make it visible
+        activeDeviceName.classList.remove('hidden');
+        activeDeviceName.classList.add('md:inline');
+    }
+    
+    // Update popup details if it exists
+    if (popupStatus) {
+        switch(status) {
+            case 'connected':
+                popupStatus.textContent = 'Connected';
+                popupStatus.className = 'text-success';
+                break;
+            case 'connecting':
+                popupStatus.textContent = 'Connecting...';
+                popupStatus.className = 'text-secondary';
+                break;
+            case 'disconnected':
+                popupStatus.textContent = 'Disconnected';
+                popupStatus.className = 'text-danger';
+                break;
+            case 'error':
+                popupStatus.textContent = 'Connection Error';
+                popupStatus.className = 'text-danger';
+                break;
+        }
+    }
+    
+    if (popupDeviceIP) {
+        popupDeviceIP.textContent = deviceIP;
+    }
+    
     // Store the selected device for reconnection
     if (deviceIP) {
         localStorage.setItem('selectedDeviceIP', deviceIP);
+        window.currentDeviceIP = deviceIP;
     }
 }
 
-// Handle incoming messages and route to appropriate modules - IMPROVED VERSION
+// Handle incoming messages - Enhanced to detect both status and pong responses
 function handleMessage(event) {
     try {
         const data = JSON.parse(event.data);
-        console.log('Received message:', data);
         
-        // REMOVED: Don't automatically highlight tabs on status updates
-        // if (data.action === 'statusResponse' && data.operatingMode) {
-        //     if (typeof window.highlightActiveOperatingMode === 'function') {
-        //         window.highlightActiveOperatingMode(data.operatingMode);
-        //     }
-        // }
+        // Only log non-pong messages to avoid console spam
+        if (data.action !== 'pong') {
+            console.log('Received message:', data);
+        } else {
+            console.debug('Received pong response');
+        }
+        
+        // Special handling for pong responses for connection testing
+        if (data.action === 'pong') {
+            console.debug("✅ Received pong response for connection test");
+        }
+        
+        // Special handling for status responses
+        if (data.action === 'statusResponse') {
+            // Update the last message timestamp
+            window.lastStatusResponse = Date.now();
+            
+            // Remove the "Refresh Status" button if it exists
+            const refreshStatusBtn = document.getElementById('refresh-status-button');
+            if (refreshStatusBtn) {
+                refreshStatusBtn.parentNode.removeChild(refreshStatusBtn);
+            }
+        }
         
         // Special handling for power commands to ensure UI is updated
         if (data.action === 'setOutputStateResponse' || data.action === 'powerOutputResponse') {
@@ -318,32 +474,36 @@ function handleMessage(event) {
     }
 }
 
-// Send a command to the device - available globally - IMPROVED VERSION
+// Send a command to the device - Enhanced with better error handling for ESP32
 window.sendCommand = function(command) {
-    // Log all commands for debugging
-    console.log('Attempting to send command:', command);
-    
-    if (!websocket) {
-        console.error('WebSocket not initialized');
-        return false;
+    // Log all commands for debugging (except routine pings which would flood the console)
+    if (command.action !== 'ping') {
+        console.log('Sending command:', command);
+    } else {
+        console.debug('Sending ping');
     }
     
-    if (websocket.readyState !== WebSocket.OPEN) {
-        console.error('WebSocket not connected. Current state:', websocket.readyState);
+    if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+        console.error('WebSocket not connected. Current state:', websocket ? websocket.readyState : 'undefined');
         
-        // Special handling for critical commands like power toggle
-        if (command.action === 'setOutputState') {
-            console.log('Attempting to reconnect before sending power command...');
+        // Special handling for critical commands - reconnect first
+        if (command.action === 'setOutputState' || command.action === 'getStatus' || 
+            command.action === 'powerOutput') {
+            console.log('Critical command - attempting to reconnect first...');
             
-            // Try to reconnect first
+            // Try to reconnect first and queue the command for retry
+            window.pendingCommand = command;
             initWebSocket();
             
-            // Alert user about connection issues
+            // Schedule command retry after reconnection attempt
             setTimeout(() => {
-                if (websocket.readyState !== WebSocket.OPEN) {
-                    alert('Connection to device lost. Please check your connection and try again.');
+                if (websocket && websocket.readyState === WebSocket.OPEN && window.pendingCommand) {
+                    console.log('Retrying command after reconnection:', window.pendingCommand);
+                    const cmd = window.pendingCommand;
+                    window.pendingCommand = null;
+                    window.sendCommand(cmd);
                 }
-            }, 500);
+            }, 3000); // Increased for ESP32
         }
         
         return false;
@@ -352,16 +512,15 @@ window.sendCommand = function(command) {
     try {
         const commandStr = JSON.stringify(command);
         websocket.send(commandStr);
-        console.log('Successfully sent command:', command);
         
-        // Dispatch a custom event for logging in the log viewer
-        document.dispatchEvent(new CustomEvent('websocket-sent', { 
-            detail: command 
-        }));
-        
-        // For power commands, log additional info
-        if (command.action === 'setOutputState') {
-            console.log('Sent power state change to:', command.enabled ? 'ON' : 'OFF');
+        // Only log non-ping commands fully
+        if (command.action !== 'ping') {
+            console.log('Successfully sent command:', command);
+            
+            // Dispatch a custom event for logging in the log viewer
+            document.dispatchEvent(new CustomEvent('websocket-sent', { 
+                detail: command 
+            }));
         }
         
         return true;
@@ -371,12 +530,21 @@ window.sendCommand = function(command) {
     }
 }
 
-// Expose key functions globally
+// Add a function to request device status that other components can use
+window.requestDeviceStatus = function() {
+    return window.sendCommand({ action: 'getStatus', timestamp: Date.now() });
+};
+
+// Expose key functions globally (consolidated exports)
 window.initWebSocket = initWebSocket;
+window.sendCommand = window.sendCommand || sendCommand;
 
-// Add this check at the end of the file to ensure auto-refresh starts
+// Add getCurrentDeviceIP helper
+window.getCurrentDeviceIP = function() {
+    return window.currentDeviceIP || localStorage.getItem('selectedDeviceIP') || window.location.hostname;
+};
 
-// Fallback initialization for auto-refresh - updated import path
+// Fallback initialization for auto-refresh
 document.addEventListener('DOMContentLoaded', function() {
     // Check for auto-refresh after 3 seconds
     setTimeout(() => {
@@ -385,7 +553,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.startAutoRefresh();
             }
         } else {
-            // Try to manually import the basic_control.js module (renamed)
+            // Try to manually import the basic_control.js module
             import('./basic_control.js')
                 .then(module => {
                     if (typeof module.startAutoRefresh === 'function') {
@@ -399,3 +567,112 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 3000);
 });
+
+// Track WebSocket connection status
+window.lastWebSocketMessage = 0; 
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Core module loaded");
+    
+    // Connect to WebSocket if not connected
+    if (!window.socket || window.socket.readyState !== 1) {
+        window.initWebSocket();
+    }
+    
+    // Remove any refresh status buttons that might be created during initialization
+    setTimeout(removeRefreshStatusButtons, 2000);
+    
+    // Add a mutation observer to remove any dynamically added refresh status buttons
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            if (mutation.addedNodes.length) {
+                for (const node of mutation.addedNodes) {
+                    if (node.id && node.id.includes('refresh-status')) {
+                        node.parentNode.removeChild(node);
+                    }
+                }
+            }
+        });
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+});
+
+// Initialize websocket status indicator popup
+function setupWebSocketStatusIndicator() {
+    const statusContainer = document.querySelector('.websocket-status-container');
+    const detailsPopup = document.querySelector('.websocket-details-popup');
+    
+    if (statusContainer && detailsPopup) {
+        // Toggle popup on click
+        statusContainer.addEventListener('click', (e) => {
+            // Prevent this from triggering if we click the Test Connection button
+            if (e.target.id === 'popup-test-connection') return;
+            
+            detailsPopup.classList.toggle('hidden');
+            
+            // Update last message time
+            const lastMessageEl = document.getElementById('popup-last-message');
+            if (lastMessageEl) {
+                if (window.lastStatusResponse) {
+                    const timeSince = Math.floor((Date.now() - window.lastStatusResponse) / 1000);
+                    if (timeSince < 60) {
+                        lastMessageEl.textContent = `${timeSince} seconds ago`;
+                    } else if (timeSince < 3600) {
+                        lastMessageEl.textContent = `${Math.floor(timeSince / 60)} minutes ago`;
+                    } else {
+                        lastMessageEl.textContent = `${Math.floor(timeSince / 3600)} hours ago`;
+                    }
+                } else {
+                    lastMessageEl.textContent = 'No response yet';
+                }
+            }
+        });
+        
+        // Setup test connection button
+        const testButton = document.getElementById('popup-test-connection');
+        if (testButton) {
+            testButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent triggering the popup toggle
+                detailsPopup.classList.add('hidden'); // Hide popup
+                
+                if (typeof window.checkFullConnectivity === 'function') {
+                    window.checkFullConnectivity();
+                } else {
+                    alert('Connection test function not available');
+                }
+            });
+        }
+        
+        // Close popup when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!statusContainer.contains(e.target) && !detailsPopup.classList.contains('hidden')) {
+                detailsPopup.classList.add('hidden');
+            }
+        });
+    }
+}
+
+// Initialize on page load - add WebSocket status indicator setup
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Core module loaded");
+    
+    // Setup WebSocket status indicator
+    setupWebSocketStatusIndicator();
+    
+    // Connect to WebSocket if not connected
+    if (!window.socket || window.socket.readyState !== 1) {
+        window.initWebSocket();
+    }
+});
+
+// Remove any status refresh buttons that might be created by other modules
+function removeRefreshStatusButtons() {
+    const refreshButtons = document.querySelectorAll('[id^="refresh-status"]');
+    refreshButtons.forEach(button => {
+        if (button && button.parentNode) {
+            button.parentNode.removeChild(button);
+        }
+    });
+}

@@ -1,6 +1,6 @@
 /**
- * Interface functionality for XY-SK120
- * Handles UI interactions and menu displays
+ * Card Swiper functionality for XY-SK120
+ * Handles mobile card swiping and desktop card layout
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -209,45 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
-    // Mode tab switcher - special handling to prevent swipe
-    document.querySelectorAll('.mode-tab').forEach(tab => {
-        tab.addEventListener('click', function(e) {
-            // Ensure click doesn't trigger swipe
-            e.stopPropagation();
-            
-            // Disable swipe temporarily
-            preventSwipe = true;
-            setTimeout(() => { preventSwipe = false; }, 300);
-            
-            // Get the mode from data attribute
-            const mode = this.getAttribute('data-mode');
-            
-            // Select all mode tabs and remove active styling
-            document.querySelectorAll('.mode-tab').forEach(t => {
-                t.classList.remove('border-secondary', 'text-secondary');
-                t.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-            });
-            
-            // Add active styling to the clicked tab
-            this.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
-            this.classList.add('border-secondary', 'text-secondary');
-            
-            // Hide all mode settings
-            document.querySelectorAll('.mode-settings').forEach(panel => {
-                panel.classList.add('hidden');
-                panel.classList.remove('block');
-            });
-            
-            // Show the selected mode settings
-            const settingsPanel = document.getElementById(mode + '-settings');
-            if (settingsPanel) {
-                settingsPanel.classList.remove('hidden');
-                settingsPanel.classList.add('block');
-            }
-        });
-    });
-    
+
     // Expose API for other modules
     window.CardSwiper = {
         goToCard: function(index) {
@@ -286,6 +248,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 return true;
             }
             return false;
+        },
+        
+        disableTabHandlers: function() {
+            // This is a placeholder function that can be called from index.html
+            // to ensure no conflicting handlers are running
+            console.log("Disabling conflicting tab handlers");
         }
     };
 });
+
+// Export as ES module
+export const CardSwiper = window.CardSwiper;

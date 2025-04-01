@@ -1,14 +1,15 @@
 /**
- * Simple utility script to check connectivity
+ * Simple connectivity checker
  */
 
 // Function to check backend connectivity
 function checkBackendConnectivity() {
+    console.log("Running basic connectivity check");
+    
     // Create results container
     const results = {
         httpPing: false,
         websocket: false,
-        wifiStatus: false,
         errors: []
     };
     
@@ -16,115 +17,168 @@ function checkBackendConnectivity() {
     const deviceIP = localStorage.getItem('selectedDeviceIP') || window.location.hostname;
     const baseUrl = `${window.location.protocol}//${deviceIP}`;
     
-    // 1. Check basic HTTP connectivity using ping endpoint
-    return fetch(`${baseUrl}/ping`)
-        .then(response => {
-            results.httpPing = response.ok;
-            
-            // 2. Check WebSocket status
-            results.websocket = window.websocketConnected && 
-                               window.websocket && 
-                               window.websocket.readyState === 1;
-            
-            // 3. Check WiFi status endpoint
-            return fetch(`${baseUrl}/api/wifi/status`)
-                .then(response => {
-                    results.wifiStatus = response.ok;
-                    if (!response.ok) {
-                        results.errors.push(`WiFi status HTTP error: ${response.status}`);
-                    }
-                    return results;
-                })
-                .catch(err => {
-                    results.errors.push(`WiFi status error: ${err.message}`);
-                    return results;
-                });
-        })
-        .catch(err => {
-            results.errors.push(`HTTP ping error: ${err.message}`);
-            return results;
-        });
+    // Simple check to see if WebSocket is connected
+    results.websocket = window.websocketConnected && 
+                        window.websocket && 
+                        window.websocket.readyState === WebSocket.OPEN;
+    
+    // Return the results directly without additional network calls that might interfere
+    return Promise.resolve(results);
 }
 
-// Function to display the connectivity results
+// Simplified display function
 function displayConnectivityResults(results) {
-    const container = document.createElement('div');
-    container.style.cssText = `
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        background: rgba(0,0,0,0.8);
-        color: white;
-        padding: 10px;
-        border-radius: 5px;
-        font-family: monospace;
-        z-index: 9999;
-        max-width: 400px;
-    `;
+    alert(results.websocket ? 
+        "WebSocket is connected" : 
+        "WebSocket is disconnected - check console for details");
+        
+    console.log("WebSocket connection status:", results.websocket ? "Connected" : "Disconnected");
+    console.log("WebSocket state:", window.websocket ? 
+        ["Connecting", "Open", "Closing", "Closed"][window.websocket.readyState] : 
+        "Not initialized");
+}
+
+// Simplified ping test that first checks if we're testing the currently connected device
+function pingWebSocketConnection() {
+    console.log("🏓 Testing WebSocket connection...");
     
-    container.innerHTML = `
-        <h3 style="margin-top:0">Connectivity Check</h3>
-        <div style="color:${results.httpPing ? '#4CAF50' : '#F44336'}">HTTP Ping: ${results.httpPing ? 'OK' : 'Failed'}</div>
-        <div style="color:${results.websocket ? '#4CAF50' : '#F44336'}">WebSocket: ${results.websocket ? 'Connected' : 'Disconnected'}</div>
-        <div style="color:${results.wifiStatus ? '#4CAF50' : '#F44336'}">WiFi Status API: ${results.wifiStatus ? 'OK' : 'Failed'}</div>
-        ${results.errors.length > 0 ? 
-            `<div style="margin-top:10px;border-top:1px solid #555;padding-top:10px">
-                <strong>Errors:</strong>
-                <ul style="margin:5px 0;padding-left:20px">
-                    ${results.errors.map(err => `<li>${err}</li>`).join('')}
-                </ul>
-            </div>` : 
-            ''
+    return new Promise((resolve, reject) => {
+        // Check if WebSocket is defined and connected
+        if (!window.websocket || window.websocket.readyState !== WebSocket.OPEN) {
+            console.error("❌ WebSocket not connected. Current state:", 
+                         window.websocket ? window.websocket.readyState : "undefined");
+            reject(new Error("WebSocket not connected"));
+            return;
         }
-        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-            <button id="reconnect-websocket" style="padding:5px;background:#2ecc71;border:none;color:white;border-radius:3px;cursor:pointer">Reconnect</button>
-            <button id="close-connectivity-check" style="padding:5px;background:#3498db;border:none;color:white;border-radius:3px;cursor:pointer">Close</button>
-        </div>
-    `;
-    
-    document.body.appendChild(container);
-    
-    // Add event listeners
-    document.getElementById('close-connectivity-check').addEventListener('click', () => {
-        document.body.removeChild(container);
-    });
-    
-    document.getElementById('reconnect-websocket').addEventListener('click', () => {
-        if (typeof window.initWebSocket === 'function') {
-            window.initWebSocket();
-            setTimeout(() => document.body.removeChild(container), 1000);
+        
+        // Try with just a basic status request (simpler and more reliable)
+        if (typeof window.sendCommand === 'function') {
+            console.log("📤 Testing connection with getStatus command...");
+            
+            // Track if we've received a response
+            let responseReceived = false;
+            
+            // Set up a one-time listener for status response
+            const statusListener = function(event) {
+                const data = event.detail;
+                if (data && (data.action === 'statusResponse' || data.action === 'pong')) {
+                    responseReceived = true;
+                    document.removeEventListener('websocket-message', statusListener);
+                    clearTimeout(statusTimeout);
+                    console.log("✅ Response received! Connection working correctly.");
+                    resolve(true);
+                }
+            };
+            
+            // Listen for the status response
+            document.addEventListener('websocket-message', statusListener);
+            
+            // Set timeout for response
+            const statusTimeout = setTimeout(() => {
+                if (!responseReceived) {
+                    document.removeEventListener('websocket-message', statusListener);
+                    console.log("⏱️ Response timeout, connection test failed");
+                    reject(new Error("Response timeout - no response received"));
+                }
+            }, 5000); // Reasonable timeout
+            
+            // Send the status request
+            const result = window.sendCommand({ 
+                action: 'getStatus',
+                timestamp: Date.now() // Prevent caching
+            });
+            
+            if (!result) {
+                // If send command failed
+                document.removeEventListener('websocket-message', statusListener);
+                clearTimeout(statusTimeout);
+                console.log("❌ Failed to send command");
+                reject(new Error("Failed to send command"));
+            }
+        } else {
+            // Fallback to simple check if we can't send commands
+            if (window.websocketConnected && window.websocket.readyState === WebSocket.OPEN) {
+                console.log("✅ WebSocket appears to be connected (basic check)");
+                resolve(true);
+            } else {
+                reject(new Error("WebSocket not properly connected"));
+            }
         }
     });
 }
 
-// Make globally available
-window.checkConnectivity = function() {
-    checkBackendConnectivity().then(displayConnectivityResults);
-};
+// Simplified full connectivity check
+async function checkFullConnectivity() {
+    console.log("🔍 Running connectivity check...");
+    
+    const results = {
+        websocket: false,
+        responseTest: false,
+        errors: []
+    };
+    
+    // Remove any "Refresh Status" buttons that might be present
+    const refreshButtons = document.querySelectorAll('[id^="refresh-status"]');
+    refreshButtons.forEach(button => {
+        if (button && button.parentNode) {
+            button.parentNode.removeChild(button);
+        }
+    });
+    
+    // Check WebSocket connection status
+    results.websocket = window.websocketConnected && 
+                        window.websocket && 
+                        window.websocket.readyState === WebSocket.OPEN;
+    
+    // If WebSocket seems connected, test with a command
+    if (results.websocket) {
+        try {
+            await pingWebSocketConnection();
+            results.responseTest = true;
+        } catch (error) {
+            console.error("Connection test failed:", error.message);
+            results.errors.push(`Connection test failed: ${error.message}`);
+        }
+    } else {
+        results.errors.push("WebSocket not connected");
+    }
+    
+    // Display results
+    displaySimplifiedResults(results);
+    
+    return results;
+}
 
-// Add check connectivity button to the page
-document.addEventListener('DOMContentLoaded', function() {
-    // Create a small button in the top-right corner
-    const btn = document.createElement('button');
-    btn.textContent = '🔌';
-    btn.title = 'Check Connectivity';
-    btn.style.cssText = `
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        z-index: 9000;
-        background: rgba(52, 152, 219, 0.7);
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        font-size: 16px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    `;
-    btn.onclick = window.checkConnectivity;
-    document.body.appendChild(btn);
-});
+// Simplified results display
+function displaySimplifiedResults(results) {
+    console.log("📊 Connection Test Results:", results);
+    
+    if (results.websocket && results.responseTest) {
+        alert("✅ Connection test successful! The device is connected and responding.");
+    } else {
+        let message = "❌ Connection test failed\n\n";
+        
+        if (!results.websocket) {
+            message += "• WebSocket is not connected\n";
+        } else if (!results.responseTest) {
+            message += "• Device is not responding to commands\n";
+        }
+        
+        if (results.errors.length > 0) {
+            message += "\nErrors:\n";
+            results.errors.forEach(error => {
+                message += `• ${error}\n`;
+            });
+        }
+        
+        message += "\nTry refreshing the page or check your connection.";
+        alert(message);
+    }
+}
+
+// Make functions available globally
+window.checkBackendConnectivity = checkBackendConnectivity;
+window.displayConnectivityResults = displayConnectivityResults;
+window.pingWebSocketConnection = pingWebSocketConnection;
+window.checkFullConnectivity = checkFullConnectivity;
+window.checkConnectivity = checkFullConnectivity; // Replace the old function with the more comprehensive one

@@ -25,6 +25,7 @@ module.exports = {
         'voltage': '#64ff00', // Green for CV mode
         'current': '#fff500', // Yellow for CC mode
         'power': '#b73dff',   // Purple for CP mode
+        'temperature': '#00e5ff', // Cyan for temperature
       },
       fontFamily: {
         'sans': ['Arial', 'sans-serif'],
@@ -52,6 +53,7 @@ module.exports = {
         'pulse': 'pulse 2s infinite alternate ease-in-out',
         'spin': 'spin 1s ease-in-out infinite',
         'fadeIn': 'fadeIn 0.3s ease',
+        'slowPulse': 'slowPulse 3s infinite',
       },
       keyframes: {
         pulse: {
@@ -64,6 +66,10 @@ module.exports = {
         fadeIn: {
           'from': { opacity: '0' },
           'to': { opacity: '1' },
+        },
+        slowPulse: {
+          '0%, 100%': { opacity: '0.2' },
+          '50%': { opacity: '0.6' },
         }
       },
       transitionProperty: {

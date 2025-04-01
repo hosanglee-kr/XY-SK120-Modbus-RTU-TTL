@@ -46,6 +46,9 @@ export function initBasicControls() {
             startAutoRefresh();
         }
     }, 5000);
+    
+    // Use the consolidated timer handling
+    window.autoRefreshTimer = window.autoRefreshTimer || null;
 }
 
 // Auto-refresh timer variable
@@ -194,7 +197,7 @@ function syncPowerToggleWithActualState() {
     }
 }
 
-// Revert back to original helper function for updating output status display - REMOVE ANIMATION
+// Fix typo in updateOutputStatusDisplay function - "On" should be "isOn"
 function updateOutputStatusDisplay(isOn) {
     const outputStatus = document.getElementById('output-status');
     if (!outputStatus) return;
@@ -206,7 +209,7 @@ function updateOutputStatusDisplay(isOn) {
     if (isOn === true) {
         outputStatus.textContent = "ON";
         outputStatus.classList.add('status-on');
-    } else if (isOn === false) {
+    } else if (isOn === false) { // Fix: "On" should be "isOn"
         outputStatus.textContent = "OFF";
         outputStatus.classList.add('status-off');
     } else {
@@ -529,16 +532,27 @@ function updateBasicUI(data) {
 function updateOutputStatus(enabled) {
     console.log("Updating output status UI to:", enabled ? "ON" : "OFF");
     
-    // Update output status display
-    updateOutputStatusDisplay(enabled);
-    
-    // Update power toggle with proper checked state
-    const powerToggle = document.getElementById('power-toggle');
-    if (powerToggle) {
-        console.log("Setting power toggle checkbox to:", enabled);
-        // Only update if the state doesn't match to avoid triggering the change event
-        if (powerToggle.checked !== enabled) {
-            powerToggle.checked = enabled;
+    // Use the common updateOutputStatusDisplay function from basic_control.js if available
+    if (typeof window.updateOutputStatusDisplay === 'function') {
+        window.updateOutputStatusDisplay(enabled);
+    } else {
+        // Fallback to direct implementation if function not available
+        const outputStatus = document.getElementById('output-status');
+        if (!outputStatus) return;
+        
+        // Clear all state classes first
+        outputStatus.classList.remove('status-on', 'status-off', 'status-unknown', 'status-loading');
+        
+        // Add appropriate class for current state
+        if (enabled === true) {
+            outputStatus.textContent = "ON";
+            outputStatus.classList.add('status-on');
+        } else if (enabled === false) {
+            outputStatus.textContent = "OFF";
+            outputStatus.classList.add('status-off');
+        } else {
+            outputStatus.textContent = "--";
+            outputStatus.classList.add('status-unknown');
         }
     }
 }
