@@ -347,9 +347,10 @@ export function refreshPsuStatus() {
 // Set up voltage control
 function setupVoltageControls() {
     const applyVoltage = document.getElementById('apply-voltage');
+    const setVoltageInput = document.getElementById('voltage-preset'); // Changed to voltage-preset
     if (applyVoltage) {
         applyVoltage.addEventListener('click', function() {
-            const voltage = parseFloat(document.getElementById('set-voltage').value);
+            const voltage = parseFloat(setVoltageInput.value); // Changed to voltage-preset
             if (!isNaN(voltage) && voltage >= 0 && voltage <= 30) {
                 sendCommand({ 
                     action: 'setVoltage', 
@@ -365,9 +366,10 @@ function setupVoltageControls() {
 // Set up current control
 function setupCurrentControls() {
     const applyCurrent = document.getElementById('apply-current');
+    const setCurrentInput = document.getElementById('current-preset'); // Changed to current-preset
     if (applyCurrent) {
         applyCurrent.addEventListener('click', function() {
-            const current = parseFloat(document.getElementById('set-current').value);
+            const current = parseFloat(setCurrentInput.value); // Changed to current-preset
             if (!isNaN(current) && current >= 0 && current <= 5) {
                 sendCommand({ 
                     action: 'setCurrent', 
@@ -387,7 +389,11 @@ function setupOperatingModes() {
     if (applyCvBtn) {
         applyCvBtn.addEventListener('click', () => {
             const voltage = parseFloat(document.getElementById('set-cv-voltage').value);
-            setConstantVoltage(voltage);
+            if (!isNaN(voltage)) {
+                setConstantVoltage(voltage);
+            } else {
+                alert('Please enter a valid voltage');
+            }
         });
     }
     
@@ -396,7 +402,11 @@ function setupOperatingModes() {
     if (applyCcBtn) {
         applyCcBtn.addEventListener('click', () => {
             const current = parseFloat(document.getElementById('set-cc-current').value);
-            setConstantCurrent(current);
+             if (!isNaN(current)) {
+                setConstantCurrent(current);
+            } else {
+                alert('Please enter a valid current');
+            }
         });
     }
     
@@ -405,7 +415,11 @@ function setupOperatingModes() {
     if (applyCpBtn) {
         applyCpBtn.addEventListener('click', () => {
             const power = parseFloat(document.getElementById('set-cp-power').value);
-            setConstantPower(power);
+            if (!isNaN(power)) {
+                setConstantPower(power);
+            } else {
+                 alert('Please enter a valid power');
+            }
         });
     }
     
@@ -497,17 +511,8 @@ function handleBasicMessages(event) {
                     module.updateOperatingMode(data.operatingMode, data);
                 }
             }).catch(err => console.error('Error importing status.js:', err));
+            }
         }
-        
-        // Update key lock status if available
-        if (data.keyLockEnabled !== undefined) {
-            import('./status.js').then(module => {
-                if (typeof module.updateKeyLockStatus === 'function') {
-                    module.updateKeyLockStatus(data.keyLockEnabled);
-                }
-            }).catch(err => console.error('Error importing status.js:', err));
-        }
-    }
     
     // Handle readings-only responses (faster updates for V/I/P)
     if (data.action === 'readingsResponse') {
