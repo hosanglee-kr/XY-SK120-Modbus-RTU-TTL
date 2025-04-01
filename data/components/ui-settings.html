@@ -1,0 +1,178 @@
+<!-- UI Settings Component - To be loaded in Settings > Web UI tab -->
+<div class="space-y-6">
+    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Interface Settings</h3>
+    
+    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-4">
+        <!-- Theme Settings -->
+        <div class="flex items-center justify-between">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Dark Mode</label>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Enable dark theme for the interface</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="dark-mode-toggle" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-secondary rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-secondary"></div>
+            </label>
+        </div>
+        
+        <!-- Log Viewer Settings -->
+        <div class="flex items-center justify-between">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Log Viewer</label>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Show WebSocket traffic logs</p>
+            </div>
+            <button id="show-log-viewer" class="px-3 py-1.5 bg-secondary text-white rounded-md text-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-opacity-50 transition-colors">
+                Open Logs
+            </button>
+        </div>
+        
+        <!-- Auto-refresh Settings -->
+        <div class="flex items-center justify-between">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Auto-refresh Status</label>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Automatically update device readings</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="auto-refresh-toggle" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-secondary rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-secondary"></div>
+            </label>
+        </div>
+        
+        <!-- Refresh Interval Setting -->
+        <div>
+            <label for="refresh-interval" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Refresh Interval</label>
+            <select id="refresh-interval" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary">
+                <option value="1">1 second</option>
+                <option value="2">2 seconds</option>
+                <option value="5" selected>5 seconds</option>
+                <option value="10">10 seconds</option>
+                <option value="30">30 seconds</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Save Settings Button -->
+    <div class="flex justify-end">
+        <button id="save-ui-settings" class="px-4 py-2 bg-secondary text-white rounded hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-opacity-50 transition-colors">
+            Save Settings
+        </button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize dark mode toggle state
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            darkModeToggle.checked = document.documentElement.classList.contains('dark');
+            
+            // Add change listener
+            darkModeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#111827');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff');
+                }
+            });
+        }
+        
+        // Initialize auto-refresh toggle state
+        const autoRefreshToggle = document.getElementById('auto-refresh-toggle');
+        if (autoRefreshToggle) {
+            // Set initial state based on whether auto-refresh is active
+            autoRefreshToggle.checked = window.autoRefreshTimer !== null;
+            
+            // Add change listener
+            autoRefreshToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    if (typeof window.startAutoRefresh === 'function') {
+                        window.startAutoRefresh();
+                    }
+                } else {
+                    if (typeof window.stopAutoRefresh === 'function') {
+                        window.stopAutoRefresh();
+                    }
+                }
+            });
+        }
+        
+        // Initialize refresh interval selector
+        const refreshIntervalSelector = document.getElementById('refresh-interval');
+        if (refreshIntervalSelector) {
+            // Get the current interval from localStorage or default to 5
+            const currentInterval = localStorage.getItem('refreshInterval') 
+                ? parseInt(localStorage.getItem('refreshInterval')) / 1000 
+                : 5;
+            
+            // Set the selector to the current interval
+            refreshIntervalSelector.value = currentInterval.toString();
+            
+            // Add change listener
+            refreshIntervalSelector.addEventListener('change', function() {
+                const intervalSeconds = parseInt(this.value);
+                const intervalMs = intervalSeconds * 1000;
+                
+                // Store the selected interval
+                localStorage.setItem('refreshInterval', intervalMs.toString());
+                
+                // Apply the new interval if auto-refresh is active
+                if (typeof window.setAutoRefreshInterval === 'function') {
+                    window.setAutoRefreshInterval(intervalMs);
+                }
+            });
+        }
+        
+        // Log viewer button
+        const showLogViewerBtn = document.getElementById('show-log-viewer');
+        if (showLogViewerBtn) {
+            showLogViewerBtn.addEventListener('click', function() {
+                // Toggle log viewer
+                const logViewer = document.getElementById('log-viewer-overlay');
+                if (logViewer) {
+                    logViewer.classList.add('active');
+                    logViewer.style.transform = 'translateY(0)';
+                }
+            });
+        }
+        
+        // Save settings button
+        const saveUiSettingsBtn = document.getElementById('save-ui-settings');
+        if (saveUiSettingsBtn) {
+            saveUiSettingsBtn.addEventListener('click', function() {
+                // Save settings to localStorage
+                const darkMode = document.getElementById('dark-mode-toggle').checked;
+                const autoRefresh = document.getElementById('auto-refresh-toggle').checked;
+                const refreshInterval = document.getElementById('refresh-interval').value;
+                
+                // Save UI settings
+                localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+                localStorage.setItem('autoRefreshEnabled', autoRefresh);
+                localStorage.setItem('refreshInterval', (parseInt(refreshInterval) * 1000).toString());
+                
+                // Apply settings immediately
+                if (darkMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+                
+                if (autoRefresh) {
+                    if (typeof window.startAutoRefresh === 'function') {
+                        window.startAutoRefresh();
+                    }
+                } else {
+                    if (typeof window.stopAutoRefresh === 'function') {
+                        window.stopAutoRefresh();
+                    }
+                }
+                
+                // Show success message
+                alert('UI Settings saved successfully!');
+            });
+        }
+    });
+</script>

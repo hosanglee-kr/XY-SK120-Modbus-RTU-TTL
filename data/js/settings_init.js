@@ -354,3 +354,29 @@ window.removeSavedDevice = function(index) {
         setupDeviceSelector();
     }
 };
+
+// Update loading UI settings content
+function loadUISettingsContent(panel) {
+    const placeholder = panel.querySelector('#ui-settings-placeholder');
+    if (!placeholder) return;
+    
+    // Fetch the UI settings component
+    fetch('components/ui-settings.html')
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.text();
+        })
+        .then(html => {
+            // Replace placeholder with the loaded content
+            placeholder.outerHTML = html;
+            
+            // Initialize UI settings functionality
+            if (typeof initUISettings === 'function') {
+                initUISettings();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading UI settings content:', error);
+            placeholder.innerHTML = `<div class="p-4 text-red-500">Failed to load UI settings: ${error.message}</div>`;
+        });
+}
