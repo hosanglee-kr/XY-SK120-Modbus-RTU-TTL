@@ -63,33 +63,10 @@ document.addEventListener('DOMContentLoaded', function() {
  * Start auto-refresh
  */
 function startAutoRefresh() {
-    // Clear any existing timer
-    if (window.autoRefreshTimer) {
-        clearInterval(window.autoRefreshTimer);
-        window.autoRefreshTimer = null;
-    }
-    
-    // Get the refresh interval from settings, or use default (5000ms)
-    const interval = parseInt(localStorage.getItem('refreshInterval')) || 5000;
-    
-    // Update the heartbeat animation speed - check if function is available
-    if (typeof updateHeartbeatSpeed === 'function') {
-        updateHeartbeatSpeed(interval);
-    }
-    
-    // Show the heartbeat indicator - check if function is available
-    if (typeof toggleHeartbeatIndicator === 'function') {
-        toggleHeartbeatIndicator(true);
-    }
-    
-    // Start the auto-refresh timer - use global variable
-    window.autoRefreshTimer = setInterval(() => {
-        updateAllStatus();
-    }, interval);
-    
-    updateHeartbeatIndicator(true);
-    
+    // This function is incomplete and likely unused
+    // The implementation in auto_refresh.js and core.js has taken precedence
     console.log(`Auto-refresh started with interval ${interval}ms`);
+    // Missing implementation - no interval is set
 }
 
 /**

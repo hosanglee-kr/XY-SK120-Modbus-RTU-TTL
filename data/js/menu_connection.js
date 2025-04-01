@@ -359,8 +359,10 @@ function updateOperatingModeUI(mode, setValue) {
   // Set data-mode attribute for styling (more direct than class manipulation)
   modeDisplay.setAttribute('data-mode', mode || 'unknown');
   
-  // Remove the pulse animation
-  // No more animation effect
+  // The animation code was removed but comment remains:
+  // "Remove the pulse animation"
+  // "No more animation effect"
+  // This function could be simplified
 }
 
 // Update mode settings display - ENHANCED to use all available data

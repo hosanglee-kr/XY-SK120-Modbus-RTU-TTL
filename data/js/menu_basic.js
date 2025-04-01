@@ -197,7 +197,7 @@ function syncPowerToggleWithActualState() {
     }
 }
 
-// Revert back to original helper function for updating output status display - REMOVE ANIMATION
+// Fix typo in updateOutputStatusDisplay function - "On" should be "isOn"
 function updateOutputStatusDisplay(isOn) {
     const outputStatus = document.getElementById('output-status');
     if (!outputStatus) return;
@@ -209,7 +209,7 @@ function updateOutputStatusDisplay(isOn) {
     if (isOn === true) {
         outputStatus.textContent = "ON";
         outputStatus.classList.add('status-on');
-    } else if (On === false) {
+    } else if (isOn === false) { // Fix: "On" should be "isOn"
         outputStatus.textContent = "OFF";
         outputStatus.classList.add('status-off');
     } else {

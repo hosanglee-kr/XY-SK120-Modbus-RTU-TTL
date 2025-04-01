@@ -40,8 +40,9 @@ export function updateUI(data) {
     // Update protection values if included
     updateProtectionValues(data);
 
-    // Remove the code that was creating the refresh status button
-    // Don't add any new code here
+    // This comment suggests there was UI related to a refresh status button
+    // that's no longer needed: "Remove the code that was creating the refresh status button"
+    // Check HTML for related elements that may be unused
 }
 
 // Update PSU readings
