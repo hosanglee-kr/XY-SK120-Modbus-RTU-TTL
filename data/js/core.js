@@ -429,6 +429,12 @@ function handleMessage(event) {
         if (data.action === 'statusResponse') {
             // Update the last message timestamp
             window.lastStatusResponse = Date.now();
+            
+            // Remove the "Refresh Status" button if it exists
+            const refreshStatusBtn = document.getElementById('refresh-status-button');
+            if (refreshStatusBtn) {
+                refreshStatusBtn.parentNode.removeChild(refreshStatusBtn);
+            }
         }
         
         // Special handling for power commands to ensure UI is updated
@@ -563,6 +569,24 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!window.socket || window.socket.readyState !== 1) {
         window.initWebSocket();
     }
+    
+    // Remove any refresh status buttons that might be created during initialization
+    setTimeout(removeRefreshStatusButtons, 2000);
+    
+    // Add a mutation observer to remove any dynamically added refresh status buttons
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            if (mutation.addedNodes.length) {
+                for (const node of mutation.addedNodes) {
+                    if (node.id && node.id.includes('refresh-status')) {
+                        node.parentNode.removeChild(node);
+                    }
+                }
+            }
+        });
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
 });
 
 // Initialize websocket status indicator popup
@@ -632,3 +656,13 @@ document.addEventListener('DOMContentLoaded', function() {
         window.initWebSocket();
     }
 });
+
+// Remove any status refresh buttons that might be created by other modules
+function removeRefreshStatusButtons() {
+    const refreshButtons = document.querySelectorAll('[id^="refresh-status"]');
+    refreshButtons.forEach(button => {
+        if (button && button.parentNode) {
+            button.parentNode.removeChild(button);
+        }
+    });
+}

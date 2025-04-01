@@ -39,6 +39,9 @@ export function updateUI(data) {
 
     // Update protection values if included
     updateProtectionValues(data);
+
+    // Remove the code that was creating the refresh status button
+    // Don't add any new code here
 }
 
 // Update PSU readings

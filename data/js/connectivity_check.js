@@ -117,6 +117,14 @@ async function checkFullConnectivity() {
         errors: []
     };
     
+    // Remove any "Refresh Status" buttons that might be present
+    const refreshButtons = document.querySelectorAll('[id^="refresh-status"]');
+    refreshButtons.forEach(button => {
+        if (button && button.parentNode) {
+            button.parentNode.removeChild(button);
+        }
+    });
+    
     // Check WebSocket connection status
     results.websocket = window.websocketConnected && 
                         window.websocket && 
