@@ -218,6 +218,21 @@ function initWebSocket() {
                 window.resolveWebsocketReady();
             }
             
+            // Test connection with a ping
+            setTimeout(() => {
+                if (typeof window.pingWebSocketConnection === 'function') {
+                    window.pingWebSocketConnection()
+                        .then(() => {
+                            console.log("WebSocket ping test successful after initial connection");
+                        })
+                        .catch(error => {
+                            console.error("WebSocket ping test failed after initial connection:", error);
+                            // If ping fails, try re-initializing
+                            setTimeout(initWebSocket, 2000);
+                        });
+                }
+            }, 1000);
+            
             // Broadcast connection event to modules
             document.dispatchEvent(new CustomEvent('websocket-connected'));
             
@@ -334,6 +349,11 @@ function handleMessage(event) {
     try {
         const data = JSON.parse(event.data);
         console.log('Received message:', data);
+        
+        // Special handling for pong responses for connection testing
+        if (data.action === 'pong') {
+            console.log("✅ Received pong response for connection test");
+        }
         
         // Special handling for power commands to ensure UI is updated
         if (data.action === 'setOutputStateResponse' || data.action === 'powerOutputResponse') {

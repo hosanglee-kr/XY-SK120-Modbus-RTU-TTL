@@ -500,9 +500,6 @@
                                     <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
                                         Add Device
                                     </button>
-                                    <button id="reconnect-btn" onclick="initWebSocket()" type="button" class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none">
-                                        Reconnect
-                                    </button>
                                 </div>
                                 
                                 <div class="mt-6">
@@ -704,9 +701,37 @@
         });
     </script>
 
+    <!-- Navbar component - Add ping test button -->
+    <script>
+        // Immediately after the navbar component is loaded, add a ping test button
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const navbar = document.getElementById('navbar');
+                if (navbar) {
+                    const connectionControls = navbar.querySelector('.connection-controls');
+                    if (connectionControls) {
+                        const pingButton = document.createElement('button');
+                        pingButton.id = 'ping-test-btn';
+                        pingButton.className = 'px-3 py-1 ml-1 text-xs rounded bg-secondary text-white';
+                        pingButton.textContent = 'Test Connection';
+                        pingButton.onclick = function() {
+                            if (typeof window.checkFullConnectivity === 'function') {
+                                window.checkFullConnectivity();
+                            } else {
+                                alert('Connection test function not available');
+                            }
+                        };
+                        connectionControls.appendChild(pingButton);
+                    }
+                }
+            }, 1000);
+        });
+    </script>
+
     <!-- Critical scripts in the correct order -->
     <script src="js/component_loader.js"></script>
     <script src="js/auto_refresh.js"></script>
+    <script src="js/connectivity_check.js"></script>
     <script src="js/core.js" onload="window.appLoadingState.coreScriptsLoaded = true; updateSplashStatus('Core scripts loaded'); hideSplashScreen();"></script>
     
     <!-- UI Components -->
