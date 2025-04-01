@@ -5,7 +5,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     // First, try to load components that are immediately visible
-    const componentsToLoadFirst = document.querySelectorAll('[data-component="splash-screen"], [data-component="navbar"], [data-component="power-supply-readings"]');
+    const componentsToLoadFirst = document.querySelectorAll('[data-component="navbar"], [data-component="power-supply-readings"]');
     
     // Then load the rest of the components
     const allComponents = document.querySelectorAll('[data-component]');
@@ -16,12 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show loading indicator for components
     function showLoadingStatus() {
-        // Update splash screen progress if it exists
-        const progressBar = document.getElementById('progress-bar');
-        if (progressBar) {
-            const percent = Math.min(30 + (loadedCount / totalCount * 70), 100); // Start at 30%, go to 100%
-            progressBar.style.width = `${percent}%`;
-        }
+        const percent = Math.min((loadedCount / totalCount * 100), 100);
+        console.log(`Loading components: ${loadedCount}/${totalCount} (${percent.toFixed(0)}%)`);
     }
     
     // Show error status for component loading

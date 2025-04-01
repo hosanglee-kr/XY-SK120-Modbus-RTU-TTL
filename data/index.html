@@ -8,130 +8,7 @@
     <!-- Meta theme color for browsers -->
     <meta id="theme-color" name="theme-color" content="#2c3e50">
     
-    <!-- Splash screen styles moved to <head> for immediate application -->
-    <style>
-        #splash-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
-            opacity: 1; /* Start visible */
-        }
-        
-        .dark #splash-screen {
-            background-color: #111827;
-        }
-        
-        .splash-logo {
-            width: 120px;
-            height: 120px;
-            margin-bottom: 20px;
-        }
-        
-        .splash-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 16px;
-            color: #2563eb;
-        }
-        
-        .dark .splash-title {
-            color: #3b82f6;
-        }
-        
-        .splash-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #2563eb;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        .dark .splash-spinner {
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-left-color: #3b82f6;
-        }
-        
-        .splash-status {
-            margin-top: 16px;
-            font-size: 14px;
-            color: #6b7280;
-        }
-        
-        .dark .splash-status {
-            color: #9ca3af;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .splash-hidden {
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        /* Fallback animations if anime.js fails to load */
-        .fallback-fade-in {
-            animation: simpleFadeIn 1s ease forwards;
-        }
-        
-        .fallback-progress {
-            animation: progressGrow 3s ease-in-out forwards;
-        }
-        
-        @keyframes simpleFadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        
-        @keyframes simpleFadeOut {
-            from { opacity: 1; transform: scale(1); }
-            to { opacity: 0; transform: scale(1.05); }
-        }
-        
-        @keyframes progressGrow {
-            from { width: 0%; }
-            to { width: 100%; }
-        }
-    </style>
-    
-    <!-- Immediate splash screen display - Critical for preventing FOUC -->
-    <script>
-        // Create splash screen immediately before DOM is even parsed
-        document.write(`
-            <div id="splash-screen" class="fixed inset-0 flex flex-col items-center justify-center bg-white dark:bg-gray-900 z-50">
-                <div class="relative w-48 h-48 mb-6">
-                    <svg id="bolt-icon" class="w-full h-full" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="boltGradient" x1="0.5" y1="0" x2="0.5" y2="1">
-                                <stop offset="0.37" stop-color="#64ff00"/>
-                                <stop offset="0.65" stop-color="#fff500"/>
-                            </linearGradient>
-                        </defs>
-                        <path id="bolt-path" d="M38.973,4.253C39.777,4.701,40.172,5.638,39.931,6.525L34.619,26.000L54.000,26.000C54.797,26.000,55.517,26.473,55.834,27.203C56.152,27.934,56.005,28.783,55.461,29.365L27.461,59.365C26.834,60.039,25.827,60.197,25.023,59.749C24.219,59.300,23.825,58.360,24.069,57.472L29.381,38.000L10.000,38.000C9.203,38.000,8.483,37.527,8.166,36.797C7.848,36.066,7.995,35.217,8.539,34.635L36.539,4.635C37.166,3.963,38.171,3.806,38.973,4.253Z" 
-                              fill="url(#boltGradient)" stroke="#b73dff" stroke-width="1.5"/>
-                    </svg>
-                </div>
-                <h1 class="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">XY-SK120 <span class="text-yellow-500">Power Supply</span></h1>
-                <div class="w-64 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
-                    <div id="progress-bar" class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style="width: 0%"></div>
-                </div>
-                <p id="splash-status" class="text-sm text-gray-500 dark:text-gray-400">Loading application...</p>
-            </div>
-        `);
-    </script>
-    
-    <!-- Theme initialization script - after splash screen -->
+    <!-- Theme initialization script -->
     <script>
       // Apply theme immediately to prevent flash of wrong theme
       (function() {
@@ -162,21 +39,15 @@
       })();
     </script>
     
-    <!-- anime.js - Animation library needs to be loaded as a regular script first -->
+    <!-- Animation library -->
     <script src="js/lib/anime.min.js"></script>
     
-    <!-- Only load splash_animation.js - which has the circles animation -->
-    <script src="js/splash_animation.js"></script>
-    
-    <!-- CSS files loaded after splash is displayed -->
+    <!-- CSS files -->
     <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="css/utilities.css">
     <link rel="stylesheet" href="css/components.css">
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 h-full transition-colors duration-200">
-    <!-- Component: Splash Screen (hidden, will replace the inline one) -->
-    <div id="splash-screen-container" data-component="splash-screen" class="hidden"></div>
-
     <div class="min-h-full flex flex-col">
         <!-- Component: Top Navigation Bar -->
         <div id="navbar" data-component="navbar"></div>
@@ -206,69 +77,8 @@
     <!-- Component: Log Viewer -->
     <div id="log-viewer" data-component="log-viewer"></div>
     
-    <!-- Initialize splash animations immediately -->
+    <!-- Initialize application -->
     <script>
-        // Track when the splash screen was first shown - immediately
-        window.splashStartTime = Date.now();
-        window.splashMinDisplayTime = 3000; // 3 seconds minimum display
-        
-        // Immediately start simple animation for the bolt
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof anime !== 'undefined') {
-                // Simple initial animation
-                anime({
-                    targets: '#bolt-path',
-                    opacity: [0.7, 1],
-                    easing: 'easeInOutSine',
-                    duration: 800
-                });
-                
-                // Simple progress animation
-                anime({
-                    targets: '#progress-bar',
-                    width: ['0%', '30%'],
-                    easing: 'easeInOutQuad',
-                    duration: 1000
-                });
-            }
-        });
-
-        // Track loading state
-        window.appLoadingState = {
-            componentsLoaded: false,
-            coreScriptsLoaded: false,
-            connectionEstablished: false
-        };
-        
-        // Update splash screen status
-        function updateSplashStatus(message) {
-            const statusEl = document.getElementById('splash-status');
-            if (statusEl) {
-                statusEl.textContent = message;
-            }
-        }
-        
-        // Hide splash screen when everything is ready
-        function hideSplashScreen() {
-            // Check if all critical components are loaded
-            if (window.appLoadingState.componentsLoaded && 
-                window.appLoadingState.coreScriptsLoaded) {
-                
-                updateSplashStatus("Application ready!");
-                
-                // Add a slight delay before hiding the splash screen
-                setTimeout(() => {
-                    const splashScreen = document.getElementById('splash-screen');
-                    if (splashScreen) {
-                        splashScreen.classList.add('opacity-0');
-                        setTimeout(() => {
-                            splashScreen.classList.add('hidden');
-                        }, 500);
-                    }
-                }, 500);
-            }
-        }
-        
         // Define placeholder functions to prevent errors
         if (!window.startAutoRefresh) {
             window.startAutoRefresh = function initialPlaceholder() {
@@ -283,107 +93,18 @@
         // Wait for components to load before running functionality
         document.addEventListener('components-loaded', function() {
             console.log('All components loaded, ready for final initialization');
-            updateSplashStatus("UI components loaded");
-            window.appLoadingState.componentsLoaded = true;
-            hideSplashScreen();
         });
         
         // Listen for WebSocket connection
         document.addEventListener('websocket-connected', function() {
-            updateSplashStatus("Connected to device");
-            window.appLoadingState.connectionEstablished = true;
+            console.log("Connected to device");
         });
     </script>
 
-    <!-- JavaScript files - Fix loading order and prevent duplicates -->
-    <script>
-        // Immediately start simple animation for the bolt
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof anime !== 'undefined') {
-                // Simple initial animation
-                anime({
-                    targets: '#bolt-path',
-                    opacity: [0, 1],
-                    easing: 'easeInOutSine',
-                    duration: 800
-                });
-                
-                // Simple progress animation
-                anime({
-                    targets: '#progress-bar',
-                    width: ['0%', '30%'],
-                    easing: 'easeInOutQuad',
-                    duration: 1000
-                });
-            }
-        });
-
-        // Track loading state
-        window.appLoadingState = {
-            componentsLoaded: false,
-            coreScriptsLoaded: false,
-            connectionEstablished: false
-        };
-        
-        // Update splash screen status
-        function updateSplashStatus(message) {
-            const statusEl = document.getElementById('splash-status');
-            if (statusEl) {
-                statusEl.textContent = message;
-            }
-        }
-        
-        // Hide splash screen when everything is ready
-        function hideSplashScreen() {
-            // Check if all critical components are loaded
-            if (window.appLoadingState.componentsLoaded && 
-                window.appLoadingState.coreScriptsLoaded) {
-                
-                updateSplashStatus("Application ready!");
-                
-                // Add a slight delay before hiding the splash screen
-                setTimeout(() => {
-                    const splashScreen = document.getElementById('splash-screen');
-                    if (splashScreen) {
-                        splashScreen.classList.add('opacity-0');
-                        setTimeout(() => {
-                            splashScreen.classList.add('hidden');
-                        }, 500);
-                    }
-                }, 500);
-            }
-        }
-        
-        // Define placeholder functions to prevent errors
-        if (!window.startAutoRefresh) {
-            window.startAutoRefresh = function initialPlaceholder() {
-                console.log("Initial placeholder auto-refresh called");
-            };
-        }
-        
-        if (!window.stopAutoRefresh) {
-            window.stopAutoRefresh = function initialPlaceholderStop() {};
-        }
-        
-        // Wait for components to load before running functionality
-        document.addEventListener('components-loaded', function() {
-            console.log('All components loaded, ready for final initialization');
-            updateSplashStatus("UI components loaded");
-            window.appLoadingState.componentsLoaded = true;
-            hideSplashScreen();
-        });
-        
-        // Listen for WebSocket connection
-        document.addEventListener('websocket-connected', function() {
-            updateSplashStatus("Connected to device");
-            window.appLoadingState.connectionEstablished = true;
-        });
-    </script>
-
-    <!-- Critical scripts in the correct order - Load connectivity_check.js AFTER core.js -->
+    <!-- JavaScript files - Load in the correct order -->
     <script src="js/component_loader.js"></script>
     <script src="js/auto_refresh.js"></script>
-    <script src="js/core.js" onload="window.appLoadingState.coreScriptsLoaded = true; updateSplashStatus('Core scripts loaded'); hideSplashScreen();"></script>
+    <script src="js/core.js"></script>
     <script src="js/connectivity_check.js"></script>
 
     <!-- Connection handler for device change requests -->
@@ -414,32 +135,6 @@
     <script src="js/settings_init.js"></script>
     
     <!-- Debug tools last -->
-    <script src="js/connectivity_check.js"></script>
     <script src="js/log_viewer.js"></script>
-
-    <!-- Final initialization for good measure -->
-    <script>
-        // Run a final initialization check when window is fully loaded
-        window.addEventListener('load', function() {
-            console.log('Window fully loaded, running final checks');
-            updateSplashStatus("Finalizing application setup");
-            
-            // Verify auto-refresh timer is running or start if needed
-            setTimeout(function() {
-                if (!window.autoRefreshTimer && typeof window.startAutoRefresh === 'function') {
-                    console.log("Auto-refresh not detected running, starting it now");
-                    window.startAutoRefresh();
-                }
-                
-                // Hide splash screen unconditionally after a timeout
-                setTimeout(() => {
-                    const splashScreen = document.getElementById('splash-screen');
-                    if (splashScreen) {
-                        splashScreen.classList.add('splash-hidden');
-                    }
-                }, 1000);
-            }, 1500);
-        });
-    </script>
 </body>
 </html>

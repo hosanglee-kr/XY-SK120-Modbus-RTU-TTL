@@ -3,47 +3,12 @@
  * Loads HTML components into placeholders
  */
 
-// Ensure splash screen is visible during component loading
-(function() {
-    // Ensure the splash screen is visible
-    const splashScreen = document.getElementById('splash-screen');
-    if (splashScreen && !splashScreen.style.opacity) {
-        splashScreen.style.opacity = '1';
-    }
-})();
-
 // Wait for DOM content to be loaded before loading components
 document.addEventListener('DOMContentLoaded', function() {
     // Track loaded components
     const componentPlaceholders = document.querySelectorAll('[data-component]');
     const totalComponents = componentPlaceholders.length;
     let loadedComponents = 0;
-    
-    // Update the splash screen with component loading progress
-    function updateLoadingProgress() {
-        if (window.updateSplashStatus) {
-            window.updateSplashStatus(`Loading components (${loadedComponents}/${totalComponents})...`);
-        }
-        
-        // Update progress bar if it exists
-        const progressBar = document.getElementById('progress-bar');
-        if (progressBar) {
-            const initialProgress = 30; // Starting progress percentage
-            const progressPerComponent = (70 - initialProgress) / totalComponents;
-            const currentProgress = initialProgress + (progressPerComponent * loadedComponents);
-            
-            if (typeof anime !== 'undefined') {
-                anime({
-                    targets: progressBar,
-                    width: `${currentProgress}%`,
-                    easing: 'easeInOutQuad',
-                    duration: 300
-                });
-            } else {
-                progressBar.style.width = `${currentProgress}%`;
-            }
-        }
-    }
     
     // Load each component
     componentPlaceholders.forEach(function(placeholder) {
@@ -81,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     loadedComponents++;
-                    updateLoadingProgress();
                     
                     console.log(`Component loaded (${loadedComponents}/${totalComponents}): ${componentName}`);
                     

@@ -90,14 +90,6 @@ function loadBasicControls() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing core functionality');
     
-    // Listen for splash screen completion
-    document.addEventListener('splash-screen-hidden', function() {
-        console.log('Splash screen animation complete, initializing UI');
-        if (typeof window.initializeUI === 'function') {
-            window.initializeUI();
-        }
-    });
-
     // Initialize core functionality
     initializeModules();
     
@@ -675,4 +667,15 @@ function removeRefreshStatusButtons() {
             button.parentNode.removeChild(button);
         }
     });
+}
+
+// Function to forcibly continue UI loading despite WebSocket failures
+function forceUiContinuation() {
+    console.log("Forcing UI to continue loading despite WebSocket failure");
+    
+    // Set a flag indicating offline mode
+    window.offlineMode = true;
+    
+    // Create an error banner for the user
+    setTimeout(showConnectionErrorBanner, 1500);
 }
