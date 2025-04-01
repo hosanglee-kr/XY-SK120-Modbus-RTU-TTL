@@ -1,5 +1,9 @@
 # XY-SK120 Power Supply Control
 
+![Demo](documentation/demo.jpg)
+
+![Demo](documentation/demo.gif)
+
 This project allows you to control an XY-SK120 power supply (and compatible models) over Modbus RTU using a Seeed XIAO ESP32S3.
 
 ## Features
