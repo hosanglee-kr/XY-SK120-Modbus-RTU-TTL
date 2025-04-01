@@ -595,3 +595,22 @@ input:checked + .key-lock-slider {
 .status-value.off {
     @apply text-gray-500 dark:text-gray-400;
 }
+
+/* WebSocket Status Indicator Styles */
+.websocket-status-container {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.websocket-status-container:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark .websocket-status-container:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.websocket-details-popup {
+    min-width: 200px;
+}

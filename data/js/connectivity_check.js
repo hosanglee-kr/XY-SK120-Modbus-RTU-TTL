@@ -38,9 +38,9 @@ function displayConnectivityResults(results) {
         "Not initialized");
 }
 
-// New ping test function to verify WebSocket connection
+// Simplified ping test that first checks if we're testing the currently connected device
 function pingWebSocketConnection() {
-    console.log("🏓 Testing WebSocket connection with ping...");
+    console.log("🏓 Testing WebSocket connection...");
     
     return new Promise((resolve, reject) => {
         // Check if WebSocket is defined and connected
@@ -51,126 +51,122 @@ function pingWebSocketConnection() {
             return;
         }
         
-        // Set up timeout for ping response
-        const pingTimeout = setTimeout(() => {
-            document.removeEventListener('websocket-message', pongListener);
-            reject(new Error("Ping timeout - no response received"));
-        }, 5000);
-        
-        // Setup listener for pong response
-        const pongListener = function(event) {
-            if (event.detail && event.detail.action === 'pong') {
-                console.log("✅ Received pong response! Connection working correctly.");
-                clearTimeout(pingTimeout);
-                document.removeEventListener('websocket-message', pongListener);
-                resolve(true);
+        // Try with just a basic status request (simpler and more reliable)
+        if (typeof window.sendCommand === 'function') {
+            console.log("📤 Testing connection with getStatus command...");
+            
+            // Track if we've received a response
+            let responseReceived = false;
+            
+            // Set up a one-time listener for status response
+            const statusListener = function(event) {
+                const data = event.detail;
+                if (data && (data.action === 'statusResponse' || data.action === 'pong')) {
+                    responseReceived = true;
+                    document.removeEventListener('websocket-message', statusListener);
+                    clearTimeout(statusTimeout);
+                    console.log("✅ Response received! Connection working correctly.");
+                    resolve(true);
+                }
+            };
+            
+            // Listen for the status response
+            document.addEventListener('websocket-message', statusListener);
+            
+            // Set timeout for response
+            const statusTimeout = setTimeout(() => {
+                if (!responseReceived) {
+                    document.removeEventListener('websocket-message', statusListener);
+                    console.log("⏱️ Response timeout, connection test failed");
+                    reject(new Error("Response timeout - no response received"));
+                }
+            }, 5000); // Reasonable timeout
+            
+            // Send the status request
+            const result = window.sendCommand({ 
+                action: 'getStatus',
+                timestamp: Date.now() // Prevent caching
+            });
+            
+            if (!result) {
+                // If send command failed
+                document.removeEventListener('websocket-message', statusListener);
+                clearTimeout(statusTimeout);
+                console.log("❌ Failed to send command");
+                reject(new Error("Failed to send command"));
             }
-        };
-        
-        // Listen for response
-        document.addEventListener('websocket-message', pongListener);
-        
-        // Send ping command
-        try {
-            const pingCommand = { action: 'ping', timestamp: Date.now() };
-            window.websocket.send(JSON.stringify(pingCommand));
-            console.log("📤 Ping sent:", pingCommand);
-        } catch (error) {
-            clearTimeout(pingTimeout);
-            document.removeEventListener('websocket-message', pongListener);
-            console.error("❌ Error sending ping:", error);
-            reject(error);
+        } else {
+            // Fallback to simple check if we can't send commands
+            if (window.websocketConnected && window.websocket.readyState === WebSocket.OPEN) {
+                console.log("✅ WebSocket appears to be connected (basic check)");
+                resolve(true);
+            } else {
+                reject(new Error("WebSocket not properly connected"));
+            }
         }
     });
 }
 
-// Extended connectivity check that includes WebSocket ping test
+// Simplified full connectivity check
 async function checkFullConnectivity() {
-    console.log("🔍 Running comprehensive connectivity check...");
+    console.log("🔍 Running connectivity check...");
     
     const results = {
-        httpPing: false,
         websocket: false,
-        websocketPing: false,
+        responseTest: false,
         errors: []
     };
-    
-    // Get the base URL
-    const deviceIP = localStorage.getItem('selectedDeviceIP') || window.location.hostname;
     
     // Check WebSocket connection status
     results.websocket = window.websocketConnected && 
                         window.websocket && 
                         window.websocket.readyState === WebSocket.OPEN;
     
-    // If WebSocket seems connected, test with ping
+    // If WebSocket seems connected, test with a command
     if (results.websocket) {
         try {
             await pingWebSocketConnection();
-            results.websocketPing = true;
+            results.responseTest = true;
         } catch (error) {
-            console.error("WebSocket ping test failed:", error.message);
-            results.errors.push(`WebSocket ping test failed: ${error.message}`);
-            
-            // Try to reconnect if ping fails
-            if (typeof window.initWebSocket === 'function') {
-                console.log("🔄 Attempting to reconnect WebSocket after failed ping test");
-                window.initWebSocket();
-            }
+            console.error("Connection test failed:", error.message);
+            results.errors.push(`Connection test failed: ${error.message}`);
         }
-    }
-    
-    // Try HTTP ping to see if server is responding
-    try {
-        const response = await fetch(`${window.location.protocol}//${deviceIP}/ping`);
-        if (response.ok) {
-            results.httpPing = true;
-        }
-    } catch (error) {
-        console.error("HTTP ping failed:", error);
-        results.errors.push(`HTTP ping failed: ${error.message}`);
+    } else {
+        results.errors.push("WebSocket not connected");
     }
     
     // Display results
-    displayConnectionResults(results);
+    displaySimplifiedResults(results);
     
     return results;
 }
 
-// Enhanced results display
-function displayConnectionResults(results) {
+// Simplified results display
+function displaySimplifiedResults(results) {
     console.log("📊 Connection Test Results:", results);
     
-    // Create a more detailed alert
-    let message = "Connection Status:\n\n";
-    message += `🌐 HTTP API: ${results.httpPing ? "✅ Working" : "❌ Not working"}\n`;
-    message += `🔌 WebSocket Connected: ${results.websocket ? "✅ Connected" : "❌ Disconnected"}\n`;
-    
-    if (results.websocket) {
-        message += `🏓 WebSocket Ping Test: ${results.websocketPing ? "✅ Working" : "❌ Failed"}\n`;
-    }
-    
-    if (results.errors.length > 0) {
-        message += "\nErrors:\n";
-        results.errors.forEach(error => {
-            message += `• ${error}\n`;
-        });
+    if (results.websocket && results.responseTest) {
+        alert("✅ Connection test successful! The device is connected and responding.");
+    } else {
+        let message = "❌ Connection test failed\n\n";
         
-        message += "\nRecommended Actions:\n";
-        message += "1. Check if the device is powered on and connected to the network\n";
-        message += "2. Verify the correct IP address is being used\n";
-        message += "3. Try refreshing the page\n";
-        message += "4. Check the browser console for more details";
+        if (!results.websocket) {
+            message += "• WebSocket is not connected\n";
+        } else if (!results.responseTest) {
+            message += "• Device is not responding to commands\n";
+        }
+        
+        if (results.errors.length > 0) {
+            message += "\nErrors:\n";
+            results.errors.forEach(error => {
+                message += `• ${error}\n`;
+            });
+        }
+        
+        message += "\nTry refreshing the page or check your connection.";
+        alert(message);
     }
-    
-    alert(message);
 }
-
-// Make globally available
-window.checkConnectivity = function() {
-    console.log("Running simplified connectivity diagnostics...");
-    checkBackendConnectivity().then(displayConnectivityResults);
-};
 
 // Make functions available globally
 window.checkBackendConnectivity = checkBackendConnectivity;

@@ -168,7 +168,12 @@ function initializeModules() {
 // WebSocket connection function
 function initWebSocket() {
     // Get device IP - with fallback to current hostname
-    let deviceIP = localStorage.getItem('selectedDeviceIP') || window.location.hostname;
+    // Check for manual override first (for device manager connections)
+    let deviceIP = window.manualDeviceIP || localStorage.getItem('selectedDeviceIP') || window.location.hostname;
+    
+    // Don't clear the manual device IP so it persists for connection status checks
+    // Instead, store it directly as the currentDeviceIP
+    window.currentDeviceIP = deviceIP;
     
     // If device IP is localhost but we're accessing from a remote host, use the current hostname
     if (deviceIP === 'localhost' && 
@@ -194,11 +199,11 @@ function initWebSocket() {
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${wsProtocol}//${deviceIP}/ws`;
     
+    console.log(`Creating WebSocket connection to ${wsUrl}`);
+    updateStatus('connecting', deviceIP);
+    
     try {
         // Create new WebSocket connection
-        console.log(`Creating WebSocket connection to ${wsUrl}`);
-        updateStatus('connecting', deviceIP);
-        
         websocket = new WebSocket(wsUrl);
         
         // Make it globally available immediately
@@ -207,7 +212,7 @@ function initWebSocket() {
         
         // Setup event handlers
         websocket.onopen = function() {
-            console.log('WebSocket connected');
+            console.log('WebSocket connected to', deviceIP);
             websocketConnected = true;
             window.websocketConnected = true;
             
@@ -218,34 +223,23 @@ function initWebSocket() {
                 window.resolveWebsocketReady();
             }
             
-            // Test connection with a ping
+            // Test connection with a ping - but be gentler on ESP32
             setTimeout(() => {
-                if (typeof window.pingWebSocketConnection === 'function') {
-                    window.pingWebSocketConnection()
-                        .then(() => {
-                            console.log("WebSocket ping test successful after initial connection");
-                        })
-                        .catch(error => {
-                            console.error("WebSocket ping test failed after initial connection:", error);
-                            // If ping fails, try re-initializing
-                            setTimeout(initWebSocket, 2000);
-                        });
+                // Request initial status - safer than ping test
+                if (typeof window.requestDeviceStatus === 'function') {
+                    window.requestDeviceStatus();
                 }
-            }, 1000);
-            
-            // Broadcast connection event to modules
-            document.dispatchEvent(new CustomEvent('websocket-connected'));
-            
-            // Request initial status
-            if (typeof window.updateAllStatus === 'function') {
-                setTimeout(() => {
-                    try {
-                        window.updateAllStatus();
-                    } catch (e) {
-                        console.error("Error in updateAllStatus:", e);
-                    }
-                }, 500);
-            }
+                
+                // Broadcast connection event to modules
+                document.dispatchEvent(new CustomEvent('websocket-connected', {
+                    detail: { deviceIP: deviceIP }
+                }));
+                
+                // Update saved devices list to reflect new connection
+                if (typeof window.updateSavedDevicesList === 'function') {
+                    setTimeout(() => window.updateSavedDevicesList(), 500);
+                }
+            }, 500);
         };
         
         websocket.onclose = function(event) {
@@ -255,7 +249,14 @@ function initWebSocket() {
             updateStatus('disconnected', deviceIP);
             
             // Broadcast disconnection event
-            document.dispatchEvent(new CustomEvent('websocket-disconnected'));
+            document.dispatchEvent(new CustomEvent('websocket-disconnected', {
+                detail: { deviceIP: deviceIP }
+            }));
+            
+            // Update saved devices list to reflect disconnection
+            if (typeof window.updateSavedDevicesList === 'function') {
+                setTimeout(() => window.updateSavedDevicesList(), 500);
+            }
             
             // Attempt automatic reconnection after a delay
             setTimeout(() => {
@@ -296,10 +297,33 @@ function initWebSocket() {
     }
 }
 
-// Update connection status
+// Add a more reliable WebSocket setup function that other code can use
+window.setupWebSocket = function(ip) {
+    window.manualDeviceIP = ip;
+    
+    // Also store it in localStorage to be consistent
+    if (ip) {
+        localStorage.setItem('selectedDeviceIP', ip);
+    }
+    
+    return initWebSocket();
+};
+
+// Update connection status with enhanced UI
 function updateStatus(status, deviceIP) {
     const statusElement = document.getElementById('websocket-status');
     const statusIndicator = document.getElementById('websocket-status-indicator');
+    const activeDeviceName = document.getElementById('active-device-name');
+    
+    // Also update popup elements if they exist
+    const popupStatus = document.getElementById('popup-status');
+    const popupDeviceIP = document.getElementById('popup-device-ip');
+    
+    // Get the device name if available
+    let deviceName = '';
+    if (typeof window.getDeviceName === 'function') {
+        deviceName = window.getDeviceName(deviceIP) || '';
+    }
     
     if (statusElement) {
         switch(status) {
@@ -338,21 +362,73 @@ function updateStatus(status, deviceIP) {
         }
     }
     
+    // Update active device name display
+    if (activeDeviceName) {
+        if (deviceName) {
+            activeDeviceName.textContent = deviceName;
+        } else {
+            activeDeviceName.textContent = deviceIP;
+        }
+        
+        // Make it visible
+        activeDeviceName.classList.remove('hidden');
+        activeDeviceName.classList.add('md:inline');
+    }
+    
+    // Update popup details if it exists
+    if (popupStatus) {
+        switch(status) {
+            case 'connected':
+                popupStatus.textContent = 'Connected';
+                popupStatus.className = 'text-success';
+                break;
+            case 'connecting':
+                popupStatus.textContent = 'Connecting...';
+                popupStatus.className = 'text-secondary';
+                break;
+            case 'disconnected':
+                popupStatus.textContent = 'Disconnected';
+                popupStatus.className = 'text-danger';
+                break;
+            case 'error':
+                popupStatus.textContent = 'Connection Error';
+                popupStatus.className = 'text-danger';
+                break;
+        }
+    }
+    
+    if (popupDeviceIP) {
+        popupDeviceIP.textContent = deviceIP;
+    }
+    
     // Store the selected device for reconnection
     if (deviceIP) {
         localStorage.setItem('selectedDeviceIP', deviceIP);
+        window.currentDeviceIP = deviceIP;
     }
 }
 
-// Handle incoming messages
+// Handle incoming messages - Enhanced to detect both status and pong responses
 function handleMessage(event) {
     try {
         const data = JSON.parse(event.data);
-        console.log('Received message:', data);
+        
+        // Only log non-pong messages to avoid console spam
+        if (data.action !== 'pong') {
+            console.log('Received message:', data);
+        } else {
+            console.debug('Received pong response');
+        }
         
         // Special handling for pong responses for connection testing
         if (data.action === 'pong') {
-            console.log("✅ Received pong response for connection test");
+            console.debug("✅ Received pong response for connection test");
+        }
+        
+        // Special handling for status responses
+        if (data.action === 'statusResponse') {
+            // Update the last message timestamp
+            window.lastStatusResponse = Date.now();
         }
         
         // Special handling for power commands to ensure UI is updated
@@ -382,10 +458,14 @@ function handleMessage(event) {
     }
 }
 
-// Send a command to the device - CONSOLIDATED VERSION
+// Send a command to the device - Enhanced with better error handling for ESP32
 window.sendCommand = function(command) {
-    // Log all commands for debugging
-    console.log('Sending command:', command);
+    // Log all commands for debugging (except routine pings which would flood the console)
+    if (command.action !== 'ping') {
+        console.log('Sending command:', command);
+    } else {
+        console.debug('Sending ping');
+    }
     
     if (!websocket || websocket.readyState !== WebSocket.OPEN) {
         console.error('WebSocket not connected. Current state:', websocket ? websocket.readyState : 'undefined');
@@ -407,7 +487,7 @@ window.sendCommand = function(command) {
                     window.pendingCommand = null;
                     window.sendCommand(cmd);
                 }
-            }, 1500);
+            }, 3000); // Increased for ESP32
         }
         
         return false;
@@ -416,12 +496,16 @@ window.sendCommand = function(command) {
     try {
         const commandStr = JSON.stringify(command);
         websocket.send(commandStr);
-        console.log('Successfully sent command:', command);
         
-        // Dispatch a custom event for logging in the log viewer
-        document.dispatchEvent(new CustomEvent('websocket-sent', { 
-            detail: command 
-        }));
+        // Only log non-ping commands fully
+        if (command.action !== 'ping') {
+            console.log('Successfully sent command:', command);
+            
+            // Dispatch a custom event for logging in the log viewer
+            document.dispatchEvent(new CustomEvent('websocket-sent', { 
+                detail: command 
+            }));
+        }
         
         return true;
     } catch (e) {
@@ -430,9 +514,19 @@ window.sendCommand = function(command) {
     }
 }
 
+// Add a function to request device status that other components can use
+window.requestDeviceStatus = function() {
+    return window.sendCommand({ action: 'getStatus', timestamp: Date.now() });
+};
+
 // Expose key functions globally (consolidated exports)
 window.initWebSocket = initWebSocket;
 window.sendCommand = window.sendCommand || sendCommand;
+
+// Add getCurrentDeviceIP helper
+window.getCurrentDeviceIP = function() {
+    return window.currentDeviceIP || localStorage.getItem('selectedDeviceIP') || window.location.hostname;
+};
 
 // Fallback initialization for auto-refresh
 document.addEventListener('DOMContentLoaded', function() {
@@ -464,6 +558,74 @@ window.lastWebSocketMessage = 0;
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Core module loaded");
+    
+    // Connect to WebSocket if not connected
+    if (!window.socket || window.socket.readyState !== 1) {
+        window.initWebSocket();
+    }
+});
+
+// Initialize websocket status indicator popup
+function setupWebSocketStatusIndicator() {
+    const statusContainer = document.querySelector('.websocket-status-container');
+    const detailsPopup = document.querySelector('.websocket-details-popup');
+    
+    if (statusContainer && detailsPopup) {
+        // Toggle popup on click
+        statusContainer.addEventListener('click', (e) => {
+            // Prevent this from triggering if we click the Test Connection button
+            if (e.target.id === 'popup-test-connection') return;
+            
+            detailsPopup.classList.toggle('hidden');
+            
+            // Update last message time
+            const lastMessageEl = document.getElementById('popup-last-message');
+            if (lastMessageEl) {
+                if (window.lastStatusResponse) {
+                    const timeSince = Math.floor((Date.now() - window.lastStatusResponse) / 1000);
+                    if (timeSince < 60) {
+                        lastMessageEl.textContent = `${timeSince} seconds ago`;
+                    } else if (timeSince < 3600) {
+                        lastMessageEl.textContent = `${Math.floor(timeSince / 60)} minutes ago`;
+                    } else {
+                        lastMessageEl.textContent = `${Math.floor(timeSince / 3600)} hours ago`;
+                    }
+                } else {
+                    lastMessageEl.textContent = 'No response yet';
+                }
+            }
+        });
+        
+        // Setup test connection button
+        const testButton = document.getElementById('popup-test-connection');
+        if (testButton) {
+            testButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent triggering the popup toggle
+                detailsPopup.classList.add('hidden'); // Hide popup
+                
+                if (typeof window.checkFullConnectivity === 'function') {
+                    window.checkFullConnectivity();
+                } else {
+                    alert('Connection test function not available');
+                }
+            });
+        }
+        
+        // Close popup when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!statusContainer.contains(e.target) && !detailsPopup.classList.contains('hidden')) {
+                detailsPopup.classList.add('hidden');
+            }
+        });
+    }
+}
+
+// Initialize on page load - add WebSocket status indicator setup
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Core module loaded");
+    
+    // Setup WebSocket status indicator
+    setupWebSocketStatusIndicator();
     
     // Connect to WebSocket if not connected
     if (!window.socket || window.socket.readyState !== 1) {

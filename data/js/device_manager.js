@@ -133,14 +133,30 @@ function addDevice(ip, name) {
 // Track current connection attempt to prevent loops
 let connectionInProgress = false;
 let lastConnectionAttempt = null;
+let verificationAttempts = 0;
 
-// Connect to a device
+// Connect to a device - simplified to avoid unnecessary connection tests
 function connectToDevice(ip) {
+    // Get the currently connected IP
+    const currentConnectedIP = window.websocket && window.websocketConnected ? 
+        (window.manualDeviceIP || localStorage.getItem('selectedDeviceIP') || window.location.hostname) : null;
+    
+    // If trying to connect to the currently connected device, just show success
+    if (currentConnectedIP && currentConnectedIP === ip) {
+        showConnectionStatus(`Already connected to ${ip}`);
+        updateActiveDeviceIndicator(ip);
+        updateSavedDevicesList(); // Refresh list to show correct connection status
+        return;
+    }
+    
     // Prevent connecting to the same device repeatedly
     if (connectionInProgress && lastConnectionAttempt === ip) {
         console.log('Connection attempt already in progress for:', ip);
         return;
     }
+    
+    // Reset verification attempts counter
+    verificationAttempts = 0;
     
     // Set connection tracking
     connectionInProgress = true;
@@ -162,65 +178,204 @@ function connectToDevice(ip) {
         return;
     }
     
-    // Try to connect using WebSocket - with a timeout
+    // Try to connect using WebSocket - with a longer timeout for ESP32 device
     const connectionTimeout = setTimeout(() => {
         // If we reach here, the connection attempt timed out
         if (connectionInProgress && lastConnectionAttempt === ip) {
             console.warn('WebSocket connection timeout for:', ip);
-            showConnectionStatus('Connection timeout. Using simulated connection.');
+            showConnectionStatus('Connection failed: Cannot reach device at ' + ip);
             connectionInProgress = false;
         }
-    }, 5000); // 5 second timeout
+    }, 8000); // Increased to 8 seconds for ESP32
     
-    // Check if the WebSocket setup function is available
-    if (window.setupWebSocket && typeof window.setupWebSocket === 'function') {
-        try {
-            // Close existing websocket if open
-            if (window.ws && window.ws.readyState === WebSocket.OPEN) {
-                window.ws.close();
+    // Always use direct WebSocket connection through core.js
+    // This avoids the "Connection feature not ready" message
+    if (typeof window.initWebSocket === 'function') {
+        console.log('Using core WebSocket connection...');
+        
+        // First close any existing connection
+        if (window.websocket && window.websocket.readyState === WebSocket.OPEN) {
+            try {
+                window.websocket.close();
+            } catch(e) {
+                console.error('Error closing existing connection:', e);
             }
-            
-            // Connect to the device via WebSocket
-            window.setupWebSocket(ip);
-            console.log('Connecting to device via WebSocket:', ip);
-            
-            // Request initial device status after connection
-            setTimeout(() => {
-                if (window.requestDeviceStatus && typeof window.requestDeviceStatus === 'function') {
-                    window.requestDeviceStatus();
-                }
+        }
+        
+        // Store the IP for the connection
+        window.manualDeviceIP = ip;
+        
+        // Connect to the device using the core method
+        window.initWebSocket();
+        
+        // After connecting, check the connection status after giving it time to establish
+        setTimeout(() => {
+            if (window.websocket && window.websocket.readyState === WebSocket.OPEN) {
+                console.log('WebSocket connection established, verifying...');
+                verifyConnection(ip, connectionTimeout);
+            } else {
+                // Still attempting to connect
+                setTimeout(() => {
+                    if (window.websocket && window.websocket.readyState === WebSocket.OPEN) {
+                        console.log('WebSocket connection established (delayed), verifying...');
+                        verifyConnection(ip, connectionTimeout);
+                    } else {
+                        console.warn('WebSocket connection failed to establish');
+                        showConnectionStatus('Connection failed to ' + ip);
+                        clearTimeout(connectionTimeout);
+                        connectionInProgress = false;
+                    }
+                }, 3000); // Check again after 3 more seconds
+            }
+        }, 2000); // Initial check after 2 seconds
+    } else {
+        // Fallback to setupWebSocket if available
+        if (typeof window.setupWebSocket === 'function') {
+            try {
+                window.setupWebSocket(ip);
+                console.log('Using setupWebSocket connection...');
                 
-                // Test the connection with a ping after connecting
-                if (typeof window.pingWebSocketConnection === 'function') {
-                    window.pingWebSocketConnection()
-                        .then(() => {
-                            console.log("✅ WebSocket ping test successful");
-                            showConnectionStatus('Connected to ' + ip + ' (verified)');
-                        })
-                        .catch(error => {
-                            console.error("WebSocket ping test failed:", error);
-                            showConnectionStatus('Connection issue with ' + ip + '. Try refreshing.');
-                        });
+                // Wait for the connection to establish
+                setTimeout(() => {
+                    verifyConnection(ip, connectionTimeout);
+                }, 2000);
+            } catch (e) {
+                console.error('WebSocket setup failed:', e);
+                showConnectionStatus('Connection failed! Error setting up WebSocket.');
+                clearTimeout(connectionTimeout);
+                connectionInProgress = false;
+            }
+        } else {
+            // Last resort - reload the page with the new IP
+            console.warn('No WebSocket connection methods available, reloading page to connect');
+            showConnectionStatus('No connection method available, reloading page...');
+            clearTimeout(connectionTimeout);
+            connectionInProgress = false;
+            
+            // Set a flag in session storage to indicate we're trying to connect to a different device
+            sessionStorage.setItem('connectingToDevice', ip);
+            
+            // Reload the page after a short delay
+            setTimeout(() => {
+                window.location.href = `${window.location.protocol}//${ip}`;
+            }, 1500);
+        }
+    }
+}
+
+// Verify the connection works by requesting device status
+function verifyConnection(ip, connectionTimeout) {
+    // Try to verify using getStatus command first
+    if (typeof window.sendCommand === 'function') {
+        verificationAttempts++;
+        console.log(`Verifying connection to ${ip} (attempt ${verificationAttempts})...`);
+        
+        const result = window.sendCommand({ 
+            action: 'getStatus',
+            timestamp: Date.now() // Prevent caching
+        });
+        
+        if (result) {
+            console.log(`Status request sent to ${ip}, waiting for response...`);
+            
+            // Set a timeout for the getStatus response
+            const statusTimeout = setTimeout(() => {
+                // If we're still waiting for a response after the timeout
+                if (connectionInProgress && lastConnectionAttempt === ip) {
+                    if (verificationAttempts < 3) {
+                        console.log(`No status response, retrying (attempt ${verificationAttempts + 1})...`);
+                        // Try again a couple times
+                        verifyConnection(ip, connectionTimeout);
+                    } else {
+                        // After 3 attempts, try the ping as a fallback
+                        console.log("No status response after multiple attempts, trying ping test...");
+                        tryPingTest(ip, connectionTimeout);
+                    }
+                }
+            }, 2000);
+            
+            // Set up a one-time listener for status response
+            const statusListener = function(event) {
+                try {
+                    const data = event.detail;
+                    if (data && data.action === 'statusResponse') {
+                        // We got a status response, connection is working!
+                        clearTimeout(statusTimeout);
+                        document.removeEventListener('websocket-message', statusListener);
+                        
+                        console.log(`✅ Status response received from ${ip}`);
+                        clearTimeout(connectionTimeout);
+                        
+                        // Show success message - real confirmed connection
+                        showConnectionStatus('Connected to ' + ip);
+                        connectionInProgress = false;
+                        
+                        // Update the saved devices list to reflect the new connection status
+                        updateSavedDevicesList();
+                    }
+                } catch (e) {
+                    console.error("Error in status listener:", e);
+                }
+            };
+            
+            // Listen for the status response
+            document.addEventListener('websocket-message', statusListener);
+        } else {
+            // sendCommand returned false, WebSocket probably not ready
+            console.log("Send command returned false, attempting fallback...");
+            tryPingTest(ip, connectionTimeout);
+        }
+    } else {
+        // sendCommand function not available, try ping test
+        console.log("sendCommand function not available, trying ping test...");
+        tryPingTest(ip, connectionTimeout);
+    }
+}
+
+// Try a ping test if available
+function tryPingTest(ip, connectionTimeout) {
+    if (typeof window.pingWebSocketConnection === 'function') {
+        window.pingWebSocketConnection()
+            .then(() => {
+                console.log("✅ WebSocket ping test successful");
+                // Show success message - ping confirmed connection
+                showConnectionStatus('Connected to ' + ip);
+                
+                // Request initial device status
+                if (typeof window.requestDeviceStatus === 'function') {
+                    window.requestDeviceStatus();
+                } else if (typeof window.updateAllStatus === 'function') {
+                    window.updateAllStatus();
                 }
                 
                 // Clear the timeout and tracking
                 clearTimeout(connectionTimeout);
                 connectionInProgress = false;
-            }, 1000);
-            
-        } catch (e) {
-            console.error('WebSocket connection failed:', e);
-            showConnectionStatus('Connection failed! Check if device is online.');
-            clearTimeout(connectionTimeout);
-            connectionInProgress = false;
-        }
+                
+                // Update the saved devices list to reflect the new connection
+                updateSavedDevicesList();
+            })
+            .catch(error => {
+                console.error("WebSocket ping test failed:", error);
+                
+                // Try one more time with the global websocket
+                if (window.websocket && window.websocket.readyState === WebSocket.OPEN) {
+                    showConnectionStatus('Connected to ' + ip + ' (unverified)');
+                    clearTimeout(connectionTimeout);
+                    connectionInProgress = false;
+                } else {
+                    showConnectionStatus('Connection problem with ' + ip + '. Device not responding.');
+                    clearTimeout(connectionTimeout);
+                    connectionInProgress = false;
+                }
+            });
     } else {
-        console.warn('WebSocket setup function not available yet');
-        
-        // Show simulated connection message
-        showConnectionStatus('Connected to ' + ip + ' (simulated)');
-        
-        // Clear timeout and tracking
+        // No ping test available but socket seems connected
+        if (window.websocket && window.websocket.readyState === WebSocket.OPEN) {
+            showConnectionStatus('Connected to ' + ip + ' (unverified)');
+        } else {
+            showConnectionStatus('Connection to ' + ip + ' uncertain. Try refreshing.');
+        }
         clearTimeout(connectionTimeout);
         connectionInProgress = false;
     }
@@ -245,6 +400,9 @@ function updateActiveDeviceIndicator(ip) {
     
     // Update page title to include device name
     document.title = `${displayName} - XY-SK120 Control`;
+    
+    // Update saved devices list to reflect the new connection state
+    updateSavedDevicesList();
 }
 
 // Get a device name from its IP
@@ -265,16 +423,28 @@ function showConnectionStatus(message) {
         document.body.appendChild(statusEl);
     }
     
+    // Customize appearance based on message content
+    if (message.includes('failed') || message.includes('problem') || message.includes('not accessible')) {
+        statusEl.className = 'fixed bottom-4 right-4 bg-danger text-white px-4 py-2 rounded-md shadow-lg z-50 transition-opacity duration-500 opacity-0';
+    } else if (message.includes('Connected')) {
+        statusEl.className = 'fixed bottom-4 right-4 bg-success text-white px-4 py-2 rounded-md shadow-lg z-50 transition-opacity duration-500 opacity-0';
+    } else {
+        statusEl.className = 'fixed bottom-4 right-4 bg-secondary text-white px-4 py-2 rounded-md shadow-lg z-50 transition-opacity duration-500 opacity-0';
+    }
+    
     // Update message and show
     statusEl.textContent = message;
     statusEl.classList.remove('opacity-0');
     statusEl.classList.add('opacity-100');
     
-    // Hide after 3 seconds
+    // For error messages, show longer
+    const displayTime = message.includes('failed') || message.includes('problem') ? 5000 : 3000;
+    
+    // Hide after display time
     setTimeout(() => {
         statusEl.classList.remove('opacity-100');
         statusEl.classList.add('opacity-0');
-    }, 3000);
+    }, displayTime);
 }
 
 // Add function to update the saved devices list
@@ -291,6 +461,10 @@ function updateSavedDevicesList() {
         listContainer.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">No saved devices yet</div>';
         return;
     }
+    
+    // Get the currently connected IP
+    const currentConnectedIP = window.websocket && window.websocketConnected ? 
+        (window.manualDeviceIP || localStorage.getItem('selectedDeviceIP') || window.location.hostname) : null;
     
     // Create list items for each device
     devices.forEach((device, index) => {
@@ -314,17 +488,30 @@ function updateSavedDevicesList() {
         const buttonGroup = document.createElement('div');
         buttonGroup.className = 'flex space-x-2';
         
-        // Connect button
-        const connectBtn = document.createElement('button');
-        connectBtn.className = 'text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-opacity-90';
-        connectBtn.textContent = 'Connect';
-        connectBtn.onclick = function(e) {
-            e.preventDefault(); // Prevent default form submission
-            e.stopPropagation(); // Stop event bubbling
-            connectToDevice(device.ip);
-        };
+        // Check if this device is already connected
+        const isConnectedDevice = currentConnectedIP && currentConnectedIP === device.ip;
         
-        // Delete button
+        if (isConnectedDevice) {
+            // Show a "Connected" button instead of "Connect"
+            const connectedBtn = document.createElement('button');
+            connectedBtn.className = 'text-xs px-2 py-1 bg-success text-white rounded cursor-default';
+            connectedBtn.textContent = 'Connected';
+            connectedBtn.title = 'Currently connected to this device';
+            buttonGroup.appendChild(connectedBtn);
+        } else {
+            // Connect button for non-connected devices
+            const connectBtn = document.createElement('button');
+            connectBtn.className = 'text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-opacity-90';
+            connectBtn.textContent = 'Connect';
+            connectBtn.onclick = function(e) {
+                e.preventDefault(); // Prevent default form submission
+                e.stopPropagation(); // Stop event bubbling
+                connectToDevice(device.ip);
+            };
+            buttonGroup.appendChild(connectBtn);
+        }
+        
+        // Delete button (always show)
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'text-xs px-2 py-1 bg-danger text-white rounded hover:bg-opacity-90';
         deleteBtn.textContent = 'Delete';
@@ -334,8 +521,6 @@ function updateSavedDevicesList() {
             removeDevice(index);
             updateSavedDevicesList();
         };
-        
-        buttonGroup.appendChild(connectBtn);
         buttonGroup.appendChild(deleteBtn);
         
         deviceRow.appendChild(deviceInfo);
@@ -364,11 +549,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // Just update the indicator without reconnecting
         updateActiveDeviceIndicator(selectedDeviceIP);
     }
+    
+    // Add event listeners for WebSocket connection changes
+    document.addEventListener('websocket-connected', function() {
+        // When a new connection is established, update the saved devices list
+        setTimeout(() => updateSavedDevicesList(), 500);
+    });
+    
+    document.addEventListener('websocket-disconnected', function() {
+        // When connection is lost, update the saved devices list
+        setTimeout(() => updateSavedDevicesList(), 500);
+    });
 });
+
+// Also update device indicator when connecting
+window.getCurrentDeviceIP = window.getCurrentDeviceIP || function() {
+    return window.currentDeviceIP || localStorage.getItem('selectedDeviceIP') || window.location.hostname;
+};
 
 // Make functions available globally
 window.addDevice = addDevice;
 window.loadSavedDevices = loadSavedDevices;
 window.connectToDevice = connectToDevice;
 window.updateSavedDevicesList = updateSavedDevicesList;
-window.removeDevice = removeDevice;
+window.removeDevice = removeDevice; // Make sure removeDevice is exported globally
+window.getDeviceName = getDeviceName; // Export this as well for good measure

@@ -701,39 +701,32 @@
         });
     </script>
 
-    <!-- Navbar component - Add ping test button -->
+    <!-- Critical scripts in the correct order - Load connectivity_check.js AFTER core.js -->
+    <script src="js/component_loader.js"></script>
+    <script src="js/auto_refresh.js"></script>
+    <script src="js/core.js" onload="window.appLoadingState.coreScriptsLoaded = true; updateSplashStatus('Core scripts loaded'); hideSplashScreen();"></script>
+    <script src="js/connectivity_check.js"></script>
+
+    <!-- Connection handler for device change requests -->
     <script>
-        // Immediately after the navbar component is loaded, add a ping test button
+        // Check if there's a pending connection request from a page reload
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                const navbar = document.getElementById('navbar');
-                if (navbar) {
-                    const connectionControls = navbar.querySelector('.connection-controls');
-                    if (connectionControls) {
-                        const pingButton = document.createElement('button');
-                        pingButton.id = 'ping-test-btn';
-                        pingButton.className = 'px-3 py-1 ml-1 text-xs rounded bg-secondary text-white';
-                        pingButton.textContent = 'Test Connection';
-                        pingButton.onclick = function() {
-                            if (typeof window.checkFullConnectivity === 'function') {
-                                window.checkFullConnectivity();
-                            } else {
-                                alert('Connection test function not available');
-                            }
-                        };
-                        connectionControls.appendChild(pingButton);
+            const pendingConnection = sessionStorage.getItem('connectingToDevice');
+            if (pendingConnection) {
+                console.log('Resuming connection to', pendingConnection);
+                // Clear the flag
+                sessionStorage.removeItem('connectingToDevice');
+                
+                // Wait for the page to fully load before attempting connection
+                setTimeout(() => {
+                    if (typeof window.connectToDevice === 'function') {
+                        window.connectToDevice(pendingConnection);
                     }
-                }
-            }, 1000);
+                }, 2000);
+            }
         });
     </script>
 
-    <!-- Critical scripts in the correct order -->
-    <script src="js/component_loader.js"></script>
-    <script src="js/auto_refresh.js"></script>
-    <script src="js/connectivity_check.js"></script>
-    <script src="js/core.js" onload="window.appLoadingState.coreScriptsLoaded = true; updateSplashStatus('Core scripts loaded'); hideSplashScreen();"></script>
-    
     <!-- UI Components -->
     <script src="js/tab_component.js"></script>
     <script src="js/component_initializer.js"></script>
