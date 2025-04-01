@@ -1,106 +1,187 @@
 <!-- WebSocket Status Indicator Component -->
-<div class="websocket-status-container flex items-center px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 ml-2">
-    <div id="websocket-status-indicator" class="h-3 w-3 rounded-full bg-danger mr-2"></div>
-    <span id="websocket-status" class="text-sm text-danger font-bold">Disconnected</span>
-    <span id="active-device-name" class="text-xs text-gray-500 dark:text-gray-400 ml-2 hidden md:inline truncate max-w-[120px]"></span>
-    <div class="websocket-details-popup hidden absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 p-3 rounded-md shadow-lg z-50 border border-gray-200 dark:border-gray-700 text-xs">
-        <div class="flex flex-col space-y-1">
-            <div class="flex justify-between">
-                <span class="font-medium">Status:</span>
-                <span id="popup-status">Disconnected</span>
+<div class="relative" id="websocket-status">
+    <button id="ws-status-btn" class="flex items-center space-x-1 px-2 py-1 rounded-md text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-secondary">
+        <!-- Status indicator dot -->
+        <div id="ws-status-indicator" class="h-2 w-2 rounded-full bg-gray-400 flex-shrink-0"></div>
+        
+        <!-- Status text - default is disconnected -->
+        <span id="ws-status-text" class="text-gray-600 dark:text-gray-300">Disconnected</span>
+        
+        <!-- Dropdown arrow -->
+        <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+    </button>
+    
+    <!-- Dropdown panel - hidden by default -->
+    <div id="ws-status-dropdown" class="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50 hidden">
+        <div class="p-3">
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">WebSocket Connection</h3>
+            
+            <!-- Connection details -->
+            <div class="space-y-2 text-xs">
+                <div class="flex justify-between">
+                    <span class="text-gray-500 dark:text-gray-400">Status:</span>
+                    <span id="ws-detail-status" class="font-medium text-gray-700 dark:text-gray-200">Disconnected</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500 dark:text-gray-400">Host:</span>
+                    <span id="ws-detail-host" class="font-mono text-gray-700 dark:text-gray-200">--</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500 dark:text-gray-400">Ping:</span>
+                    <span id="ws-detail-ping" class="font-mono text-gray-700 dark:text-gray-200">--</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500 dark:text-gray-400">Last Message:</span>
+                    <span id="ws-detail-last-msg" class="font-mono text-gray-700 dark:text-gray-200">--</span>
+                </div>
             </div>
-            <div class="flex justify-between">
-                <span class="font-medium">Device IP:</span>
-                <span id="popup-device-ip">-</span>
-            </div>
-            <div class="flex justify-between">
-                <span class="font-medium">Last Response:</span>
-                <span id="popup-last-message">-</span>
+            
+            <!-- Action buttons -->
+            <div class="flex justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <button id="ws-reconnect-btn" class="px-2 py-1 text-xs rounded bg-secondary hover:bg-opacity-90 text-white focus:outline-none focus:ring-2 focus:ring-secondary">
+                    Reconnect
+                </button>
+                <button id="ws-close-btn" class="px-2 py-1 text-xs rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-400">
+                    Close
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Add connection list to the popup
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the connections list in the popup
-        function updateConnectionsList() {
-            const connectionsListEl = document.getElementById('popup-connections-list');
-            if (!connectionsListEl) return;
+        const statusBtn = document.getElementById('ws-status-btn');
+        const statusDropdown = document.getElementById('ws-status-dropdown');
+        const statusIndicator = document.getElementById('ws-status-indicator');
+        const statusText = document.getElementById('ws-status-text');
+        const detailStatus = document.getElementById('ws-detail-status');
+        const detailHost = document.getElementById('ws-detail-host');
+        const detailPing = document.getElementById('ws-detail-ping');
+        const detailLastMsg = document.getElementById('ws-detail-last-msg');
+        const reconnectBtn = document.getElementById('ws-reconnect-btn');
+        const closeBtn = document.getElementById('ws-close-btn');
+        
+        // Toggle dropdown on click
+        if (statusBtn && statusDropdown) {
+            statusBtn.addEventListener('click', function() {
+                statusDropdown.classList.toggle('hidden');
+            });
             
-            // Get saved devices if available
-            let savedDevices = [];
-            if (typeof window.loadSavedDevices === 'function') {
-                savedDevices = window.loadSavedDevices();
-            }
-            
-            // Get current IP
-            const currentIP = window.getCurrentDeviceIP ? window.getCurrentDeviceIP() : 
-                (localStorage.getItem('selectedDeviceIP') || window.location.hostname);
-            
-            // Clear existing content
-            connectionsListEl.innerHTML = '';
-            
-            if (savedDevices.length === 0) {
-                connectionsListEl.innerHTML = '<div class="text-gray-500 dark:text-gray-400">No saved connections</div>';
-                return;
-            }
-            
-            // Create list
-            const list = document.createElement('ul');
-            list.className = 'space-y-1';
-            
-            // Add saved devices
-            savedDevices.forEach(device => {
-                const item = document.createElement('li');
-                item.className = 'flex items-center justify-between';
-                
-                const isActive = currentIP === device.ip;
-                
-                const nameSpan = document.createElement('span');
-                nameSpan.className = isActive ? 'font-medium text-success' : '';
-                nameSpan.textContent = (device.name || device.ip) + (isActive ? ' (active)' : '');
-                
-                item.appendChild(nameSpan);
-                
-                // Only show Connect button for non-active connections
-                if (!isActive) {
-                    const connectBtn = document.createElement('button');
-                    connectBtn.className = 'text-xs py-0.5 px-1.5 bg-secondary text-white rounded hover:bg-opacity-90 ml-2';
-                    connectBtn.textContent = 'Connect';
-                    connectBtn.onclick = function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (typeof window.connectToDevice === 'function') {
-                            window.connectToDevice(device.ip);
-                            document.querySelector('.websocket-details-popup').classList.add('hidden');
-                        }
-                    };
-                    
-                    item.appendChild(connectBtn);
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!statusBtn.contains(event.target) && !statusDropdown.contains(event.target)) {
+                    statusDropdown.classList.add('hidden');
                 }
-                
-                list.appendChild(item);
             });
+        }
+        
+        // Reconnect button action
+        if (reconnectBtn) {
+            reconnectBtn.addEventListener('click', function() {
+                // Check if reconnectWebSocket function exists
+                if (typeof window.reconnectWebSocket === 'function') {
+                    window.reconnectWebSocket();
+                    statusDropdown.classList.add('hidden');
+                } else {
+                    console.error('reconnectWebSocket function not found');
+                }
+            });
+        }
+        
+        // Close button (just closes the dropdown)
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                statusDropdown.classList.add('hidden');
+            });
+        }
+        
+        // Update status when WebSocket events occur
+        document.addEventListener('websocket-connected', function(e) {
+            if (statusIndicator) {
+                statusIndicator.classList.remove('bg-gray-400', 'bg-red-500');
+                statusIndicator.classList.add('bg-green-500');
+            }
             
-            connectionsListEl.appendChild(list);
-        }
-        
-        // Update connections list when websocket status container is clicked
-        const statusContainer = document.querySelector('.websocket-status-container');
-        if (statusContainer) {
-            statusContainer.addEventListener('click', function() {
-                updateConnectionsList();
-            });
-        }
-        
-        // Also update when connections change
-        document.addEventListener('websocket-connected', function() {
-            updateConnectionsList();
+            if (statusText) {
+                statusText.textContent = 'Connected';
+            }
+            
+            if (detailStatus) {
+                detailStatus.textContent = 'Connected';
+                detailStatus.classList.remove('text-gray-500', 'text-red-500');
+                detailStatus.classList.add('text-green-500');
+            }
+            
+            if (detailHost && e.detail && e.detail.host) {
+                detailHost.textContent = e.detail.host;
+            }
+            
+            // Show reconnect button
+            if (reconnectBtn) {
+                reconnectBtn.disabled = false;
+            }
         });
         
-        // Initialize on load
-        setTimeout(updateConnectionsList, 1000);
+        document.addEventListener('websocket-disconnected', function() {
+            if (statusIndicator) {
+                statusIndicator.classList.remove('bg-gray-400', 'bg-green-500');
+                statusIndicator.classList.add('bg-red-500');
+            }
+            
+            if (statusText) {
+                statusText.textContent = 'Disconnected';
+            }
+            
+            if (detailStatus) {
+                detailStatus.textContent = 'Disconnected';
+                detailStatus.classList.remove('text-gray-500', 'text-green-500');
+                detailStatus.classList.add('text-red-500');
+            }
+            
+            // Show reconnect button
+            if (reconnectBtn) {
+                reconnectBtn.disabled = false;
+            }
+        });
+        
+        document.addEventListener('websocket-connecting', function() {
+            if (statusIndicator) {
+                statusIndicator.classList.remove('bg-green-500', 'bg-red-500');
+                statusIndicator.classList.add('bg-yellow-500');
+            }
+            
+            if (statusText) {
+                statusText.textContent = 'Connecting...';
+            }
+            
+            if (detailStatus) {
+                detailStatus.textContent = 'Connecting...';
+                detailStatus.classList.remove('text-green-500', 'text-red-500');
+                detailStatus.classList.add('text-yellow-500');
+            }
+            
+            // Disable reconnect button while connecting
+            if (reconnectBtn) {
+                reconnectBtn.disabled = true;
+            }
+        });
+        
+        // Update ping display
+        document.addEventListener('websocket-ping', function(e) {
+            if (detailPing && e.detail && typeof e.detail.pingMs !== 'undefined') {
+                detailPing.textContent = `${e.detail.pingMs}ms`;
+            }
+        });
+        
+        // Update last message time
+        document.addEventListener('websocket-message', function() {
+            if (detailLastMsg) {
+                const now = new Date();
+                detailLastMsg.textContent = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            }
+        });
     });
 </script>

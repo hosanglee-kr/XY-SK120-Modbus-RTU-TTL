@@ -1,34 +1,222 @@
 <!-- Basic Controls Card -->
-<div class="card basic-controls-card">
-    <div class="card-header">
-        <h2 class="card-title text-gray-700 dark:text-white">
-            <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 8v8"></path>
-                <path d="M8 12h8"></path>
+<div class="bg-card dark:bg-card-dark shadow-md rounded-lg overflow-hidden mb-6">
+    <div class="flex justify-between items-center px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+        <h2 class="text-lg font-medium flex items-center text-gray-700 dark:text-white">
+            <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20z"></path>
+                <path d="M12 6v6l4 2"></path>
             </svg>
             <span>Basic Controls</span>
         </h2>
     </div>
-    <div class="card-body">
-        <div>
-            <label for="set-voltage" class="form-label">Set Voltage (V)</label>
-            <div class="mt-1 flex rounded-md shadow-sm">
-                <input type="number" id="set-voltage" min="0" max="30" step="0.1" class="form-input rounded-r-none">
-                <button id="apply-voltage" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
-                    Set
-                </button>
+    
+    <div class="p-4 space-y-4">
+        <!-- Output Control -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Output Status</h3>
+                <div class="flex items-center justify-between">
+                    <span class="text-xl font-bold" id="output-status">--</span>
+                    <button id="toggle-output" class="px-4 py-2 bg-secondary text-white rounded hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-opacity-50 transition-colors">
+                        Toggle
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Voltage Presets -->
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Voltage Preset</h3>
+                <div class="flex space-x-2">
+                    <div class="relative flex-1">
+                        <input type="number" id="voltage-preset" min="0" max="30" step="0.1" 
+                               class="w-full pl-8 pr-12 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary" 
+                               placeholder="0.00">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 dark:text-gray-400 sm:text-sm">V</span>
+                        </div>
+                        <div class="absolute inset-y-0 right-0 flex items-center">
+                            <button id="apply-voltage" 
+                                    class="h-full rounded-r-md border-0 px-3 bg-secondary text-white focus:outline-none">
+                                Set
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2 flex space-x-2">
+                    <button data-voltage="5" class="preset-btn flex-1 py-1 px-2 text-xs bg-gray-200 dark:bg-gray-600 rounded text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none">5V</button>
+                    <button data-voltage="9" class="preset-btn flex-1 py-1 px-2 text-xs bg-gray-200 dark:bg-gray-600 rounded text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none">9V</button>
+                    <button data-voltage="12" class="preset-btn flex-1 py-1 px-2 text-xs bg-gray-200 dark:bg-gray-600 rounded text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none">12V</button>
+                    <button data-voltage="15" class="preset-btn flex-1 py-1 px-2 text-xs bg-gray-200 dark:bg-gray-600 rounded text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none">15V</button>
+                </div>
+            </div>
+            
+            <!-- Current Presets -->
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Preset</h3>
+                <div class="flex space-x-2">
+                    <div class="relative flex-1">
+                        <input type="number" id="current-preset" min="0" max="5" step="0.01" 
+                               class="w-full pl-8 pr-12 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary" 
+                               placeholder="0.00">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 dark:text-gray-400 sm:text-sm">A</span>
+                        </div>
+                        <div class="absolute inset-y-0 right-0 flex items-center">
+                            <button id="apply-current" 
+                                    class="h-full rounded-r-md border-0 px-3 bg-secondary text-white focus:outline-none">
+                                Set
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2 flex space-x-2">
+                    <button data-current="0.5" class="current-preset-btn flex-1 py-1 px-2 text-xs bg-gray-200 dark:bg-gray-600 rounded text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none">0.5A</button>
+                    <button data-current="1" class="current-preset-btn flex-1 py-1 px-2 text-xs bg-gray-200 dark:bg-gray-600 rounded text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none">1A</button>
+                    <button data-current="2" class="current-preset-btn flex-1 py-1 px-2 text-xs bg-gray-200 dark:bg-gray-600 rounded text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none">2A</button>
+                    <button data-current="3" class="current-preset-btn flex-1 py-1 px-2 text-xs bg-gray-200 dark:bg-gray-600 rounded text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none">3A</button>
+                </div>
             </div>
         </div>
         
-        <div>
-            <label for="set-current" class="form-label">Set Current (A)</label>
-            <div class="mt-1 flex rounded-md shadow-sm">
-                <input type="number" id="set-current" min="0" max="5" step="0.01" class="form-input rounded-r-none">
-                <button id="apply-current" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
-                    Set
-                </button>
+        <!-- Protection Settings -->
+        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Protection Settings</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- OVP Setting -->
+                <div>
+                    <label for="ovp-setting" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">OVP</label>
+                    <div class="relative">
+                        <input type="number" id="ovp-setting" min="0" max="32" step="0.1" 
+                               class="w-full pl-2 pr-8 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary" 
+                               placeholder="0.00">
+                        <div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+                            <span class="text-gray-500 dark:text-gray-400 text-xs">V</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- OCP Setting -->
+                <div>
+                    <label for="ocp-setting" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">OCP</label>
+                    <div class="relative">
+                        <input type="number" id="ocp-setting" min="0" max="5.1" step="0.01" 
+                               class="w-full pl-2 pr-8 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary" 
+                               placeholder="0.00">
+                        <div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+                            <span class="text-gray-500 dark:text-gray-400 text-xs">A</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- OPP Setting -->
+                <div>
+                    <label for="opp-setting" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">OPP</label>
+                    <div class="relative">
+                        <input type="number" id="opp-setting" min="0" max="120" step="0.1" 
+                               class="w-full pl-2 pr-8 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary" 
+                               placeholder="0.0">
+                        <div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+                            <span class="text-gray-500 dark:text-gray-400 text-xs">W</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Apply Button -->
+                <div class="flex items-end">
+                    <button id="apply-protection" class="w-full py-1.5 bg-secondary text-white rounded hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-opacity-50 transition-colors">
+                        Apply Protection
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Add event listeners once DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Voltage preset buttons
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const voltage = this.getAttribute('data-voltage');
+                document.getElementById('voltage-preset').value = voltage;
+            });
+        });
+        
+        // Current preset buttons
+        document.querySelectorAll('.current-preset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const current = this.getAttribute('data-current');
+                document.getElementById('current-preset').value = current;
+            });
+        });
+        
+        // Apply voltage preset
+        document.getElementById('apply-voltage').addEventListener('click', function() {
+            const voltage = document.getElementById('voltage-preset').value;
+            if (voltage && !isNaN(voltage)) {
+                sendVoltagePreset(parseFloat(voltage));
+            }
+        });
+        
+        // Apply current preset
+        document.getElementById('apply-current').addEventListener('click', function() {
+            const current = document.getElementById('current-preset').value;
+            if (current && !isNaN(current)) {
+                sendCurrentPreset(parseFloat(current));
+            }
+        });
+        
+        // Toggle output
+        document.getElementById('toggle-output').addEventListener('click', function() {
+            toggleOutput();
+        });
+        
+        // Apply protection settings
+        document.getElementById('apply-protection').addEventListener('click', function() {
+            const ovp = document.getElementById('ovp-setting').value;
+            const ocp = document.getElementById('ocp-setting').value;
+            const opp = document.getElementById('opp-setting').value;
+            
+            // Validate inputs
+            if (ovp && !isNaN(ovp) && ocp && !isNaN(ocp) && opp && !isNaN(opp)) {
+                setProtectionLimits(parseFloat(ovp), parseFloat(ocp), parseFloat(opp));
+            } else {
+                alert('Please enter valid protection values');
+            }
+        });
+    });
+    
+    // These functions would be defined in your main JavaScript file
+    function sendVoltagePreset(voltage) {
+        if (typeof window.setVoltage === 'function') {
+            window.setVoltage(voltage);
+        } else {
+            console.error('setVoltage function not found');
+        }
+    }
+    
+    function sendCurrentPreset(current) {
+        if (typeof window.setCurrent === 'function') {
+            window.setCurrent(current);
+        } else {
+            console.error('setCurrent function not found');
+        }
+    }
+    
+    function toggleOutput() {
+        if (typeof window.toggleOutputState === 'function') {
+            window.toggleOutputState();
+        } else {
+            console.error('toggleOutputState function not found');
+        }
+    }
+    
+    function setProtectionLimits(ovp, ocp, opp) {
+        if (typeof window.setProtectionLimits === 'function') {
+            window.setProtectionLimits(ovp, ocp, opp);
+        } else {
+            console.error('setProtectionLimits function not found');
+        }
+    }
+</script>

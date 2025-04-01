@@ -1,0 +1,157 @@
+<!-- Settings Card Section with Tabs -->
+<div class="bg-card dark:bg-card-dark shadow-md rounded-lg overflow-hidden mb-6">
+    <div class="flex justify-between items-center px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+        <h2 class="text-lg font-medium flex items-center text-gray-700 dark:text-white">
+            <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <span>Settings</span>
+        </h2>
+    </div>
+    
+    <!-- Settings tabs -->
+    <div id="settings-tabs-container" data-tabs="settings">
+        <div class="flex overflow-x-auto overflow-y-hidden border-b border-gray-200 whitespace-nowrap dark:border-gray-700" role="tablist" id="settings-tablist" aria-label="Settings tabs">
+            <button id="tab-device" role="tab" aria-selected="false" aria-controls="device-settings-tab" 
+                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                </svg>
+                <span class="mx-1 text-sm sm:text-base">
+                    Device
+                </span>
+            </button>
+            <button id="tab-ui" role="tab" aria-selected="false" aria-controls="ui-settings-tab" 
+                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+                <span class="mx-1 text-sm sm:text-base">
+                    Web UI
+                </span>
+            </button>
+            <button id="tab-wifi" role="tab" aria-selected="true" aria-controls="wifi-settings-tab" 
+                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-blue-600 bg-transparent border-b-2 border-secondary sm:px-4 dark:text-blue-300 dark:border-blue-400 whitespace-nowrap focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                </svg>
+                <span class="mx-1 text-sm sm:text-base">
+                    WiFi
+                </span>
+            </button>
+            <button id="tab-manager" role="tab" aria-selected="false" aria-controls="manager-settings-tab" 
+                class="inline-flex items-center h-10 px-2 py-2 -mb-px text-center text-gray-700 bg-transparent border-b-2 border-transparent sm:px-4 dark:text-white whitespace-nowrap focus:outline-none hover:border-gray-400 dark:hover:border-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mx-1 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                <span class="mx-1 text-sm sm:text-base">
+                    Links
+                </span>
+            </button>
+        </div>
+        
+        <!-- Tab panel contents -->
+        <div id="wifi-settings-tab" role="tabpanel" aria-labelledby="tab-wifi" tabindex="0" aria-hidden="false" class="p-4 space-y-6">
+            <!-- We'll keep the existing Wi-Fi settings content -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Status</p>
+                    <p id="wifi-status" class="text-lg font-semibold text-gray-700 dark:text-gray-200">--</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">SSID</p>
+                    <p id="wifi-ssid" class="text-lg font-semibold text-gray-700 dark:text-gray-200 truncate">--</p>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">IP</p>
+                    <p id="wifi-ip" class="text-lg font-semibold text-gray-700 dark:text-gray-200">--</p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button id="wifi-refresh-btn" onclick="fetchWifiStatus()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-secondary">
+                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh WiFi Status
+                </button>
+                <button id="wifi-reset-btn" onclick="resetWifiSettings()" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-danger hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-danger">
+                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9-5m0 0l9-5-9 5-9 5 9 5m0 0v8"></path>
+                    </svg>
+                    Reset WiFi
+                </button>
+            </div>
+        </div>
+        
+        <!-- Other tab panels are hidden by default -->
+        <div id="device-settings-tab" role="tabpanel" aria-labelledby="tab-device" tabindex="0" aria-hidden="true" class="p-4 space-y-6 hidden">
+            <!-- Device settings content loaded dynamically -->
+            <div id="device-settings-placeholder" class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg text-center">
+                <p class="text-gray-500 dark:text-gray-400">Loading device settings...</p>
+            </div>
+        </div>
+        
+        <div id="ui-settings-tab" role="tabpanel" aria-labelledby="tab-ui" tabindex="0" aria-hidden="true" class="p-4 space-y-6 hidden">
+            <!-- UI settings content loaded dynamically -->
+            <div id="ui-settings-placeholder" class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg text-center">
+                <p class="text-gray-500 dark:text-gray-400">Loading UI settings...</p>
+            </div>
+        </div>
+        
+        <div id="manager-settings-tab" role="tabpanel" aria-labelledby="tab-manager" tabindex="0" aria-hidden="true" class="p-4 space-y-6 hidden">
+            <!-- Manager settings content loaded dynamically -->
+            <div id="manager-settings-placeholder" class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg text-center">
+                <p class="text-gray-500 dark:text-gray-400">Loading link manager...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tab functionality using the tab_component.js
+    // The component will automatically be initialized if tab_component.js is loaded
+    
+    // Listen for tab changes to load content dynamically
+    document.addEventListener('tab-changed', function(e) {
+        if (e.detail.tabsName === 'settings') {
+            const panel = e.detail.panel;
+            const tab = e.detail.tab;
+            const tabId = tab.id;
+            
+            // Add logic to load tab-specific content if needed
+            if (tabId === 'tab-device' && panel.querySelector('#device-settings-placeholder')) {
+                // Load device settings content
+                loadDeviceSettings(panel);
+            } else if (tabId === 'tab-ui' && panel.querySelector('#ui-settings-placeholder')) {
+                // Load UI settings content
+                loadUISettings(panel);
+            } else if (tabId === 'tab-manager' && panel.querySelector('#manager-settings-placeholder')) {
+                // Load link manager content
+                loadLinkManager(panel);
+            }
+        }
+    });
+    
+    // Helper functions for loading content
+    function loadDeviceSettings(panel) {
+        // Example of dynamic content loading
+        if (typeof window.loadDeviceSettingsContent === 'function') {
+            window.loadDeviceSettingsContent(panel);
+        }
+    }
+    
+    function loadUISettings(panel) {
+        if (typeof window.loadUISettingsContent === 'function') {
+            window.loadUISettingsContent(panel);
+        }
+    }
+    
+    function loadLinkManager(panel) {
+        if (typeof window.loadLinkManagerContent === 'function') {
+            window.loadLinkManagerContent(panel);
+        }
+    }
+});
+</script>

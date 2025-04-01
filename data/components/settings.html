@@ -1,0 +1,156 @@
+<!-- Settings Component -->
+<div class="bg-card dark:bg-card-dark shadow-md rounded-lg overflow-hidden mb-6">
+    <div class="flex justify-between items-center px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+        <h2 class="text-lg font-medium flex items-center text-gray-700 dark:text-white">
+            <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <span>Device Settings</span>
+        </h2>
+    </div>
+    
+    <div class="p-4 space-y-6">
+        <!-- Device Configuration -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Device Name -->
+            <div>
+                <label for="device-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Device Name</label>
+                <input type="text" id="device-name" 
+                       class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary" 
+                       placeholder="My Power Supply">
+            </div>
+            
+            <!-- Modbus ID -->
+            <div>
+                <label for="modbus-id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Modbus ID</label>
+                <select id="modbus-id" 
+                        class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary appearance-none pr-10 bg-no-repeat bg-right">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            
+            <!-- Baud Rate -->
+            <div>
+                <label for="baud-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Baud Rate</label>
+                <select id="baud-rate" 
+                        class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary appearance-none pr-10 bg-no-repeat bg-right">
+                    <option value="9600">9600</option>
+                    <option value="19200">19200</option>
+                    <option value="38400">38400</option>
+                    <option value="57600">57600</option>
+                    <option value="115200">115200</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Divider -->
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Interface Settings</h3>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Update Interval -->
+                <div>
+                    <label for="update-interval" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Update Interval (ms)</label>
+                    <input type="number" id="update-interval" min="500" max="10000" step="100" 
+                           class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary" 
+                           placeholder="1000">
+                </div>
+                
+                <!-- Toggle Switches -->
+                <div class="grid grid-cols-1 gap-2">
+                    <!-- Auto-connect Toggle -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Auto-connect on Startup</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="auto-connect-toggle" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-secondary rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-secondary"></div>
+                        </label>
+                    </div>
+                    
+                    <!-- Auto-refresh Toggle -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Auto-refresh Status</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="auto-refresh-toggle" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-secondary rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-secondary"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Save Settings Button -->
+        <div class="flex justify-end">
+            <button id="save-settings" class="px-4 py-2 bg-secondary text-white rounded hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-opacity-50 transition-colors">
+                Save Settings
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load current settings when component is loaded
+        loadDeviceSettings();
+        
+        // Save settings
+        document.getElementById('save-settings').addEventListener('click', function() {
+            saveDeviceSettings();
+        });
+    });
+    
+    function loadDeviceSettings() {
+        // Call the global function to load settings if it exists
+        if (typeof window.loadCurrentDeviceSettings === 'function') {
+            window.loadCurrentDeviceSettings()
+                .then(settings => {
+                    // Populate form with settings
+                    if (settings) {
+                        document.getElementById('device-name').value = settings.deviceName || '';
+                        document.getElementById('modbus-id').value = settings.modbusId || '1';
+                        document.getElementById('baud-rate').value = settings.baudRate || '9600';
+                        document.getElementById('update-interval').value = settings.updateInterval || '1000';
+                        document.getElementById('auto-connect-toggle').checked = settings.autoConnect || false;
+                        document.getElementById('auto-refresh-toggle').checked = settings.autoRefresh !== false; // Default to true
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to load settings:', error);
+                });
+        } else {
+            console.warn('loadCurrentDeviceSettings function not found');
+        }
+    }
+    
+    function saveDeviceSettings() {
+        // Get values from form
+        const settings = {
+            deviceName: document.getElementById('device-name').value,
+            modbusId: document.getElementById('modbus-id').value,
+            baudRate: document.getElementById('baud-rate').value,
+            updateInterval: document.getElementById('update-interval').value,
+            autoConnect: document.getElementById('auto-connect-toggle').checked,
+            autoRefresh: document.getElementById('auto-refresh-toggle').checked
+        };
+        
+        // Call the global function to save settings if it exists
+        if (typeof window.saveDeviceSettings === 'function') {
+            window.saveDeviceSettings(settings)
+                .then(() => {
+                    // Show success message or perform any additional actions
+                    alert('Settings saved successfully!');
+                })
+                .catch(error => {
+                    console.error('Failed to save settings:', error);
+                    alert('Failed to save settings: ' + error.message);
+                });
+        } else {
+            console.warn('saveDeviceSettings function not found');
+        }
+    }
+</script>

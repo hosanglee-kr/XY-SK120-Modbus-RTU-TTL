@@ -1,0 +1,110 @@
+<!-- UI Documentation Component -->
+<div class="bg-card dark:bg-card-dark shadow-md rounded-lg overflow-hidden mb-6">
+    <div class="flex justify-between items-center px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+        <h2 class="text-lg font-medium flex items-center text-gray-700 dark:text-white">
+            <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+            <span>UI Components</span>
+        </h2>
+    </div>
+    
+    <div class="p-4 space-y-8">
+        <!-- Colors Section -->
+        <section class="space-y-4">
+            <h3 class="font-medium text-gray-900 dark:text-white">Theme Colors</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- Primary Colors -->
+                <div class="space-y-2">
+                    <div class="h-10 w-full bg-primary rounded"></div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Primary</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-10 w-full bg-secondary rounded"></div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Secondary</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-10 w-full bg-success rounded"></div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Success</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-10 w-full bg-danger rounded"></div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Danger</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-10 w-full bg-warning rounded"></div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Warning</p>
+                </div>
+                
+                <!-- Device Colors -->
+                <div class="space-y-2">
+                    <div class="h-10 w-full bg-voltage rounded"></div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Voltage</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-10 w-full bg-current rounded"></div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Current</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-10 w-full bg-power rounded"></div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Power</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-10 w-full bg-temperature rounded"></div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Temperature</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Buttons Section -->
+        <section class="space-y-4">
+            <h3 class="font-medium text-gray-900 dark:text-white">Buttons</h3>
+            <div class="flex flex-wrap gap-4">
+                <button class="px-4 py-2 bg-secondary text-white rounded hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-opacity-50 transition-colors">
+                    Primary Button
+                </button>
+                <button class="px-4 py-2 bg-success text-white rounded hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-success focus:ring-opacity-50 transition-colors">
+                    Success Button
+                </button>
+                <button class="px-4 py-2 bg-danger text-white rounded hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-danger focus:ring-opacity-50 transition-colors">
+                    Danger Button
+                </button>
+                <button class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-secondary transition-colors">
+                    Secondary Button
+                </button>
+            </div>
+        </section>
+        
+        <!-- Form Controls -->
+        <section class="space-y-4">
+            <h3 class="font-medium text-gray-900 dark:text-white">Form Controls</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Text Input -->
+                <div>
+                    <label for="example-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Text Input</label>
+                    <input type="text" id="example-input" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary" placeholder="Example input">
+                </div>
+                
+                <!-- Select -->
+                <div>
+                    <label for="example-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select</label>
+                    <select id="example-select" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary appearance-none pr-10 bg-no-repeat bg-right">
+                        <option>Option 1</option>
+                        <option>Option 2</option>
+                        <option>Option 3</option>
+                    </select>
+                </div>
+                
+                <!-- Toggle Switch -->
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Toggle Switch</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-secondary rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-secondary"></div>
+                    </label>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>

@@ -1,18 +1,6 @@
 <!-- Animated Splash Screen Component using anime.js -->
 <style>
-    /* Fallback animations if anime.js fails to load */
-    .fallback-fade-in {
-        animation: simpleFadeIn 1s ease forwards;
-    }
-    
-    .fallback-fade-out {
-        animation: simpleFadeOut 1s ease forwards;
-    }
-    
-    .fallback-progress {
-        animation: progressGrow 3s ease-in-out forwards;
-    }
-    
+    /* Fallback animations if anime.js fails to load - Only keeping what can't be done with Tailwind */
     @keyframes simpleFadeIn {
         from { opacity: 0; transform: scale(0.9); }
         to { opacity: 1; transform: scale(1); }
@@ -62,25 +50,25 @@
         </svg>
 
         <!-- Pulsating voltage/current indicator rings -->
-        <div id="voltage-ring" class="absolute inset-0 border-4 border-blue-500 rounded-full opacity-0"></div>
-        <div id="current-ring" class="absolute inset-0 border-4 border-yellow-400 rounded-full opacity-0"></div>
+        <div id="voltage-ring" class="absolute inset-0 border-4 border-secondary rounded-full opacity-0"></div>
+        <div id="current-ring" class="absolute inset-0 border-4 border-current rounded-full opacity-0"></div>
     </div>
 
-    <h1 class="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">XY-SK120 <span class="text-yellow-500">Power Supply</span></h1>
+    <h1 class="text-2xl font-bold mb-4 text-secondary dark:text-blue-400">XY-SK120 <span class="text-warning">Power Supply</span></h1>
     
     <div class="flex items-center justify-center space-x-6 mb-6">
         <div class="flex flex-col items-center">
-            <span id="voltage-value" class="text-xl font-mono text-blue-500">0.00V</span>
+            <span id="voltage-value" class="text-xl font-mono text-voltage">0.00V</span>
             <span class="text-xs text-gray-500 dark:text-gray-400">Voltage</span>
         </div>
         <div class="h-8 w-px bg-gray-300 dark:bg-gray-700"></div>
         <div class="flex flex-col items-center">
-            <span id="current-value" class="text-xl font-mono text-yellow-500">0.00A</span>
+            <span id="current-value" class="text-xl font-mono text-current">0.00A</span>
             <span class="text-xs text-gray-500 dark:text-gray-400">Current</span>
         </div>
         <div class="h-8 w-px bg-gray-300 dark:bg-gray-700"></div>
         <div class="flex flex-col items-center">
-            <span id="power-value" class="text-xl font-mono text-purple-500">0.0W</span>
+            <span id="power-value" class="text-xl font-mono text-power">0.0W</span>
             <span class="text-xs text-gray-500 dark:text-gray-400">Power</span>
         </div>
     </div>

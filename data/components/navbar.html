@@ -5,15 +5,15 @@
             <div class="flex items-center">
                 <!-- Adding back just the text title, no logo -->
                 <div class="flex-shrink-0 flex items-center">
-                    <span class="text-lg font-semibold text-gray-900 dark:text-white">XY-SK120</span>
+                    <span class="text-lg font-semibold text-primary dark:text-white">XY-SK120</span>
                 </div>
                 
-                <div class="hidden md:ml-6 md:flex md:space-x-4">
-                    <!-- Current: "border-indigo-500 text-gray-900", Default: "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700" -->
-                    <a href="#" class="border-secondary text-gray-900 dark:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                <div class="hidden md:ml-6 md:flex md:space-x-8">
+                    <!-- Current: Active link styling with Tailwind, Default: Transparent border -->
+                    <a href="#" class="border-secondary text-primary dark:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                         Home
                     </a>
-                    <a href="info.html" class="border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                    <a href="info.html" class="border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200">
                         Info
                     </a>
                 </div>
@@ -21,31 +21,81 @@
             
             <div class="flex items-center">
                 <!-- WebSocket Status Indicator -->
-                <div id="websocket-status-container" data-component="websocket_status"></div>
+                <div id="websocket-status-container" class="relative" data-component="websocket_status"></div>
                 
                 <!-- Device Selector -->
-                <select id="device-selector" class="ml-2 text-sm rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-white py-1 px-2 focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary">
+                <select id="device-selector" class="ml-2 text-sm rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-700 dark:text-white py-1 px-2 focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary appearance-none pr-8 bg-no-repeat bg-right">
                     <option value="">Select Device</option>
                 </select>
                 
-                <!-- Removed theme switch and log viewer toggle -->
+                <!-- Add dark mode toggle button -->
+                <button id="theme-toggle" class="ml-4 p-1 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-secondary">
+                    <!-- Sun icon for dark mode -->
+                    <svg id="theme-toggle-light-icon" class="hidden w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
+                    </svg>
+                    <!-- Moon icon for light mode -->
+                    <svg id="theme-toggle-dark-icon" class="hidden w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                    </svg>
+                </button>
+                
+                <!-- Log Viewer Toggle Button -->
+                <button id="open-logs-btn" class="ml-2 p-1 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-secondary">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
 </nav>
 
 <script>
-    // Initialize theme toggle - simplified since elements were removed
     document.addEventListener('DOMContentLoaded', function() {
-        // Keep the theme initialization but remove the event listeners
-        // for the removed elements
+        // Get the theme toggle button
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
         
-        // Apply user's theme preference from localStorage if available
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else if (savedTheme === 'light') {
-            document.documentElement.classList.remove('dark');
+        // Set the icons based on the current theme
+        if (document.documentElement.classList.contains('dark')) {
+            darkIcon.classList.add('hidden');
+            lightIcon.classList.remove('hidden');
+        } else {
+            lightIcon.classList.add('hidden');
+            darkIcon.classList.remove('hidden');
+        }
+        
+        // Add click event to toggle theme
+        themeToggleBtn.addEventListener('click', function() {
+            // Toggle dark class on document element
+            document.documentElement.classList.toggle('dark');
+            
+            // Update icons
+            darkIcon.classList.toggle('hidden');
+            lightIcon.classList.toggle('hidden');
+            
+            // Save preference to localStorage
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+                document.querySelector('meta[name="theme-color"]').setAttribute('content', '#111827');
+            } else {
+                localStorage.setItem('theme', 'light');
+                document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff');
+            }
+        });
+        
+        // Show the log viewer when logs button is clicked
+        const openLogsBtn = document.getElementById('open-logs-btn');
+        if (openLogsBtn) {
+            openLogsBtn.addEventListener('click', function() {
+                const logViewer = document.getElementById('log-viewer-overlay');
+                if (logViewer) {
+                    logViewer.classList.toggle('active');
+                    document.body.classList.toggle('log-viewer-open');
+                }
+            });
         }
     });
 </script>

@@ -1,0 +1,45 @@
+/* Minimal utilities that can't be handled by Tailwind */
+
+/* CSS Variables for JS access */
+:root {
+  /* Device specific colors - match Tailwind theme */
+  --voltage-color: #64ff00; 
+  --current-color: #fff500;
+  --power-color: #b73dff;
+  --temperature-color: #00e5ff;
+  
+  /* App colors - defined in tailwind.config.js */
+  --primary-color: #2c3e50;
+  --secondary-color: #3498db;
+  --success-color: #2ecc71;
+  --danger-color: #e74c3c;
+  --warning-color: #f39c12;
+}
+
+/* Custom animations */
+@keyframes slowPulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
+/* Log viewer active state */
+#log-viewer-overlay.active {
+  transform: translateY(0);
+}
+
+/* Transition for WebSocket status */
+.websocket-status-container {
+  position: relative;
+  transition: all 0.2s;
+}
+
+/* Utility classes for animation */
+.animate-slow-pulse {
+  animation: slowPulse 3s ease-in-out infinite;
+}

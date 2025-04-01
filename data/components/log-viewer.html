@@ -1,34 +1,252 @@
-<!-- Log Viewer component -->
-<div id="log-viewer-overlay" class="fixed inset-x-0 bottom-0 w-full bg-white dark:bg-gray-800 shadow-lg rounded-t-lg border border-gray-200 dark:border-gray-700 p-2 transform translate-y-full transition-transform duration-300 ease-in-out z-50" style="height: 33vh;">
+<!-- Log Viewer Component -->
+<div id="log-viewer-overlay" class="fixed bottom-0 left-0 right-0 z-overlay transform translate-y-full transition-transform duration-300 ease-in-out bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 p-2">
     <div class="flex justify-between items-center mb-2">
         <div class="flex items-center space-x-3 text-sm">
             <h3 class="font-medium text-gray-800 dark:text-white">WebSocket Logs</h3>
+            
+            <!-- Auto-refresh toggle -->
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="auto-scroll-toggle" checked class="sr-only peer">
+                <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-secondary rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-secondary"></div>
+                <span class="ml-2 text-sm font-medium text-gray-500 dark:text-gray-300">Auto-scroll</span>
+            </label>
         </div>
-        <div class="flex items-center space-x-2">
-            <button id="log-pause" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Pause">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m-7-10a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
+        <div class="flex items-center space-x-1">
+            <button id="log-pause" class="p-1.5 rounded-md text-secondary hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Pause">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m-7-10a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-10z"></path>
                 </svg>
             </button>
-            <button id="log-resume" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200 hidden" title="Resume">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            <button id="log-resume" class="p-1.5 rounded-md text-secondary hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors hidden" title="Resume">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
             </button>
-            <button id="log-clear" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Clear logs">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            <button id="log-clear" class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Clear logs">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                 </svg>
             </button>
-            <button id="log-close" class="p-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition duration-200" title="Close logs">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+            <button id="log-download" class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Download logs">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+            </button>
+            <button id="log-close" class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Close logs">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
         </div>
     </div>
-    <div id="log-container" class="w-full overflow-auto bg-gray-100 dark:bg-gray-900 rounded p-2 text-xs font-mono" style="height: calc(33vh - 40px);">
-        <div id="logs" class="w-full"></div>
+    
+    <!-- Log filtering options -->
+    <div class="flex flex-wrap gap-2 mb-2">
+        <div class="flex items-center">
+            <label class="inline-flex items-center cursor-pointer mr-3">
+                <input type="checkbox" id="filter-requests" checked class="sr-only peer">
+                <div class="relative w-8 h-4 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-blue-500"></div>
+                <span class="ml-1 text-xs font-medium text-gray-500 dark:text-gray-300">Requests</span>
+            </label>
+            
+            <label class="inline-flex items-center cursor-pointer mr-3">
+                <input type="checkbox" id="filter-responses" checked class="sr-only peer">
+                <div class="relative w-8 h-4 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-green-500"></div>
+                <span class="ml-1 text-xs font-medium text-gray-500 dark:text-gray-300">Responses</span>
+            </label>
+            
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="filter-errors" checked class="sr-only peer">
+                <div class="relative w-8 h-4 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-500 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-red-500"></div>
+                <span class="ml-1 text-xs font-medium text-gray-500 dark:text-gray-300">Errors</span>
+            </label>
+        </div>
+        
+        <div class="ml-auto">
+            <select id="log-level" class="text-xs py-0.5 px-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded focus:ring-secondary focus:border-secondary">
+                <option value="debug">All Logs</option>
+                <option value="info">Info & Above</option>
+                <option value="warn">Warnings & Errors</option>
+                <option value="error">Errors Only</option>
+            </select>
+        </div>
+    </div>
+    
+    <div id="log-container" class="overflow-auto bg-gray-100 dark:bg-gray-900 rounded p-2 text-xs font-mono" style="height: calc(33.33vh - 80px);">
+        <div id="logs" class="space-y-1">
+            <!-- Log entries will be added here dynamically -->
+            <div class="text-gray-500 dark:text-gray-400 italic">Log viewer initialized. Waiting for WebSocket traffic...</div>
+        </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Log viewer functionality
+        const logViewer = document.getElementById('log-viewer-overlay');
+        const logContainer = document.getElementById('log-container');
+        const logsDiv = document.getElementById('logs');
+        const pauseBtn = document.getElementById('log-pause');
+        const resumeBtn = document.getElementById('log-resume');
+        const clearBtn = document.getElementById('log-clear');
+        const closeBtn = document.getElementById('log-close');
+        const downloadBtn = document.getElementById('log-download');
+        const autoScrollToggle = document.getElementById('auto-scroll-toggle');
+        
+        // Initialize variables
+        let isPaused = false;
+        let logBuffer = [];
+        
+        // Toggle auto-scroll
+        if (autoScrollToggle) {
+            autoScrollToggle.addEventListener('change', function() {
+                if (this.checked && !isPaused) {
+                    scrollToBottom();
+                }
+            });
+        }
+        
+        // Pause logs
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', function() {
+                isPaused = true;
+                pauseBtn.classList.add('hidden');
+                resumeBtn.classList.remove('hidden');
+            });
+        }
+        
+        // Resume logs
+        if (resumeBtn) {
+            resumeBtn.addEventListener('click', function() {
+                isPaused = false;
+                resumeBtn.classList.add('hidden');
+                pauseBtn.classList.remove('hidden');
+                
+                // Process buffered logs
+                processBufferedLogs();
+                
+                // Scroll to bottom if auto-scroll is enabled
+                if (autoScrollToggle && autoScrollToggle.checked) {
+                    scrollToBottom();
+                }
+            });
+        }
+        
+        // Clear logs
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function() {
+                logsDiv.innerHTML = '';
+                logBuffer = [];
+            });
+        }
+        
+        // Close log viewer
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                logViewer.classList.remove('active');
+                document.body.classList.remove('log-viewer-open');
+            });
+        }
+        
+        // Download logs
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function() {
+                const logsText = logsDiv.innerText;
+                const blob = new Blob([logsText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `websocket-logs-${new Date().toISOString().slice(0, 19).replace('T', '_')}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function() {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 0);
+            });
+        }
+        
+        // Function to add a log entry
+        window.addLogEntry = function(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            // Set color based on log type
+            switch (type) {
+                case 'request':
+                    logEntry.classList.add('text-blue-600', 'dark:text-blue-400');
+                    break;
+                case 'response':
+                    logEntry.classList.add('text-green-600', 'dark:text-green-400');
+                    break;
+                case 'error':
+                    logEntry.classList.add('text-red-600', 'dark:text-red-400');
+                    break;
+                default:
+                    logEntry.classList.add('text-gray-800', 'dark:text-gray-200');
+            }
+            
+            // Add timestamp
+            const now = new Date();
+            const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}`;
+            
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            if (isPaused) {
+                // Add to buffer if paused
+                logBuffer.push({ element: logEntry, type });
+            } else {
+                // Add directly to log container
+                logsDiv.appendChild(logEntry);
+                
+                // Apply filters
+                applyFilters();
+                
+                // Scroll to bottom if auto-scroll is enabled
+                if (autoScrollToggle && autoScrollToggle.checked) {
+                    scrollToBottom();
+                }
+            }
+        };
+        
+        // Process buffered logs
+        function processBufferedLogs() {
+            if (logBuffer.length > 0) {
+                logBuffer.forEach(item => {
+                    logsDiv.appendChild(item.element);
+                });
+                logBuffer = [];
+                
+                // Apply filters
+                applyFilters();
+            }
+        }
+        
+        // Scroll to bottom
+        function scrollToBottom() {
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // Apply log filters
+        function applyFilters() {
+            const filterRequests = document.getElementById('filter-requests');
+            const filterResponses = document.getElementById('filter-responses');
+            const filterErrors = document.getElementById('filter-errors');
+            const logLevel = document.getElementById('log-level');
+            
+            // Implement filtering logic if needed
+        }
+        
+        // Set up filter event listeners
+        const filterCheckboxes = document.querySelectorAll('#filter-requests, #filter-responses, #filter-errors');
+        filterCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', applyFilters);
+        });
+        
+        const logLevelSelect = document.getElementById('log-level');
+        if (logLevelSelect) {
+            logLevelSelect.addEventListener('change', applyFilters);
+        }
+    });
+</script>
