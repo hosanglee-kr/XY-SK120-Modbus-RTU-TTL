@@ -19,6 +19,7 @@
 #include <AsyncWebSocket.h>
 #include <WiFi.h>
 #include "wifi_interface/wifi_manager_wrapper.h"
+#include "wifi_interface/wifi_settings.h" // Include the new wifi_settings header
 #include "modbus_handler.h"
 #include "config_manager.h"
 #include "web_interface/log_utils.h" // Update to use the web_interface-specific log utils
@@ -685,6 +686,69 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         responseDoc["timeZone"] = serialized(getCurrentTimeZone());
       }
       
+      String response;
+      serializeJson(responseDoc, response);
+      client->text(response);
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+      return;
+    }
+    
+    // Handle save wifi credentials request
+    if (action == "saveWifiCredentials") {
+      String ssid = doc["ssid"];
+      String password = doc["password"];
+
+      bool success = saveWiFiCredentialsToNVS(ssid, password); // Use the new function
+
+      DynamicJsonDocument responseDoc(256);
+      responseDoc["action"] = "saveWifiCredentialsResponse";
+      responseDoc["success"] = success;
+
+      String response;
+      serializeJson(responseDoc, response);
+      client->text(response);
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+      return;
+    }
+
+    // Handle load wifi credentials request
+    if (action == "loadWifiCredentials") {
+      String wifiCredentials = loadWiFiCredentialsFromNVS(); // Use the new function
+
+      DynamicJsonDocument responseDoc(WIFI_CREDENTIALS_JSON_SIZE);
+      responseDoc["action"] = "loadWifiCredentialsResponse";
+      responseDoc["wifiCredentials"] = wifiCredentials;
+
+      String response;
+      serializeJson(responseDoc, response);
+      client->text(response);
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+      return;
+    }
+    
+    // Handle reset wifi request
+    if (action == "resetWifi") {
+      bool success = resetWiFi(); // Use the new function
+
+      DynamicJsonDocument responseDoc(256);
+      responseDoc["action"] = "resetWifiResponse";
+      responseDoc["success"] = success;
+
+      String response;
+      serializeJson(responseDoc, response);
+      client->text(response);
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+      return;
+    }
+    
+    // Handle get wifi status request
+    if (action == "getWifiStatus") {
+      String wifiStatus = getWifiStatus();
+
+      DynamicJsonDocument responseDoc(512);
+      responseDoc["action"] = "wifiStatusResponse";
+      responseDoc["wifiStatus"] = wifiStatus;
+
       String response;
       serializeJson(responseDoc, response);
       client->text(response);

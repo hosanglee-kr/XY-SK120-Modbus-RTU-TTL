@@ -1,6 +1,15 @@
 #include "wifi_manager_wrapper.h"
 #include <WiFi.h>
 #include <WiFiManager.h>
+#include <Preferences.h>
+#include <ArduinoJson.h>
+
+// NVS namespace for WiFi credentials
+#define WIFI_NAMESPACE "wifi_creds"
+#define WIFI_CREDENTIALS_KEY "wifi_list"
+
+// Max size of JSON document for WiFi credentials
+#define WIFI_CREDENTIALS_JSON_SIZE 2048
 
 bool initWiFiManager(const char* apName, const char* apPassword) {
     WiFiManager wifiManager;
@@ -70,4 +79,49 @@ int getWiFiRSSI() {
 
 String getWiFiMAC() {
     return WiFi.macAddress();
+}
+
+bool saveWiFiCredentials(const String& ssid, const String& password) {
+    Preferences prefs;
+    prefs.begin(WIFI_NAMESPACE, false); // Read-write mode
+
+    // Load existing credentials
+    String wifiListJson = prefs.getString(WIFI_CREDENTIALS_KEY, "[]");
+
+    DynamicJsonDocument doc(WIFI_CREDENTIALS_JSON_SIZE);
+    DeserializationError error = deserializeJson(doc, wifiListJson);
+    if (error) {
+        Serial.println("Failed to parse wifi list: " + String(error.c_str()));
+        prefs.end();
+        return false;
+    }
+
+    JsonArray wifiList = doc.to<JsonArray>();
+
+    // Create a new JSON object for the new credentials
+    JsonObject newCreds = wifiList.createNestedObject();
+    newCreds["ssid"] = ssid;
+    newCreds["password"] = password;
+
+    // Serialize the updated JSON document
+    String updatedWifiListJson;
+    serializeJson(doc, updatedWifiListJson);
+
+    // Save the updated JSON string to NVS
+    bool success = prefs.putString(WIFI_CREDENTIALS_KEY, updatedWifiListJson);
+    prefs.end();
+
+    if (!success) {
+        Serial.println("Failed to save wifi credentials");
+    }
+
+    return success;
+}
+
+String loadWiFiCredentials() {
+    Preferences prefs;
+    prefs.begin(WIFI_NAMESPACE, true); // Read-only mode
+    String wifiListJson = prefs.getString(WIFI_CREDENTIALS_KEY, "[]");
+    prefs.end();
+    return wifiListJson;
 }

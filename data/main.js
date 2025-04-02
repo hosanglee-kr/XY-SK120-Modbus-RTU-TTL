@@ -11,6 +11,7 @@ import {
 import { setVoltageValue, setCurrentValue, initPowerButton, initBasicControls } from './modules/menu_basic.js';
 import { updateUI } from './modules/menu_display.js';
 import { initDeviceManager } from './modules/device_manager.js';
+import { initWifiSettings } from './modules/menu_settings.js';
 
 // Global state
 let lastDataUpdate = 0;

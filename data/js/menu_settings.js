@@ -1,3 +1,5 @@
+import { initWifiSettings } from './wifi_settings.js';
+
 /**
  * Settings functionality for XY-SK120
  * Mirrors firmware's menu_settings functionality
@@ -7,6 +9,9 @@
 export function initSettings() {
     // Set up event listeners for settings controls
     setupWifiControls();
+    
+    // Initialize WiFi settings
+    initWifiSettings();
     
     // Listen for WebSocket messages related to settings
     document.addEventListener('websocket-message', handleSettingsMessages);
@@ -116,10 +121,12 @@ function updateWifiStatusDisplay(data) {
     const wifiStatus = document.getElementById('wifi-status');
     const wifiSsid = document.getElementById('wifi-ssid');
     const wifiIp = document.getElementById('wifi-ip');
+    const wifiRssi = document.getElementById('wifi-rssi');
     
     if (wifiStatus) wifiStatus.textContent = data.status || 'Unknown';
     if (wifiSsid) wifiSsid.textContent = data.ssid || 'Unknown';
     if (wifiIp) wifiIp.textContent = data.ip || '--';
+    if (wifiRssi) wifiRssi.textContent = data.rssi || '--';
 }
 
 // Reset WiFi settings
@@ -159,7 +166,51 @@ export function saveDeviceConfig(config) {
         });
 }
 
+// Save WiFi settings
+export function saveWifiSettings(settings) {
+    fetch('/api/wifi/settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(settings)
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('WiFi settings saved successfully!');
+            } else {
+                alert('Error saving WiFi settings: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error saving WiFi settings:', error);
+            alert('Error saving WiFi settings. Check console for details.');
+        });
+}
+
+// Load WiFi settings
+export function loadWifiSettings() {
+    fetch('/api/wifi/settings')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update UI with loaded settings
+                document.getElementById('wifi-ssid').value = data.settings.ssid;
+                document.getElementById('wifi-password').value = data.settings.password;
+            } else {
+                alert('Error loading WiFi settings: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading WiFi settings:', error);
+            alert('Error loading WiFi settings. Check console for details.');
+        });
+}
+
 // Make functions available globally
 window.fetchWifiStatus = fetchWifiStatus;
 window.resetWifiSettings = resetWifiSettings;
 window.saveDeviceConfig = saveDeviceConfig;
+window.saveWifiSettings = saveWifiSettings;
+window.loadWifiSettings = loadWifiSettings;
