@@ -168,6 +168,11 @@ function initializeModules() {
     import('./menu_settings.js').then(module => {
         if(module.initSettings) module.initSettings();
     }).catch(err => console.error('Failed to load settings:', err));
+
+    // Import wifi settings
+    import('./wifi_settings.js').then(module => {
+        window.initWifiSettings = module.initWifiSettings;
+    }).catch(err => console.error('Failed to load wifi settings:', err));
     
     // Import device manager
     import('./device_manager.js').then(module => {

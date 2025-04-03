@@ -148,6 +148,3 @@ function resetWifi() {
     console.log("Resetting WiFi settings...");
     window.sendCommand({ action: 'resetWifi' });
 }
-
-// Export functions
-export { initWifiSettings };

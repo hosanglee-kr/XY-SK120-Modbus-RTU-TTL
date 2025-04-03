@@ -1,4 +1,4 @@
-import { initWifiSettings } from './wifi_settings.js';
+// import { initWifiSettings } from './wifi_settings.js';
 
 /**
  * Settings functionality for XY-SK120
@@ -11,7 +11,9 @@ export function initSettings() {
     setupWifiControls();
     
     // Initialize WiFi settings
-    initWifiSettings();
+    if (typeof window.initWifiSettings === 'function') {
+        window.initWifiSettings();
+    }
     
     // Listen for WebSocket messages related to settings
     document.addEventListener('websocket-message', handleSettingsMessages);
@@ -26,7 +28,6 @@ function setupWifiControls() {
     if (wifiRefreshBtn) {
         wifiRefreshBtn.addEventListener('click', fetchWifiStatus);
     }
-    
     const wifiResetBtn = document.getElementById('wifi-reset-btn');
     if (wifiResetBtn) {
         wifiResetBtn.addEventListener('click', resetWifiSettings);
@@ -36,7 +37,6 @@ function setupWifiControls() {
 // Handle WebSocket messages related to settings
 function handleSettingsMessages(event) {
     const data = event.detail;
-    
     // Handle WiFi status responses
     if (data.action === 'wifiStatusResponse') {
         updateWifiUI(data);
@@ -48,7 +48,6 @@ function updateWifiUI(data) {
     const wifiStatus = document.getElementById('wifi-status');
     const wifiSsid = document.getElementById('wifi-ssid');
     const wifiIp = document.getElementById('wifi-ip');
-    
     if (wifiStatus) wifiStatus.textContent = data.status || 'Unknown';
     if (wifiSsid) wifiSsid.textContent = data.ssid || 'Not connected';
     if (wifiIp) wifiIp.textContent = data.ip || 'No IP';
@@ -57,7 +56,6 @@ function updateWifiUI(data) {
 // Fetch WiFi status
 export function fetchWifiStatus() {
     console.log("Fetching WiFi status...");
-    
     // Check if we have an active WebSocket connection first
     if (window.websocketConnected && window.websocket && window.websocket.readyState === WebSocket.OPEN) {
         console.log("Using WebSocket to fetch WiFi status");
@@ -65,9 +63,7 @@ export function fetchWifiStatus() {
         window.sendCommand({ action: 'getWifiStatus' });
         return;
     }
-    
     // Fallback to HTTP API if WebSocket not available
-    // Remove HTTP API fallback
     console.log("WebSocket not available");
 }
 
@@ -87,18 +83,18 @@ export function saveDeviceConfig(config) {
         },
         body: JSON.stringify(config)
     })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Configuration saved successfully!');
-            } else {
-                alert('Error saving configuration: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error saving configuration:', error);
-            alert('Error saving configuration. Check console for details.');
-        });
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Configuration saved successfully!');
+        } else {
+            alert('Error saving configuration: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving configuration:', error);
+        alert('Error saving configuration. Check console for details.');
+    });
 }
 
 // Save WiFi settings
@@ -110,37 +106,37 @@ export function saveWifiSettings(settings) {
         },
         body: JSON.stringify(settings)
     })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('WiFi settings saved successfully!');
-            } else {
-                alert('Error saving WiFi settings: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error saving WiFi settings:', error);
-            alert('Error saving WiFi settings. Check console for details.');
-        });
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('WiFi settings saved successfully!');
+        } else {
+            alert('Error saving WiFi settings: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving WiFi settings:', error);
+        alert('Error saving WiFi settings. Check console for details.');
+    });
 }
 
 // Load WiFi settings
 export function loadWifiSettings() {
     fetch('/api/wifi/settings')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Update UI with loaded settings
-                document.getElementById('wifi-ssid').value = data.settings.ssid;
-                document.getElementById('wifi-password').value = data.settings.password;
-            } else {
-                alert('Error loading WiFi settings: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error loading WiFi settings:', error);
-            alert('Error loading WiFi settings. Check console for details.');
-        });
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update UI with loaded settings
+            document.getElementById('wifi-ssid').value = data.settings.ssid;
+            document.getElementById('wifi-password').value = data.settings.password;
+        } else {
+            alert('Error loading WiFi settings: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error loading WiFi settings:', error);
+        alert('Error loading WiFi settings. Check console for details.');
+    });
 }
 
 // Make functions available globally
