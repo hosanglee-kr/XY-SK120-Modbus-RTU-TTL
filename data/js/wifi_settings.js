@@ -184,6 +184,7 @@
                 // Get form values
                 const ssidInput = this.querySelector('#new-wifi-ssid');
                 const passwordInput = this.querySelector('#new-wifi-password');
+                const priorityInput = this.querySelector('#new-wifi-priority');
                 const submitBtn = this.querySelector('[type="submit"]');
                 
                 if (!ssidInput || !passwordInput) {
@@ -193,6 +194,7 @@
                 
                 const ssid = ssidInput.value.trim();
                 const password = passwordInput.value;
+                const priority = priorityInput ? parseInt(priorityInput.value) || -1 : -1;
                 
                 if (!ssid) {
                     alert('Please enter an SSID');
@@ -210,7 +212,7 @@
                 submitBtn.textContent = 'Adding...';
                 
                 // Add WiFi network with better error handling
-                window.wifiInterface.addWifiNetwork(ssid, password)
+                window.wifiInterface.addWifiNetwork(ssid, password, priority)
                     .then(result => {
                         if (result.success) {
                             alert(`WiFi network "${ssid}" added successfully!`);
@@ -218,6 +220,7 @@
                             // Clear form
                             ssidInput.value = '';
                             passwordInput.value = '';
+                            if (priorityInput) priorityInput.value = '1';
                             
                             // Perform a combined refresh (status and networks)
                             refreshWifiStatusAndNetworks();
@@ -235,6 +238,23 @@
                         submitBtn.textContent = 'Add Network';
                     });
             });
+            
+            // Check if we need to add the priority field
+            if (!newForm.querySelector('#new-wifi-priority')) {
+                const passwordField = newForm.querySelector('#new-wifi-password').parentNode;
+                
+                // Create priority field container div
+                const priorityField = document.createElement('div');
+                priorityField.innerHTML = `
+                    <label for="new-wifi-priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority (1 = highest)</label>
+                    <input type="number" id="new-wifi-priority" placeholder="1" min="1" value="1" 
+                        class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Lower number = higher connection priority</p>
+                `;
+                
+                // Insert the priority field after the password field
+                passwordField.parentNode.insertBefore(priorityField, passwordField.nextSibling);
+            }
         }
     }
 
@@ -563,6 +583,12 @@
         // Ensure networks is an array
         if (!networks) networks = [];
         
+        // Debug - log the number of networks and their actual data
+        console.log(`Displaying ${networks.length} WiFi networks`);
+        networks.forEach((net, idx) => {
+            console.log(`  ${idx}: ${net.ssid || 'Unknown SSID'} (Priority: ${net.priority || idx+1})`);
+        });
+        
         // Check if we have any networks
         if (networks.length === 0) {
             networksContainer.innerHTML = `
@@ -573,9 +599,23 @@
             return;
         }
         
+        // Sort networks by priority if available
+        if (networks.length > 0 && networks[0].priority !== undefined) {
+            networks.sort((a, b) => {
+                // If priority is available, sort by it (lower number = higher priority)
+                return (a.priority || 999) - (b.priority || 999);
+            });
+        }
+        
         let html = '';
+        
+        // Loop through ALL networks - no limit on how many to display
         networks.forEach((network, index) => {
             const ssid = network.ssid || 'Unknown SSID';
+            const priority = network.priority || index + 1;
+            
+            console.log(`Building HTML for network ${index}: ${ssid}`);
+            
             const isConnected = currentWifiStatus && currentWifiStatus.ssid === ssid && 
                               currentWifiStatus.status === 'connected';
             const isConnecting = currentWifiStatus && currentWifiStatus.ssid === ssid && 
@@ -583,36 +623,37 @@
             
             // Generate classes for the network item container
             const containerClasses = isConnected ? 
-                'flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0 bg-green-50 dark:bg-green-900/20' : 
-                'flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0';
+                'flex flex-col border-b border-gray-200 dark:border-gray-700 last:border-b-0 bg-green-50 dark:bg-green-900/20' : 
+                'flex flex-col border-b border-gray-200 dark:border-gray-700 last:border-b-0';
             
             // Determine button state based on connection status
             let connectButton = '';
             if (isConnected) {
                 // Already connected - show a disabled "Connected" button
                 connectButton = `
-                    <button class="text-xs px-2 py-1 bg-green-500 text-white rounded cursor-default">
+                    <button class="text-xs px-2 py-1 bg-green-500 text-white rounded cursor-default inline-flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="inline-block h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
-                        Connected
+                        <span>Connected</span>
                     </button>
                 `;
             } else if (isConnecting) {
                 // Currently connecting - show indicator
                 connectButton = `
-                    <button class="text-xs px-2 py-1 bg-yellow-500 text-white rounded cursor-default">
+                    <button class="text-xs px-2 py-1 bg-yellow-500 text-white rounded cursor-default inline-flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="inline-block animate-spin h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        Connecting...
+                        <span>Connecting...</span>
                     </button>
                 `;
             } else {
                 // Not connected - show connect button
                 connectButton = `
-                    <button onclick="window.wifiSettings.connectToNetwork('${ssid}')" class="text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-opacity-90">
-                        Connect
+                    <button onclick="window.wifiSettings.connectToNetwork('${ssid}')" 
+                        class="text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-opacity-90 inline-flex items-center">
+                        <span>Connect</span>
                     </button>
                 `;
             }
@@ -661,32 +702,169 @@
                 `;
             }
             
-            // Build the network item HTML
-            html += `
-                <div class="${containerClasses}">
-                    <div class="flex-1">
-                        <p class="text-sm font-medium ${isConnected ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}">
-                            ${ssid}
-                            ${isConnected ? 
-                                `<span class="ml-2 text-xs bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100 px-1.5 py-0.5 rounded-full">
-                                    Connected
-                                </span>` : ''}
-                        </p>
-                        ${signalStrength}
-                        ${isConnected && currentWifiStatus.ip ? 
-                            `<div class="mt-1 text-xs text-gray-500 dark:text-gray-400">IP: ${currentWifiStatus.ip}</div>` : ''}
-                    </div>
-                    <div class="flex space-x-2">
-                        ${connectButton}
-                        <button onclick="window.wifiSettings.removeNetwork(${index})" class="text-xs px-2 py-1 bg-danger text-white rounded hover:bg-opacity-90">
-                            Delete
+            // Priority indicator with smaller, more consistent size
+            const priorityControls = `
+                <div class="flex items-center mt-2 mb-1">
+                    <span class="text-xs text-gray-500 dark:text-gray-400 mr-2">Priority: ${priority}</span>
+                    <div class="flex space-x-1">
+                        <button onclick="window.wifiSettings.movePriorityUp(${index})" 
+                            class="text-xs px-1 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none"
+                            ${index === 0 ? 'disabled' : ''}>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                            </svg>
                         </button>
+                        <button onclick="window.wifiSettings.movePriorityDown(${index})"
+                            class="text-xs px-1 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none"
+                            ${index === networks.length - 1 ? 'disabled' : ''}>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Build the network item HTML with standardized button sizes
+            html += `
+                <div class="${containerClasses}" data-network-index="${index}" data-network-ssid="${ssid}">
+                    <div class="p-3">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <p class="text-sm font-medium ${isConnected ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}">
+                                    ${ssid}
+                                    ${isConnected ? 
+                                        `<span class="ml-2 text-xs bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100 px-1.5 py-0.5 rounded-full">
+                                            Connected
+                                        </span>` : ''}
+                                </p>
+                                ${signalStrength || ''}
+                                ${isConnected && currentWifiStatus.ip ? 
+                                    `<div class="mt-1 text-xs text-gray-500 dark:text-gray-400">IP: ${currentWifiStatus.ip}</div>` : ''}
+                                
+                                ${priorityControls}
+                            </div>
+                            <div class="flex space-x-2 ml-2">
+                                ${connectButton}
+                                <button onclick="window.wifiSettings.removeNetwork(${index})" 
+                                    class="text-xs px-2 py-1 bg-danger text-white rounded hover:bg-opacity-90 inline-flex items-center">
+                                    <span>Delete</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
         });
         
+        // Log the total HTML length to make sure it's not being truncated
+        console.log(`Total HTML length for networks: ${html.length} characters`);
+        
+        // Set the HTML to the container - ensure no styling is limiting display
+        networksContainer.style.maxHeight = "none"; // Remove any height restrictions
         networksContainer.innerHTML = html;
+        
+        // Check how many networks were actually rendered
+        const renderedNetworks = networksContainer.querySelectorAll('.flex.flex-col');
+        console.log(`Actually rendered ${renderedNetworks.length} networks in the DOM`);
+        
+        // Force a reflow to ensure proper rendering
+        networksContainer.style.display = "none";
+        setTimeout(() => {
+            networksContainer.style.display = "block";
+        }, 0);
+    }
+
+    // Remove function to update storage status
+    // function updateStorageStatus() { ... }
+
+    // Function to move network priority up (higher priority) - with better error handling
+    function movePriorityUp(index) {
+        if (index <= 0) return; // Already at top
+        
+        const newPriority = index; // Current index - 1 + 1 (priorities are 1-based)
+        
+        // Show loading state
+        const networksContainer = document.getElementById('saved-wifi-networks');
+        if (networksContainer) {
+            networksContainer.classList.add('opacity-50');
+        }
+        
+        console.log(`Attempting to update priority for network ${index} to ${newPriority}`);
+        
+        // Use more robust error handling
+        try {
+            window.wifiInterface.updateWifiPriority(index, newPriority)
+                .then(result => {
+                    if (result.success) {
+                        console.log(`Successfully moved network #${index} priority up`);
+                        refreshWifiStatusAndNetworks();
+                    } else {
+                        console.error(`Failed to move network priority: ${result.error}`);
+                        alert(`Failed to update priority: ${result.error || 'Unknown error'}`);
+                        refreshWifiStatusAndNetworks();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating network priority:', error);
+                    alert('Error updating network priority: ' + error.message);
+                    refreshWifiStatusAndNetworks();
+                })
+                .finally(() => {
+                    if (networksContainer) {
+                        networksContainer.classList.remove('opacity-50');
+                    }
+                });
+        } catch (error) {
+            console.error('Exception while updating network priority:', error);
+            alert('Error: Could not process priority update request');
+            if (networksContainer) {
+                networksContainer.classList.remove('opacity-50');
+            }
+        }
+    }
+
+    // Function to move network priority down (lower priority) - with better error handling
+    function movePriorityDown(index) {
+        // Show loading state
+        const networksContainer = document.getElementById('saved-wifi-networks');
+        if (networksContainer) {
+            networksContainer.classList.add('opacity-50');
+        }
+        
+        const newPriority = index + 2; // Current index + 1 + 1 (priorities are 1-based)
+        console.log(`Attempting to update priority for network ${index} to ${newPriority}`);
+        
+        // Use more robust error handling
+        try {
+            window.wifiInterface.updateWifiPriority(index, newPriority)
+                .then(result => {
+                    if (result.success) {
+                        console.log(`Successfully moved network #${index} priority down`);
+                        refreshWifiStatusAndNetworks();
+                    } else {
+                        console.error(`Failed to move network priority: ${result.error}`);
+                        alert(`Failed to update priority: ${result.error || 'Unknown error'}`);
+                        refreshWifiStatusAndNetworks();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating network priority:', error);
+                    alert('Error updating network priority: ' + error.message);
+                    refreshWifiStatusAndNetworks();
+                })
+                .finally(() => {
+                    if (networksContainer) {
+                        networksContainer.classList.remove('opacity-50');
+                    }
+                });
+        } catch (error) {
+            console.error('Exception while updating network priority:', error);
+            alert('Error: Could not process priority update request');
+            if (networksContainer) {
+                networksContainer.classList.remove('opacity-50');
+            }
+        }
     }
 
     // Improved connectToNetwork function to handle connection state
@@ -843,6 +1021,33 @@
             });
     }
 
+    // Add function to ensure the container is properly sized and visible
+    function ensureNetworksContainerVisibility() {
+        const networksContainer = document.getElementById('saved-wifi-networks');
+        if (!networksContainer) return;
+        
+        // Force a reflow to ensure the container expands properly
+        networksContainer.style.display = 'none';
+        setTimeout(() => {
+            networksContainer.style.display = 'block';
+        }, 0);
+        
+        // Check the actual dimensions of the container and its contents
+        setTimeout(() => {
+            const containerHeight = networksContainer.offsetHeight;
+            const containerScrollHeight = networksContainer.scrollHeight;
+            
+            console.log(`Network container dimensions: ${containerHeight}px visible, ${containerScrollHeight}px total content`);
+            
+            // If the content height is greater than the visible height, we may have CSS issues
+            if (containerScrollHeight > containerHeight && containerHeight < 100) {
+                console.warn("Container height appears constrained. Check for CSS limitations.");
+                // As a fallback, try to force the container to be taller
+                networksContainer.style.minHeight = `${containerScrollHeight}px`;
+            }
+        }, 100);
+    }
+
     // Export functions for global access
     window.wifiSettings = {
         initWifiSettings,
@@ -850,7 +1055,9 @@
         connectToNetwork,
         removeNetwork,
         refreshNetworks,
-        refreshWifiStatusAndNetworks
+        refreshWifiStatusAndNetworks,
+        movePriorityUp,
+        movePriorityDown
     };
 
     // Make initWifiSettings available directly

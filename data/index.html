@@ -127,6 +127,24 @@
         #wifi-status, #wifi-ssid, #wifi-ip, #wifi-rssi {
             min-height: 1.5rem; /* Ensures even empty elements maintain height */
         }
+
+        /* Remove max-height and scrolling properties for the saved networks container */
+        #saved-wifi-networks {
+            /* Remove these properties:
+            max-height: 400px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            */
+        }
+        
+        /* Remove scrollbar styling since we won't need it */
+        /*
+        #saved-wifi-networks::-webkit-scrollbar { ... }
+        #saved-wifi-networks::-webkit-scrollbar-track { ... }
+        #saved-wifi-networks::-webkit-scrollbar-thumb { ... }
+        .dark #saved-wifi-networks::-webkit-scrollbar-track { ... }
+        .dark #saved-wifi-networks::-webkit-scrollbar-thumb { ... }
+        */
     </style>
     
     <!-- Immediate splash screen display - Critical for preventing FOUC -->

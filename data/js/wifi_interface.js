@@ -80,18 +80,18 @@
     }
 
     /**
-     * Add a new WiFi network
+     * Add a new WiFi network with priority
      * @param {string} ssid - Network SSID
      * @param {string} password - Network password
+     * @param {number} priority - Network priority (lower is higher priority)
      * @returns {Promise} Resolves to success status
      */
-    function addWifiNetwork(ssid, password) {
+    function addWifiNetwork(ssid, password, priority = -1) {
         return new Promise((resolve, reject) => {
             // Use the global function to wait for WebSocket readiness
             if (typeof window.whenWebsocketReady === 'function') {
                 window.whenWebsocketReady(() => {
-                    // This will only execute when the WebSocket is connected
-                    sendAddWifiNetworkRequest(ssid, password, resolve, reject);
+                    sendAddWifiNetworkRequest(ssid, password, priority, resolve, reject);
                 });
             } else {
                 // Fallback to direct check
@@ -99,13 +99,13 @@
                     reject(new Error('WebSocket not connected'));
                     return;
                 }
-                sendAddWifiNetworkRequest(ssid, password, resolve, reject);
+                sendAddWifiNetworkRequest(ssid, password, priority, resolve, reject);
             }
         });
     }
 
-    // Helper function to send the add network request
-    function sendAddWifiNetworkRequest(ssid, password, resolve, reject) {
+    // Helper function to send the add network request with priority
+    function sendAddWifiNetworkRequest(ssid, password, priority, resolve, reject) {
         // Create a one-time event listener for the response
         const messageHandler = function(event) {
             const data = event.detail;
@@ -125,11 +125,12 @@
         // Add the event listener
         document.addEventListener('websocket-message', messageHandler);
         
-        // Send the command
+        // Send the command with priority
         const success = window.sendCommand({
             action: 'addWifiNetwork',
             ssid: ssid,
-            password: password
+            password: password,
+            priority: priority
         });
         
         // If sending fails, reject immediately
@@ -142,6 +143,80 @@
         setTimeout(() => {
             document.removeEventListener('websocket-message', messageHandler);
             reject(new Error('Add WiFi network request timeout'));
+        }, 10000);
+    }
+
+    /**
+     * Update WiFi network priority
+     * @param {number} index - Network index to update
+     * @param {number} newPriority - New priority value
+     * @returns {Promise} Resolves to success status
+     */
+    function updateWifiPriority(index, newPriority) {
+        return new Promise((resolve, reject) => {
+            // Use the global function to wait for WebSocket readiness
+            if (typeof window.whenWebsocketReady === 'function') {
+                window.whenWebsocketReady(() => {
+                    sendUpdatePriorityRequest(index, newPriority, resolve, reject);
+                });
+            } else {
+                // Fallback to direct check
+                if (!window.websocketConnected) {
+                    reject(new Error('WebSocket not connected'));
+                    return;
+                }
+                sendUpdatePriorityRequest(index, newPriority, resolve, reject);
+            }
+        });
+    }
+
+    // Helper function to send the update priority request
+    function sendUpdatePriorityRequest(index, newPriority, resolve, reject) {
+        console.log(`Sending request to update network ${index} priority to ${newPriority}`);
+        
+        // Create a one-time event listener for the response
+        const messageHandler = function(event) {
+            const data = event.detail;
+            
+            // Debug all incoming messages to find the response
+            console.log('WebSocket message received while waiting for priority update:', data.action);
+            
+            if (data.action === 'updateWifiPriorityResponse') {
+                // Clean up the listener
+                document.removeEventListener('websocket-message', messageHandler);
+                
+                console.log('Received priority update response:', data);
+                
+                // Resolve with the success status
+                resolve({
+                    success: data.success,
+                    error: data.error
+                });
+            }
+        };
+        
+        // Add the event listener
+        document.addEventListener('websocket-message', messageHandler);
+        
+        // Send the command with debug information
+        console.log('Sending updateWifiPriority command:', { index, newPriority });
+        const success = window.sendCommand({
+            action: 'updateWifiPriority',
+            index: index,
+            priority: newPriority,
+            timestamp: Date.now() // Add timestamp to prevent caching
+        });
+        
+        // If sending fails, reject immediately
+        if (!success) {
+            document.removeEventListener('websocket-message', messageHandler);
+            reject(new Error('Failed to send update WiFi priority request'));
+        }
+        
+        // Set a timeout to prevent hanging - extend to 10 seconds for slower devices
+        setTimeout(() => {
+            document.removeEventListener('websocket-message', messageHandler);
+            reject(new Error('Update WiFi priority request timeout'));
         }, 10000);
     }
 
@@ -299,6 +374,7 @@
         addWifiNetwork,
         loadWifiCredentials,
         resetWifi,
+        updateWifiPriority,
         DEFAULT_WIFI_STATUS
     };
 })();

@@ -2,22 +2,39 @@
 #define WIFI_MANAGER_WRAPPER_H
 
 #include <Arduino.h>
-#include <IPAddress.h>
 #include <String>
 
-// Max size of JSON document for WiFi credentials
-#define WIFI_CREDENTIALS_JSON_SIZE 2048
+// Include wifi_settings.h first to get the shared constants
+#include "wifi_settings.h"
 
-// WiFi manager wrapper functions to prevent include conflicts
-bool initWiFiManager(const char* apName, const char* apPassword = NULL);
+// Initialize WiFi Manager with AP name
+bool initWiFiManager(const char* apName);
+
+// Initialize WiFi Manager with AP name and password
+bool initWiFiManager(const char* apName, const char* apPassword);
+
+// Connect to saved networks in priority order
+bool connectToSavedNetworks();
+
+// Reset WiFi settings
 void resetWiFiSettings();
+
+// Check if WiFi is connected
 bool isWiFiConnected();
+
+// Get WiFi SSID
 String getWiFiSSID();
+
+// Get WiFi IP address
 String getWiFiIP();
+
+// Get WiFi RSSI
 int getWiFiRSSI();
+
+// Get WiFi MAC address
 String getWiFiMAC();
 
-// New functions for managing multiple WiFi credentials
+// Legacy functions that now call the NVS versions
 bool saveWiFiCredentials(const String& ssid, const String& password);
 String loadWiFiCredentials();
 

@@ -837,6 +837,33 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
         return;
     }
+    
+    if (action == "updateWifiPriority") {
+        int index = doc["index"];
+        int newPriority = doc["priority"];
+        
+        Serial.print("Received WiFi priority update request: index=");
+        Serial.print(index);
+        Serial.print(", newPriority=");
+        Serial.println(newPriority);
+        
+        // Try to update the priority
+        bool success = updateWiFiNetworkPriority(index, newPriority);
+        
+        DynamicJsonDocument responseDoc(256);
+        responseDoc["action"] = "updateWifiPriorityResponse";
+        responseDoc["success"] = success;
+        
+        if (!success) {
+            responseDoc["error"] = "Failed to update network priority";
+        }
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        return;
+    }
   }
 }
 
