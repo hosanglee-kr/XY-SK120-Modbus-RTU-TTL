@@ -1,16 +1,409 @@
 /**
  * WiFi settings functionality for XY-SK120
- * This file has been cleared and will be reimplemented with new requirements.
+ * Handles WiFi configuration and status display
  */
 
-// Placeholder for future implementation
-console.log("WiFi settings module placeholder - awaiting new implementation");
+import { 
+    getWifiStatus, 
+    addWifiNetwork, 
+    loadWifiCredentials, 
+    resetWifi 
+} from './wifi_interface.js';
 
-// Export empty functions to prevent errors in existing code that might reference them
+// Initialize WiFi settings module
 export function initWifiSettings() {
-  console.log("WiFi settings initialization placeholder");
+    console.log("Initializing WiFi settings module");
+    
+    // Set up event listeners
+    setupWifiRefreshButton();
+    setupWifiResetButton();
+    setupAddWifiForm();
+    
+    // Listen for WebSocket connection events
+    document.addEventListener('websocket-connected', handleWebSocketConnected);
+    document.addEventListener('websocket-disconnected', handleWebSocketDisconnected);
+    
+    // Request initial WiFi status
+    fetchWifiStatus();
 }
 
-// Make empty functions available globally to prevent errors
+// Set up WiFi refresh button
+function setupWifiRefreshButton() {
+    const refreshBtn = document.getElementById('wifi-refresh-btn');
+    if (refreshBtn) {
+        // Remove any existing listeners to prevent duplicates
+        const newRefreshBtn = refreshBtn.cloneNode(true);
+        refreshBtn.parentNode.replaceChild(newRefreshBtn, refreshBtn);
+        
+        // Add new event listener
+        newRefreshBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            this.disabled = true;
+            const originalText = this.innerHTML;
+            this.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Refreshing...
+            `;
+            
+            // Fetch WiFi status
+            fetchWifiStatus()
+                .finally(() => {
+                    // Restore button state after 2 seconds
+                    setTimeout(() => {
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                    }, 2000);
+                });
+        });
+    }
+}
+
+// Set up WiFi reset button
+function setupWifiResetButton() {
+    const resetBtn = document.getElementById('wifi-reset-btn');
+    if (resetBtn) {
+        // Remove any existing listeners to prevent duplicates
+        const newResetBtn = resetBtn.cloneNode(true);
+        resetBtn.parentNode.replaceChild(newResetBtn, resetBtn);
+        
+        // Add new event listener
+        newResetBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            if (confirm('Are you sure you want to reset WiFi settings? This will remove all saved networks and the device will restart.')) {
+                // Show loading state
+                this.disabled = true;
+                this.textContent = 'Resetting...';
+                
+                // Reset WiFi
+                resetWifi()
+                    .then(result => {
+                        if (result.success) {
+                            alert('WiFi settings reset successfully. The device will restart.');
+                        } else {
+                            alert(`Failed to reset WiFi settings: ${result.error || 'Unknown error'}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error resetting WiFi:', error);
+                        alert('Error resetting WiFi: ' + error.message);
+                    })
+                    .finally(() => {
+                        // Restore button state
+                        this.disabled = false;
+                        this.innerHTML = `
+                            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5m0 0l9-5-9 5-9 5 9 5m0 0v8"></path>
+                            </svg>
+                            Reset WiFi
+                        `;
+                    });
+            }
+        });
+    }
+}
+
+// Set up add WiFi form
+function setupAddWifiForm() {
+    const form = document.getElementById('add-wifi-form');
+    if (form) {
+        // Remove any existing listeners to prevent duplicates
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
+        // Add new event listener
+        newForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form values
+            const ssidInput = this.querySelector('#new-wifi-ssid');
+            const passwordInput = this.querySelector('#new-wifi-password');
+            const submitBtn = this.querySelector('[type="submit"]');
+            
+            if (!ssidInput || !passwordInput) {
+                alert('Form inputs not found');
+                return;
+            }
+            
+            const ssid = ssidInput.value.trim();
+            const password = passwordInput.value;
+            
+            if (!ssid) {
+                alert('Please enter an SSID');
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Adding...';
+            
+            // Add WiFi network
+            addWifiNetwork(ssid, password)
+                .then(result => {
+                    if (result.success) {
+                        alert(`WiFi network "${ssid}" added successfully!`);
+                        
+                        // Clear form
+                        ssidInput.value = '';
+                        passwordInput.value = '';
+                        
+                        // Refresh WiFi status
+                        fetchWifiStatus();
+                        
+                        // Refresh saved networks
+                        fetchSavedNetworks();
+                    } else {
+                        alert(`Failed to add WiFi network: ${result.error || 'Unknown error'}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding WiFi network:', error);
+                    alert('Error adding WiFi network: ' + error.message);
+                })
+                .finally(() => {
+                    // Restore button state
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Add Network';
+                });
+        });
+    }
+}
+
+// Handle WebSocket connected event
+function handleWebSocketConnected() {
+    console.log('WebSocket connected - updating WiFi status');
+    fetchWifiStatus();
+    fetchSavedNetworks();
+}
+
+// Handle WebSocket disconnected event
+function handleWebSocketDisconnected() {
+    console.log('WebSocket disconnected - marking WiFi status as unknown');
+    
+    // Set the WiFi status elements to show disconnect state
+    updateWifiStatusUI({
+        status: 'disconnected',
+        ssid: 'Not connected',
+        ip: '--',
+        rssi: 0,
+        mac: '--'
+    });
+}
+
+// Fetch WiFi status
+export function fetchWifiStatus() {
+    console.log('Fetching WiFi status');
+    
+    // Show loading state
+    setWifiStatusLoading(true);
+    
+    return getWifiStatus()
+        .then(wifiStatus => {
+            console.log('WiFi status received:', wifiStatus);
+            
+            // Update UI with WiFi status
+            updateWifiStatusUI(wifiStatus);
+            
+            return wifiStatus;
+        })
+        .catch(error => {
+            console.error('Error fetching WiFi status:', error);
+            
+            // Show error state
+            setWifiStatusError();
+            
+            throw error;
+        });
+}
+
+// Fetch saved WiFi networks
+function fetchSavedNetworks() {
+    console.log('Fetching saved WiFi networks');
+    
+    // Show loading state for saved networks
+    const networksContainer = document.getElementById('saved-wifi-networks');
+    if (networksContainer) {
+        networksContainer.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">Loading saved networks...</div>';
+    }
+    
+    return loadWifiCredentials()
+        .then(networks => {
+            console.log('Saved networks received:', networks);
+            
+            // Update UI with saved networks
+            updateSavedNetworksUI(networks);
+            
+            return networks;
+        })
+        .catch(error => {
+            console.error('Error fetching saved networks:', error);
+            
+            // Show error state
+            if (networksContainer) {
+                networksContainer.innerHTML = '<div class="p-4 text-sm text-danger">Failed to load saved networks. Please try again.</div>';
+            }
+            
+            throw error;
+        });
+}
+
+// Set WiFi status elements to loading state
+function setWifiStatusLoading(loading) {
+    const elements = ['wifi-status', 'wifi-ssid', 'wifi-ip', 'wifi-rssi'];
+    
+    elements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (loading) {
+                el.classList.add('loading');
+                el.setAttribute('data-previous', el.textContent);
+                el.textContent = 'Loading...';
+            } else {
+                el.classList.remove('loading');
+                const previous = el.getAttribute('data-previous');
+                if (previous) {
+                    el.textContent = previous;
+                }
+            }
+        }
+    });
+}
+
+// Set WiFi status elements to error state
+function setWifiStatusError() {
+    const statusEl = document.getElementById('wifi-status');
+    if (statusEl) {
+        statusEl.classList.remove('loading');
+        statusEl.textContent = 'Error';
+        statusEl.className = 'text-base font-semibold text-danger';
+    }
+    
+    const elements = ['wifi-ssid', 'wifi-ip', 'wifi-rssi'];
+    elements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.remove('loading');
+            el.textContent = '--';
+        }
+    });
+}
+
+// Update WiFi status UI
+function updateWifiStatusUI(data) {
+    // Update status
+    const statusEl = document.getElementById('wifi-status');
+    if (statusEl) {
+        statusEl.classList.remove('loading');
+        statusEl.textContent = data.status || 'Unknown';
+        
+        // Set color based on status
+        statusEl.className = 'text-base font-semibold';
+        
+        if (data.status === 'connected') {
+            statusEl.classList.add('text-success');
+        } else if (data.status === 'connecting') {
+            statusEl.classList.add('text-secondary');
+        } else if (data.status === 'disconnected') {
+            statusEl.classList.add('text-danger');
+        } else {
+            statusEl.classList.add('text-gray-700', 'dark:text-gray-200');
+        }
+    }
+    
+    // Update SSID
+    const ssidEl = document.getElementById('wifi-ssid');
+    if (ssidEl) {
+        ssidEl.classList.remove('loading');
+        ssidEl.textContent = data.ssid || 'Not connected';
+    }
+    
+    // Update IP
+    const ipEl = document.getElementById('wifi-ip');
+    if (ipEl) {
+        ipEl.classList.remove('loading');
+        ipEl.textContent = data.ip || '--';
+    }
+    
+    // Update RSSI
+    const rssiEl = document.getElementById('wifi-rssi');
+    if (rssiEl) {
+        rssiEl.classList.remove('loading');
+        
+        const rssi = parseInt(data.rssi) || 0;
+        
+        let signalStrength = '';
+        if (rssi > -50) signalStrength = 'Excellent';
+        else if (rssi > -60) signalStrength = 'Good';
+        else if (rssi > -70) signalStrength = 'Fair';
+        else if (rssi > -80) signalStrength = 'Weak';
+        else signalStrength = 'Very Weak';
+        
+        rssiEl.textContent = `${rssi} dBm (${signalStrength})`;
+    }
+}
+
+// Update saved networks UI
+function updateSavedNetworksUI(networks) {
+    const networksContainer = document.getElementById('saved-wifi-networks');
+    if (!networksContainer) return;
+    
+    if (!networks || networks.length === 0) {
+        networksContainer.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">No saved networks.</div>';
+        return;
+    }
+    
+    let html = '';
+    networks.forEach((network, index) => {
+        html += `
+            <div class="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">${network.ssid || 'Unknown SSID'}</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="window.wifiSettings.connectToNetwork('${network.ssid}')" class="text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-opacity-90">
+                        Connect
+                    </button>
+                    <button onclick="window.wifiSettings.removeNetwork(${index})" class="text-xs px-2 py-1 bg-danger text-white rounded hover:bg-opacity-90">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    networksContainer.innerHTML = html;
+}
+
+// Connect to a saved WiFi network
+function connectToNetwork(ssid) {
+    console.log(`Connecting to network: ${ssid}`);
+    
+    // This function would need to be implemented on the backend
+    // For now, show an alert
+    alert(`Feature not implemented: Connect to ${ssid}`);
+}
+
+// Remove a saved WiFi network
+function removeNetwork(index) {
+    console.log(`Removing network at index: ${index}`);
+    
+    // This function would need to be implemented on the backend
+    // For now, show an alert
+    alert(`Feature not implemented: Remove network at index ${index}`);
+}
+
+// Export functions for global access
+window.wifiSettings = {
+    initWifiSettings,
+    fetchWifiStatus,
+    connectToNetwork,
+    removeNetwork
+};
+
+// Make initWifiSettings available directly
 window.initWifiSettings = initWifiSettings;
-window.fetchWifiStatus = function() { return false; };

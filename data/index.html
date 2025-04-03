@@ -756,12 +756,16 @@
         });
     </script>
 
-    <!-- Critical scripts in the correct order - Load connectivity_check.js AFTER core.js -->
+    <!-- Critical scripts in the correct order - Load wifi modules before settings_init.js -->
     <script src="js/global_variables.js"></script>  <!-- Add this line before other scripts -->
     <script src="js/component_loader.js"></script>
     <script src="js/auto_refresh.js"></script>
     <script src="js/core.js" onload="window.appLoadingState.coreScriptsLoaded = true; updateSplashStatus('Core scripts loaded'); hideSplashScreen();"></script>
     <script src="js/connectivity_check.js"></script>
+
+    <!-- WiFi modules -->
+    <script src="js/wifi_interface.js"></script>
+    <script src="js/wifi_settings.js"></script>
 
     <!-- Connection handler for device change requests -->
     <script>

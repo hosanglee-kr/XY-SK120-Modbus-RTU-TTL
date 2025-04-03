@@ -628,19 +628,78 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
     }
     // Add a WebSocket handler for WiFi status
     else if (action == "getWifiStatus") {
-      DynamicJsonDocument responseDoc(256);
-      responseDoc["action"] = "wifiStatusResponse"; 
-      responseDoc["status"] = isWiFiConnected() ? "connected" : "disconnected";
-      responseDoc["ssid"] = getWiFiSSID();
-      responseDoc["ip"] = getWiFiIP();
-      responseDoc["rssi"] = getWiFiRSSI();
-      responseDoc["mac"] = getWiFiMAC();
-      
-      String response;
-      serializeJson(responseDoc, response);
-      client->text(response);
-      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        // Get WiFi status
+        String wifiStatusStr = getWifiStatus(); // This returns a JSON string
+
+        // Parse the JSON string to extract the data
+        DynamicJsonDocument wifiDoc(512);
+        deserializeJson(wifiDoc, wifiStatusStr);
+        
+        // Create a response using the direct format
+        DynamicJsonDocument responseDoc(512);
+        responseDoc["action"] = "wifiStatusResponse";
+        responseDoc["status"] = wifiDoc["status"];
+        responseDoc["ssid"] = wifiDoc["ssid"];
+        responseDoc["ip"] = wifiDoc["ip"];
+        responseDoc["rssi"] = wifiDoc["rssi"];
+        responseDoc["mac"] = wifiDoc["mac"];
+
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+        Serial.print("WebSocket sent: "); // Debug print
+        Serial.println(response); // Debug print
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        return;
     }
+
+    if (action == "addWifiNetwork") {
+        String ssid = doc["ssid"];
+        String password = doc["password"];
+        
+        bool success = saveWiFiCredentialsToNVS(ssid, password);
+        
+        DynamicJsonDocument responseDoc(256);
+        responseDoc["action"] = "addWifiNetworkResponse";
+        responseDoc["success"] = success;
+        responseDoc["ssid"] = ssid;
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        return;
+    }
+
+    if (action == "loadWifiCredentials") {
+        String wifiCredentials = loadWiFiCredentialsFromNVS();
+        
+        DynamicJsonDocument responseDoc(1024);
+        responseDoc["action"] = "loadWifiCredentialsResponse";
+        responseDoc["success"] = true;
+        responseDoc["credentials"] = serialized(wifiCredentials);
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        return;
+    }
+
+    if (action == "resetWifi") {
+        bool success = resetWiFi();
+        
+        DynamicJsonDocument responseDoc(256);
+        responseDoc["action"] = "resetWifiResponse";
+        responseDoc["success"] = success;
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        return;
+    }
+    
     // Handle incoming message...
     if (action == "getKeyLockStatus") {
       handleKeyLockRequest(client);
