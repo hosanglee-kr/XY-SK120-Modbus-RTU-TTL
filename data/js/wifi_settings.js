@@ -725,13 +725,84 @@
         }, 2000);
     }
 
-    // Remove a saved WiFi network
+    // Remove a saved WiFi network - Implement actual deletion functionality
     function removeNetwork(index) {
         console.log(`Removing network at index: ${index}`);
         
-        // This function would need to be implemented on the backend
-        // For now, show an alert
-        alert(`Feature not implemented: Remove network at index ${index}`);
+        // Confirm deletion with the user
+        if (!confirm('Are you sure you want to remove this WiFi network?')) {
+            return;
+        }
+        
+        // Check WebSocket connection status
+        if (!window.websocketConnected) {
+            alert('Cannot remove network: WebSocket not connected. Please check your connection.');
+            return;
+        }
+        
+        // Find the network container to show loading state
+        const networksContainer = document.getElementById('saved-wifi-networks');
+        if (networksContainer) {
+            networksContainer.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">Removing network...</div>';
+        }
+        
+        // Send remove network request via WebSocket
+        if (typeof window.whenWebsocketReady === 'function') {
+            window.whenWebsocketReady(() => {
+                // Create a one-time event listener for the response
+                const messageHandler = function(event) {
+                    const data = event.detail;
+                    
+                    if (data.action === 'removeWifiNetworkResponse') {
+                        // Clean up listener
+                        document.removeEventListener('websocket-message', messageHandler);
+                        
+                        if (data.success) {
+                            // Successful deletion
+                            console.log('Network successfully removed');
+                            
+                            // Refresh the networks list
+                            refreshWifiStatusAndNetworks();
+                        } else {
+                            // Failed deletion
+                            console.error('Failed to remove network:', data.error);
+                            alert(`Failed to remove network: ${data.error || 'Unknown error'}`);
+                            
+                            // Refresh the networks list anyway to ensure UI is in sync
+                            refreshWifiStatusAndNetworks();
+                        }
+                    }
+                };
+                
+                // Add the event listener
+                document.addEventListener('websocket-message', messageHandler);
+                
+                // Send the command
+                const success = window.sendCommand({
+                    action: 'removeWifiNetwork',
+                    index: index,
+                    timestamp: Date.now()
+                });
+                
+                // If sending fails, show error and refresh list
+                if (!success) {
+                    alert('Failed to send network removal request. Please try again.');
+                    refreshWifiStatusAndNetworks();
+                }
+                
+                // Set a timeout to prevent hanging
+                setTimeout(() => {
+                    document.removeEventListener('websocket-message', messageHandler);
+                    console.warn('Remove network request timed out');
+                    alert('Request timed out. Please try again.');
+                    refreshWifiStatusAndNetworks();
+                }, 10000);
+            });
+        } else {
+            // Fallback if whenWebsocketReady is not available
+            alert('Cannot remove network: WebSocket helper not available.');
+            refreshWifiStatusAndNetworks();
+        }
     }
 
     // Add function to manually refresh networks

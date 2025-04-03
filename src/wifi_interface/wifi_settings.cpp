@@ -80,3 +80,49 @@ bool resetWiFi() {
     resetWiFiSettings(); // Call the function from wifi_manager_wrapper
     return true; // Assume success, as there's no return value from resetWiFiSettings
 }
+
+// Add a new function to remove a WiFi credential by index
+bool removeWiFiCredentialByIndex(int index) {
+    Preferences prefs;
+    prefs.begin(WIFI_NAMESPACE, false); // Read-write mode
+
+    // Load existing credentials
+    String wifiListJson = prefs.getString(WIFI_CREDENTIALS_KEY, "[]");
+
+    DynamicJsonDocument doc(WIFI_CREDENTIALS_JSON_SIZE);
+    DeserializationError error = deserializeJson(doc, wifiListJson);
+    if (error) {
+        Serial.println("Failed to parse wifi list: " + String(error.c_str()));
+        prefs.end();
+        return false;
+    }
+
+    JsonArray wifiList = doc.as<JsonArray>();
+    
+    // Check if index is valid
+    if (index < 0 || index >= wifiList.size()) {
+        Serial.println("Invalid index for WiFi credential removal: " + String(index));
+        prefs.end();
+        return false;
+    }
+    
+    // Create a new array without the element at the specified index
+    JsonArray newWifiList = doc.to<JsonArray>();
+    newWifiList.remove(index);
+    
+    // Serialize the updated JSON document
+    String updatedWifiListJson;
+    serializeJson(doc, updatedWifiListJson);
+    
+    // Save the updated JSON string to NVS
+    bool success = prefs.putString(WIFI_CREDENTIALS_KEY, updatedWifiListJson);
+    prefs.end();
+    
+    if (!success) {
+        Serial.println("Failed to save updated WiFi credentials after removal");
+    } else {
+        Serial.println("Successfully removed WiFi credential at index: " + String(index));
+    }
+    
+    return success;
+}

@@ -816,6 +816,27 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
       LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
       return;
     }
+
+    if (action == "removeWifiNetwork") {
+        int index = doc["index"];
+        
+        // Try to remove the network at the specified index
+        bool success = removeWiFiCredentialByIndex(index);
+        
+        DynamicJsonDocument responseDoc(256);
+        responseDoc["action"] = "removeWifiNetworkResponse";
+        responseDoc["success"] = success;
+        
+        if (!success) {
+            responseDoc["error"] = "Failed to remove network";
+        }
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        return;
+    }
   }
 }
 
