@@ -67,79 +67,14 @@ export function fetchWifiStatus() {
     }
     
     // Fallback to HTTP API if WebSocket not available
-    console.log("Using HTTP API to fetch WiFi status");
-    
-    // Get correct base URL
-    const baseUrl = getAPIBaseUrl();
-    const url = `${baseUrl}/api/wifi/status`;
-    
-    // Properly handle the fetch with error handling
-    fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log("WiFi status received:", data);
-            updateWifiStatusDisplay(data);
-        })
-        .catch(err => {
-            console.error("Error fetching WiFi status:", err);
-            // Show error in UI
-            document.getElementById('wifi-status').textContent = 'Error';
-            document.getElementById('wifi-ssid').textContent = 'Connection failed';
-            document.getElementById('wifi-ip').textContent = '--';
-        });
-}
-
-/**
- * Helper function to get the correct API base URL
- */
-function getAPIBaseUrl() {
-    // Get base URL from the current window location
-    const deviceIP = localStorage.getItem('selectedDeviceIP') || window.location.hostname;
-    
-    // Default to current location if deviceIP is 'localhost' and we're not on localhost
-    if (deviceIP === 'localhost' && 
-        window.location.hostname !== 'localhost' && 
-        window.location.hostname !== '127.0.0.1') {
-        return `${window.location.protocol}//${window.location.host}`;
-    }
-    
-    // Otherwise use the protocol from current window + deviceIP
-    return `${window.location.protocol}//${deviceIP}`;
-}
-
-/**
- * Update the WiFi status UI
- */
-function updateWifiStatusDisplay(data) {
-    if (!data) return;
-    
-    const wifiStatus = document.getElementById('wifi-status');
-    const wifiSsid = document.getElementById('wifi-ssid');
-    const wifiIp = document.getElementById('wifi-ip');
-    const wifiRssi = document.getElementById('wifi-rssi');
-    
-    if (wifiStatus) wifiStatus.textContent = data.status || 'Unknown';
-    if (wifiSsid) wifiSsid.textContent = data.ssid || 'Unknown';
-    if (wifiIp) wifiIp.textContent = data.ip || '--';
-    if (wifiRssi) wifiRssi.textContent = data.rssi || '--';
+    // Remove HTTP API fallback
+    console.log("WebSocket not available");
 }
 
 // Reset WiFi settings
 export function resetWifiSettings() {
     if (confirm('Are you sure you want to reset WiFi settings? The device will restart and create an access point for new configuration.')) {
-        fetch('/api/wifi/reset', { method: 'POST' })
-            .then(response => response.json())
-            .then(data => {
-                alert('WiFi settings reset. Device will restart. Connect to the "XY-SK120-Setup" WiFi network to configure new settings.');
-            })
-            .catch(error => {
-                console.error('Error resetting WiFi:', error);
-            });
+        window.sendCommand({ action: 'resetWifi' });
     }
 }
 

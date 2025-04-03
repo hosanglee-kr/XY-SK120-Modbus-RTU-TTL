@@ -752,6 +752,8 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
       String response;
       serializeJson(responseDoc, response);
       client->text(response);
+      Serial.print("WebSocket sent: "); // Debug print
+      Serial.println(response); // Debug print
       LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
       return;
     }
@@ -876,42 +878,6 @@ void setupWebServer(AsyncWebServer* server) {
       }
     });
 
-    // WiFi management API endpoints
-    server->on("/api/wifi/status", HTTP_GET, [](AsyncWebServerRequest *request){
-      DynamicJsonDocument doc(256);
-      
-      // More robust status response
-      doc["status"] = isWiFiConnected() ? "connected" : "disconnected";
-      doc["ssid"] = getWiFiSSID();
-      doc["ip"] = getWiFiIP();
-      doc["rssi"] = getWiFiRSSI();
-      doc["mac"] = getWiFiMAC();
-      
-      // Ensure the response is valid JSON with proper error handling
-      String response;
-      serializeJson(doc, response);
-      
-      // Add CORS headers for this specific endpoint
-      AsyncWebServerResponse *resp = request->beginResponse(200, "application/json", response);
-      resp->addHeader("Access-Control-Allow-Origin", "*");
-      resp->addHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-      resp->addHeader("Access-Control-Allow-Headers", "Content-Type");
-      request->send(resp);
-    });
-    
-    server->on("/api/wifi/reset", HTTP_POST, [](AsyncWebServerRequest *request){
-      // This will trigger a WiFi settings reset and device restart
-      AsyncWebServerResponse *response = request->beginResponse(200, "application/json", 
-                                                              "{\"status\":\"success\",\"message\":\"WiFi settings reset. Device will restart...\"}");
-      request->send(response);
-      
-      // Schedule WiFi reset for after the response is sent
-      delay(500);
-      resetWiFiSettings();
-      delay(500);
-      ESP.restart();
-    });
-    
     // Add an API endpoint for time zone settings
     server->on("/api/timezone", HTTP_GET, [](AsyncWebServerRequest *request){
       String timeZones = getAvailableTimeZones();

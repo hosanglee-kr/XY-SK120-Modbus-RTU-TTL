@@ -112,38 +112,12 @@ function startAutoRefresh() {
                 console.log("⚠️ websocketConnected flag is true but socket is not ready");
                 window.websocketConnected = false;
                 stopAutoRefresh();
-                
-                // Try to re-initialize websocket
-                if (typeof window.initWebSocket === 'function') {
-                    console.log("Attempting to reconnect WebSocket");
-                    window.initWebSocket();
-                    
-                    // Restart auto-refresh after a delay if reconnection succeeds
-                    setTimeout(() => {
-                        if (window.websocketConnected) {
-                            startAutoRefresh();
-                        }
-                    }, 2000);
-                }
             } else {
                 console.log("❌ WebSocket disconnected, pausing auto-refresh");
                 stopAutoRefresh();
                 
                 // Show manual refresh buttons
                 showManualRefreshButtons();
-                
-                // Try to reconnect
-                if (typeof window.initWebSocket === 'function') {
-                    console.log("Attempting to reconnect WebSocket");
-                    window.initWebSocket();
-                    
-                    // Restart auto-refresh after a delay if reconnection succeeds
-                    setTimeout(() => {
-                        if (window.websocketConnected) {
-                            startAutoRefresh();
-                        }
-                    }, 2000);
-                }
             }
         }, 5000); // Update every 5 seconds
         
@@ -497,17 +471,8 @@ function handleBasicMessages(event) {
                     module.updateOperatingMode(data.operatingMode, data);
                 }
             }).catch(err => console.error('Error importing status.js:', err));
+            }
         }
-        
-        // Update key lock status if available
-        if (data.keyLockEnabled !== undefined) {
-            import('./status.js').then(module => {
-                if (typeof module.updateKeyLockStatus === 'function') {
-                    module.updateKeyLockStatus(data.keyLockEnabled);
-                }
-            }).catch(err => console.error('Error importing status.js:', err));
-        }
-    }
     
     // Handle readings-only responses (faster updates for V/I/P)
     if (data.action === 'readingsResponse') {
@@ -742,11 +707,6 @@ export function updateAllStatus() {
         if (!window.websocket || window.websocket.readyState !== WebSocket.OPEN) {
             console.error("WebSocket not connected. Current state:", 
                           window.websocket ? window.websocket.readyState : "undefined");
-            
-            // Try to reconnect
-            if (typeof window.initWebSocket === 'function') {
-                window.initWebSocket();
-            }
             
             return false;
         }

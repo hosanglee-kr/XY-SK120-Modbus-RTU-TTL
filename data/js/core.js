@@ -177,6 +177,15 @@ function initializeModules() {
 
 // WebSocket connection function
 function initWebSocket() {
+    // Prevent multiple simultaneous connection attempts
+    if (window.isConnecting) {
+        console.log("WebSocket connection already in progress, skipping initialization");
+        return;
+    }
+    
+    // Set connecting flag
+    window.isConnecting = true;
+    
     // Get device IP - with fallback to current hostname
     // Check for manual override first (for device manager connections)
     let deviceIP = window.manualDeviceIP || localStorage.getItem('selectedDeviceIP') || window.location.hostname;

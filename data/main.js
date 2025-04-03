@@ -127,9 +127,6 @@ function init() {
         // Initialize WebSocket with multiple attempts
         initWebSocket();
         
-        // Try again after a short delay in case of initial timing issues
-        setTimeout(initWebSocket, 1000);
-        
         // Initialize UI components
         initPowerButton();
         initBasicControls();

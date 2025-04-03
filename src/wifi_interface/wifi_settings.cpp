@@ -19,6 +19,13 @@ String getWifiStatus() {
   doc["rssi"] = getWiFiRSSI();
   doc["mac"] = getWiFiMAC();
 
+  Serial.print("WiFi Status: "); // Debug print
+  Serial.print("Status: "); Serial.println(doc["status"].as<String>()); // Debug print
+  Serial.print("SSID: "); Serial.println(doc["ssid"].as<String>()); // Debug print
+  Serial.print("IP: "); Serial.println(doc["ip"].as<String>()); // Debug print
+  Serial.print("RSSI: "); Serial.println(doc["rssi"].as<int>()); // Debug print
+  Serial.print("MAC: "); Serial.println(doc["mac"].as<String>()); // Debug print
+
   String jsonString;
   serializeJson(doc, jsonString);
   return jsonString;

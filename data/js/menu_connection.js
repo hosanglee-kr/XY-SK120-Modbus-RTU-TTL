@@ -46,18 +46,6 @@ function getWebSocketIP() {
   return selectedDevice;
 }
 
-// Redefine this function to use the central WebSocket connection
-function initWebSocket() {
-    console.log("🔄 Using central WebSocket connection (from core.js)");
-    
-    // Call the central initialization function
-    if (typeof window.initWebSocket === 'function') {
-        window.initWebSocket();
-    } else {
-        console.error("Central WebSocket initialization function not available");
-    }
-}
-
 // Handle WebSocket disconnection
 function handleDisconnect() {
   console.log('WebSocket disconnected');
@@ -445,7 +433,7 @@ function initializeStatusUpdates() {
 }
 
 // Make sure this gets called during initialization
-window.addEventListener('DOMContentLoaded', initializeStatusUpdates);
+document.addEventListener('DOMContentLoaded', initializeStatusUpdates);
 
 // Update the connection status display in the UI - improved with better visual feedback
 function updateConnectionStatusDisplay(status, deviceIP) {
