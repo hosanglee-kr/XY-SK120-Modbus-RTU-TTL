@@ -167,23 +167,40 @@
         });
     }
 
-    // Helper function to send the load credentials request
+    // Helper function to send the load credentials request with more debugging
     function sendLoadCredentialsRequest(resolve, reject) {
         // Create a one-time event listener for the response
         const messageHandler = function(event) {
             const data = event.detail;
+            
+            // Debug all incoming messages to find the response
+            console.log('Received WebSocket message while waiting for credentials:', data.action);
+            
             if (data.action === 'loadWifiCredentialsResponse') {
                 // Clean up the listener
                 document.removeEventListener('websocket-message', messageHandler);
+                
+                console.log('Received WiFi credentials response:', data);
                 
                 // Parse the credentials JSON if needed
                 let credentials = [];
                 try {
                     if (typeof data.credentials === 'string') {
+                        console.log('Credentials received as string, parsing JSON');
                         credentials = JSON.parse(data.credentials);
                     } else if (Array.isArray(data.credentials)) {
+                        console.log('Credentials received as array');
                         credentials = data.credentials;
+                    } else if (data.wifiCredentials) {
+                        // Also check for wifiCredentials field (alternate format)
+                        console.log('Using wifiCredentials field instead');
+                        if (typeof data.wifiCredentials === 'string') {
+                            credentials = JSON.parse(data.wifiCredentials);
+                        } else {
+                            credentials = data.wifiCredentials;
+                        }
                     }
+                    console.log('Parsed credentials:', credentials);
                 } catch (e) {
                     console.error('Error parsing WiFi credentials:', e);
                 }
@@ -197,8 +214,10 @@
         document.addEventListener('websocket-message', messageHandler);
         
         // Send the command
+        console.log('Sending loadWifiCredentials command');
         const success = window.sendCommand({
-            action: 'loadWifiCredentials'
+            action: 'loadWifiCredentials',
+            timestamp: Date.now() // Add timestamp to prevent caching
         });
         
         // If sending fails, reject immediately
@@ -211,7 +230,7 @@
         setTimeout(() => {
             document.removeEventListener('websocket-message', messageHandler);
             reject(new Error('Load WiFi credentials request timeout'));
-        }, 5000);
+        }, 8000); // Increased timeout for slow devices
     }
 
     /**
