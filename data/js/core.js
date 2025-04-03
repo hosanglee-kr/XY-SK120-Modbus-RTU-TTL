@@ -6,12 +6,12 @@
 // WebSocket connection variables - CENTRAL DECLARATION
 let websocket = null;
 let websocketConnected = false;
-let autoRefreshTimer = null; // SINGLE GLOBAL DECLARATION - all modules should use this
+// DO NOT redeclare autoRefreshTimer - use the global one
 
 // Declare global connection management functions
 window.websocket = null;
 window.websocketConnected = false;
-window.autoRefreshTimer = null;
+window.autoRefreshTimer = window.autoRefreshTimer || null;
 
 // Add a connection ready promise that other modules can await
 window.websocketReadyPromise = new Promise((resolve) => {

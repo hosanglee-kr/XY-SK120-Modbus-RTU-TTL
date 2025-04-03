@@ -45,7 +45,7 @@ export function initBasicControls() {
     
     // Fallback: force auto-refresh after 5 seconds regardless of connection status
     setTimeout(() => {
-        if (!autoRefreshTimer) {
+        if (!window.autoRefreshTimer) {  // Use window.autoRefreshTimer consistently
             console.log("⚠️ Auto-refresh not started after 5 seconds, starting as fallback");
             startAutoRefresh();
         }

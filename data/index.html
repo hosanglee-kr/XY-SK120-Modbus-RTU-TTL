@@ -733,6 +733,7 @@
     </script>
 
     <!-- Critical scripts in the correct order - Load connectivity_check.js AFTER core.js -->
+    <script src="js/global_variables.js"></script>  <!-- Add this line before other scripts -->
     <script src="js/component_loader.js"></script>
     <script src="js/auto_refresh.js"></script>
     <script src="js/core.js" onload="window.appLoadingState.coreScriptsLoaded = true; updateSplashStatus('Core scripts loaded'); hideSplashScreen();"></script>
