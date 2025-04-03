@@ -11,6 +11,8 @@ This document explains the components and patterns used in the XY-SK120 Web UI, 
 - [Component Reference](#component-reference)
 - [Dark Mode Support](#dark-mode-support)
 - [WebSocket Handling](#websocket-handling)
+- [JavaScript Module Pattern](#javascript-module-pattern)
+- [Error Handling Best Practices](#error-handling-best-practices)
 
 ## Tab Component System
 
@@ -287,6 +289,119 @@ document.addEventListener('websocket-message', function(event) {
 *   **Centralized WebSocket Logic:** Easier to maintain and debug WebSocket-related issues.
 *   **Loose Coupling:** Modules are decoupled from the WebSocket implementation, making the code more modular and testable.
 *   **Real-Time Updates:** WebSockets enable real-time updates of power supply status and settings in the UI.
+
+## JavaScript Module Pattern
+
+### Avoiding ES6 Modules
+
+The web interface for XY-SK120 is designed to work directly in the browser without build tools or transpilers. For this reason, we **avoid using ES6 module syntax** (`import`/`export`) which may not be supported in all browser environments, especially when served from an ESP32.
+
+**DON'T** use ES6 module syntax:
+```javascript
+// Don't do this
+export function myFunction() { ... }
+import { otherFunction } from './other_file.js';
+```
+
+### Using IIFE Pattern
+
+Instead, use the Immediately Invoked Function Expression (IIFE) pattern to create module-like scopes and expose functions via the global `window` object:
+
+**DO** use the IIFE pattern:
+```javascript
+// Do this instead
+(function() {
+    // Private scope - variables defined here are not accessible outside
+    let privateVariable = 'not accessible outside';
+    
+    // Function we want to make public
+    function publicFunction() {
+        console.log('This function will be accessible globally');
+    }
+    
+    // Expose functions to global scope via window object
+    window.myModule = {
+        publicFunction: publicFunction
+    };
+})();
+
+// Usage from another file:
+window.myModule.publicFunction();
+```
+
+## WebSocket Connection Management
+
+### Using window.whenWebsocketReady()
+
+Always use the `window.whenWebsocketReady()` helper method before sending WebSocket commands. This ensures requests are only made when the WebSocket connection is fully established, preventing errors and race conditions.
+
+```javascript
+// Correct way to send WebSocket commands
+function sendMyCommand() {
+    window.whenWebsocketReady(() => {
+        // This code will only execute when WebSocket is connected
+        window.sendCommand({
+            action: 'myAction',
+            data: 'myData'
+        });
+    });
+}
+```
+
+In contrast to the older approach:
+
+```javascript
+// Don't do this - may fail if connection isn't ready
+function sendMyCommand() {
+    // This might fail if WebSocket isn't connected yet
+    if (window.websocketConnected) {
+        window.sendCommand({
+            action: 'myAction',
+            data: 'myData'
+        });
+    }
+}
+```
+
+### Handling WebSocket Events
+
+For WebSocket events, use the standard event system:
+
+```javascript
+// Listen for WebSocket messages
+document.addEventListener('websocket-message', function(event) {
+    const data = event.detail;
+    if (data.action === 'myResponseAction') {
+        // Handle the response
+    }
+});
+
+// Listen for connection events
+document.addEventListener('websocket-connected', function() {
+    console.log('WebSocket connected, can now send commands');
+});
+
+document.addEventListener('websocket-disconnected', function() {
+    console.log('WebSocket disconnected, pause activities requiring connection');
+});
+```
+
+## Error Handling Best Practices
+
+Always handle promise rejections when using WebSocket communication:
+
+```javascript
+fetchDataFromDevice()
+    .then(data => {
+        // Handle successful response
+    })
+    .catch(error => {
+        console.warn("Error fetching data:", error.message);
+        // Show appropriate user feedback
+    });
+```
+
+By following these patterns, your code will be more robust and work reliably with the XY-SK120 device.
 
 ## Icon Usage
 

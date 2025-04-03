@@ -68,8 +68,21 @@ function initSettingsTabs() {
                 panel.setAttribute('aria-hidden', 'false');
                 
                 // If WiFi tab is selected, refresh WiFi status
-                if (panelId === 'wifi-settings-tab' && typeof window.wifiSettings.fetchWifiStatus === 'function') {
-                    window.wifiSettings.fetchWifiStatus();
+                if (panelId === 'wifi-settings-tab' && typeof window.wifiSettings?.fetchWifiStatus === 'function') {
+                    try {
+                        // Only attempt to fetch if WebSocket is connected
+                        if (window.websocketConnected) {
+                            window.wifiSettings.fetchWifiStatus()
+                                .catch(error => {
+                                    console.warn("Could not fetch WiFi status:", error.message);
+                                    // This error is now handled
+                                });
+                        } else {
+                            console.log("WebSocket not connected, WiFi status will be updated when connection is established");
+                        }
+                    } catch (error) {
+                        console.error("Error calling fetchWifiStatus:", error);
+                    }
                 }
             }
         });
