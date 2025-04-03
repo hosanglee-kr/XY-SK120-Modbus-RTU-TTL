@@ -10,6 +10,7 @@ This document explains the components and patterns used in the XY-SK120 Web UI, 
 - [Responsive Design](#responsive-design)
 - [Component Reference](#component-reference)
 - [Dark Mode Support](#dark-mode-support)
+- [WebSocket Handling](#websocket-handling)
 
 ## Tab Component System
 
@@ -239,6 +240,53 @@ Classes to use for consistent dark mode support:
 - Text colors: `text-gray-800 dark:text-white` (primary), `text-gray-600 dark:text-gray-300` (secondary)
 - Border colors: `border-gray-200 dark:border-gray-700`
 - Form input background: `bg-white dark:bg-gray-700`
+
+## WebSocket Handling
+
+The Web UI uses WebSockets for real-time communication with the XY-SK120 power supply. All WebSocket communication is now consolidated in `data/js/core.js`, which serves as the single source of truth for WebSocket initialization and message handling.
+
+### Core WebSocket Logic (`data/js/core.js`)
+
+*   **`initWebSocket()`:** Initializes the WebSocket connection and sets up event listeners for `open`, `close`, `error`, and `message` events.
+*   **`sendCommand(command)`:** Sends a JSON command to the power supply over the WebSocket connection.
+*   **`handleMessage(event)`:** Handles incoming WebSocket messages, parses the JSON data, and dispatches custom events for other modules to handle.
+
+### Module Communication
+
+Other JavaScript modules should not directly initialize or interact with the WebSocket connection. Instead, they should:
+
+1.  **Dispatch Custom Events:** When a module needs to send a command to the power supply, it should call the `window.sendCommand(command)` function.
+2.  **Handle Custom Events:** Modules should listen for custom events dispatched by `core.js` (e.g., `websocket-message`, `websocket-connected`, `websocket-disconnected`) and update their UI accordingly.
+
+### Example
+
+To send a command from a module:
+
+```javascript
+// In your module
+function setVoltage(voltage) {
+  window.sendCommand({ action: 'setVoltage', voltage: voltage });
+}
+```
+
+To handle a WebSocket message in a module:
+
+```javascript
+// In your module
+document.addEventListener('websocket-message', function(event) {
+  const data = event.detail;
+  if (data.action === 'voltageResponse') {
+    // Update UI with the new voltage value
+    updateVoltageDisplay(data.voltage);
+  }
+});
+```
+
+### Benefits of this Approach
+
+*   **Centralized WebSocket Logic:** Easier to maintain and debug WebSocket-related issues.
+*   **Loose Coupling:** Modules are decoupled from the WebSocket implementation, making the code more modular and testable.
+*   **Real-Time Updates:** WebSockets enable real-time updates of power supply status and settings in the UI.
 
 ## Icon Usage
 
