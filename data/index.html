@@ -103,6 +103,30 @@
             from { width: 0%; }
             to { width: 100%; }
         }
+
+        /* Add styles to improve WiFi status display */
+        #wifi-status.loading, #wifi-ssid.loading, #wifi-ip.loading, #wifi-rssi.loading {
+            opacity: 0.7;
+            position: relative;
+        }
+        
+        #wifi-status.loading::after, #wifi-ssid.loading::after, 
+        #wifi-ip.loading::after, #wifi-rssi.loading::after {
+            content: "...";
+            display: inline-block;
+            animation: ellipsis 1.5s infinite;
+        }
+        
+        @keyframes ellipsis {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+        
+        /* Prevent WiFi UI elements from collapsing */
+        #wifi-status, #wifi-ssid, #wifi-ip, #wifi-rssi {
+            min-height: 1.5rem; /* Ensures even empty elements maintain height */
+        }
     </style>
     
     <!-- Immediate splash screen display - Critical for preventing FOUC -->
