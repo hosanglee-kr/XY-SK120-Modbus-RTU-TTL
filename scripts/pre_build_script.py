@@ -1,5 +1,4 @@
-from SCons.Script import Import, DefaultEnvironment
-env = DefaultEnvironment()
+Import("env")
 import os
 import subprocess
 import hashlib
@@ -52,6 +51,14 @@ def before_build(source, target, env):
 
 # Register the callback
 env.AddPreAction("buildprog", before_build)
+
+# You can access the PlatformIO build environment here
+print("Current environment:", env["PIOENV"])
+print("Target platform:", env["PIOPLATFORM"])
+
+# Add any pre-build logic you need here
+# For example:
+# env.Append(CPPDEFINES=["MY_CUSTOM_DEFINE"])
 
 # Remove the BuildSources call to prevent duplicate compilation
 # env.BuildSources("$BUILD_DIR/liba74", "$PROJECT_DIR/lib/XY-SKxxx")
