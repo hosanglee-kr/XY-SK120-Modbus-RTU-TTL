@@ -629,9 +629,9 @@
             // Determine button state based on connection status
             let connectButton = '';
             if (isConnected) {
-                // Already connected - show a disabled "Connected" button
+                // Already connected - show a disabled "Connected" button with consistent height
                 connectButton = `
-                    <button class="text-xs px-2 py-1 bg-green-500 text-white rounded cursor-default inline-flex items-center">
+                    <button class="text-xs px-2 py-1.5 h-8 bg-green-500 text-white rounded cursor-default inline-flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="inline-block h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
@@ -639,9 +639,9 @@
                     </button>
                 `;
             } else if (isConnecting) {
-                // Currently connecting - show indicator
+                // Currently connecting - show indicator with consistent height
                 connectButton = `
-                    <button class="text-xs px-2 py-1 bg-yellow-500 text-white rounded cursor-default inline-flex items-center">
+                    <button class="text-xs px-2 py-1.5 h-8 bg-yellow-500 text-white rounded cursor-default inline-flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="inline-block animate-spin h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
@@ -649,10 +649,10 @@
                     </button>
                 `;
             } else {
-                // Not connected - show connect button
+                // Not connected - show connect button with consistent height
                 connectButton = `
                     <button onclick="window.wifiSettings.connectToNetwork('${ssid}')" 
-                        class="text-xs px-2 py-1 bg-secondary text-white rounded hover:bg-opacity-90 inline-flex items-center">
+                        class="text-xs px-2 py-1.5 h-8 bg-secondary text-white rounded hover:bg-opacity-90 inline-flex items-center">
                         <span>Connect</span>
                     </button>
                 `;
@@ -725,7 +725,7 @@
                 </div>
             `;
             
-            // Build the network item HTML with standardized button sizes
+            // Build the network item HTML with standardized button sizes and store the SSID attribute
             html += `
                 <div class="${containerClasses}" data-network-index="${index}" data-network-ssid="${ssid}">
                     <div class="p-3">
@@ -746,8 +746,8 @@
                             </div>
                             <div class="flex space-x-2 ml-2">
                                 ${connectButton}
-                                <button onclick="window.wifiSettings.removeNetwork(${index})" 
-                                    class="text-xs px-2 py-1 bg-danger text-white rounded hover:bg-opacity-90 inline-flex items-center">
+                                <button onclick="window.wifiSettings.removeNetwork(${index}, '${ssid.replace(/'/g, "\\'")}')" 
+                                    class="text-xs px-2 py-1.5 h-8 bg-danger text-white rounded hover:bg-opacity-90 inline-flex items-center">
                                     <span>Delete</span>
                                 </button>
                             </div>
@@ -775,8 +775,111 @@
         }, 0);
     }
 
-    // Remove function to update storage status
-    // function updateStorageStatus() { ... }
+    // Remove a saved WiFi network - Add better error handling and fallback
+    function removeNetwork(index, ssid) {
+        console.log(`Removing network at index: ${index}, SSID: ${ssid}`);
+        
+        // Confirm deletion with the user
+        if (!confirm(`Are you sure you want to remove the WiFi network "${ssid}"?`)) {
+            return;
+        }
+        
+        // Check WebSocket connection status
+        if (!window.websocketConnected) {
+            alert('Cannot remove network: WebSocket not connected. Please check your connection.');
+            return;
+        }
+        
+        // Show loading state only for the specific network being deleted
+        const networkElement = document.querySelector(`[data-network-index="${index}"][data-network-ssid="${ssid}"]`);
+        if (networkElement) {
+            networkElement.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">Removing network...</div>';
+        }
+        
+        // Keep track of whether we've received a response
+        let receivedResponse = false;
+        
+        // Send remove network request via WebSocket with improved debugging
+        if (typeof window.whenWebsocketReady === 'function') {
+            window.whenWebsocketReady(() => {
+                // Create a one-time event listener for the response
+                const messageHandler = function(event) {
+                    const data = event.detail;
+                    console.log("Received WebSocket message:", data);
+                    
+                    if (data && data.action === 'removeWifiNetworkResponse') {
+                        // Mark that we've received a response
+                        receivedResponse = true;
+                        
+                        // Clean up listener
+                        document.removeEventListener('websocket-message', messageHandler);
+                        
+                        if (data.success) {
+                            // Successful deletion
+                            console.log(`Network ${ssid} removal reported success`);
+                            
+                            // Refresh the networks list
+                            refreshWifiStatusAndNetworks();
+                        } else {
+                            // Failed deletion
+                            console.error('Failed to remove network:', data.error);
+                            alert(`Failed to remove network: ${data.error || 'Unknown error'}`);
+                            
+                            // Refresh the networks list anyway to ensure UI is in sync
+                            refreshWifiStatusAndNetworks();
+                        }
+                    }
+                };
+                
+                // Add the event listener
+                document.addEventListener('websocket-message', messageHandler);
+                
+                // Prepare simplified command - only send the essential data
+                const command = {
+                    action: 'removeWifiNetwork',
+                    index: index,
+                    ssid: ssid
+                };
+                
+                console.log("Sending removeWifiNetwork command:", command);
+                
+                // Send the command
+                const success = window.sendCommand(command);
+                
+                // If sending fails, show error and refresh list
+                if (!success) {
+                    alert('Failed to send network removal request. Please try again.');
+                    refreshWifiStatusAndNetworks();
+                    return;
+                }
+                
+                // Set a timeout to prevent hanging - but also perform a refresh regardless
+                setTimeout(() => {
+                    // Only do this if we haven't received a response yet
+                    if (!receivedResponse) {
+                        document.removeEventListener('websocket-message', messageHandler);
+                        console.warn('Remove network request timed out');
+                        
+                        // Even without a response, we'll refresh networks and show a less alarming message
+                        console.log('Refreshing networks despite timeout');
+                        
+                        // Inform the user but in a less intrusive way
+                        const statusEl = networkElement || document.getElementById('saved-wifi-networks');
+                        if (statusEl) {
+                            statusEl.innerHTML = '<div class="p-4 text-sm text-warning">Operation may have succeeded but no confirmation received. Refreshing...</div>';
+                        }
+                        
+                        // Refresh after a short delay to show the message
+                        setTimeout(() => refreshWifiStatusAndNetworks(), 1500);
+                    }
+                }, 5000); // Reduced timeout from 10s to 5s
+            });
+        } else {
+            // Fallback if whenWebsocketReady is not available
+            alert('Cannot remove network: WebSocket helper not available.');
+            refreshWifiStatusAndNetworks();
+        }
+    }
 
     // Function to move network priority up (higher priority) - with better error handling
     function movePriorityUp(index) {
@@ -901,86 +1004,6 @@
                 console.warn("Error refreshing networks after connection attempt:", error.message);
             });
         }, 2000);
-    }
-
-    // Remove a saved WiFi network - Implement actual deletion functionality
-    function removeNetwork(index) {
-        console.log(`Removing network at index: ${index}`);
-        
-        // Confirm deletion with the user
-        if (!confirm('Are you sure you want to remove this WiFi network?')) {
-            return;
-        }
-        
-        // Check WebSocket connection status
-        if (!window.websocketConnected) {
-            alert('Cannot remove network: WebSocket not connected. Please check your connection.');
-            return;
-        }
-        
-        // Find the network container to show loading state
-        const networksContainer = document.getElementById('saved-wifi-networks');
-        if (networksContainer) {
-            networksContainer.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">Removing network...</div>';
-        }
-        
-        // Send remove network request via WebSocket
-        if (typeof window.whenWebsocketReady === 'function') {
-            window.whenWebsocketReady(() => {
-                // Create a one-time event listener for the response
-                const messageHandler = function(event) {
-                    const data = event.detail;
-                    
-                    if (data.action === 'removeWifiNetworkResponse') {
-                        // Clean up listener
-                        document.removeEventListener('websocket-message', messageHandler);
-                        
-                        if (data.success) {
-                            // Successful deletion
-                            console.log('Network successfully removed');
-                            
-                            // Refresh the networks list
-                            refreshWifiStatusAndNetworks();
-                        } else {
-                            // Failed deletion
-                            console.error('Failed to remove network:', data.error);
-                            alert(`Failed to remove network: ${data.error || 'Unknown error'}`);
-                            
-                            // Refresh the networks list anyway to ensure UI is in sync
-                            refreshWifiStatusAndNetworks();
-                        }
-                    }
-                };
-                
-                // Add the event listener
-                document.addEventListener('websocket-message', messageHandler);
-                
-                // Send the command
-                const success = window.sendCommand({
-                    action: 'removeWifiNetwork',
-                    index: index,
-                    timestamp: Date.now()
-                });
-                
-                // If sending fails, show error and refresh list
-                if (!success) {
-                    alert('Failed to send network removal request. Please try again.');
-                    refreshWifiStatusAndNetworks();
-                }
-                
-                // Set a timeout to prevent hanging
-                setTimeout(() => {
-                    document.removeEventListener('websocket-message', messageHandler);
-                    console.warn('Remove network request timed out');
-                    alert('Request timed out. Please try again.');
-                    refreshWifiStatusAndNetworks();
-                }, 10000);
-            });
-        } else {
-            // Fallback if whenWebsocketReady is not available
-            alert('Cannot remove network: WebSocket helper not available.');
-            refreshWifiStatusAndNetworks();
-        }
     }
 
     // Add function to manually refresh networks
