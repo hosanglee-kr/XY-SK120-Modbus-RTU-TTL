@@ -38,3 +38,10 @@ void displayIPInfo();
 
 // Helper function to manually sync current WiFi to NVS storage
 void syncCurrentWiFi();
+
+// Dedicated function to handle adding WiFi networks
+void handleAddWifi(const String& input, String ssid, String password, int priority);
+
+// External declaration of the function from wifi_settings.cpp
+// This prevents us from redefining it in menu_wifi_core.cpp
+extern String loadWiFiCredentialsFromNVS();
