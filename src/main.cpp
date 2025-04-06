@@ -186,6 +186,8 @@ void setup() {
   } else {
     Serial.println("Connection failed. Please check wiring and settings.");
   }
+  
+  initializeSerialInterface();
 }
 
 void loop() {

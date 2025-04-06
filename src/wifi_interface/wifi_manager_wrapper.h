@@ -34,6 +34,18 @@ int getWiFiRSSI();
 // Get WiFi MAC address
 String getWiFiMAC();
 
+// Exit the config portal properly
+bool exitConfigPortal();
+
+// Process WiFiManager credentials to our storage system
+void processWiFiManagerCredentials();
+
+// Sync current WiFi connection to our storage
+void syncCurrentWiFiToStorage();
+
+// WiFiManager save credentials callback
+void saveWifiCallback();
+
 // Legacy functions that now call the NVS versions
 bool saveWiFiCredentials(const String& ssid, const String& password);
 String loadWiFiCredentials();
