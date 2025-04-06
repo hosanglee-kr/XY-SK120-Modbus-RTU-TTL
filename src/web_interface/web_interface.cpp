@@ -464,7 +464,7 @@ void handleAddWifiNetworkWebSocketCommand(AsyncWebSocketClient* client, DynamicJ
     }
 }
 
-void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* client, 
+void handleWebSocketMessage(AsyncWebSocket* server, AsyncWebSocketClient* client, 
                            AwsFrameInfo* info, uint8_t* data, size_t len) {
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
@@ -945,6 +945,12 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
         serializeJson(responseDoc, response);
         client->text(response);
         LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        return;
+    }
+
+    // Add the new action handler
+    if (action == "connectWifi") {
+        handleConnectWifiCommand(client, doc);
         return;
     }
   }

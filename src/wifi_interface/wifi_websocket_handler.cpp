@@ -236,3 +236,105 @@ void handleRemoveWifiNetworkCommand(AsyncWebSocketClient* client, DynamicJsonDoc
         Serial.println("Failed to remove WiFi network");
     }
 }
+
+// Function to handle connecting to a WiFi network
+void handleConnectWifiCommand(AsyncWebSocketClient* client, DynamicJsonDocument& inputDoc) {
+    // Check if required parameters are provided
+    if (!inputDoc.containsKey("ssid")) {
+        sendErrorResponse(client, "Missing SSID parameter");
+        return;
+    }
+    
+    String ssid = inputDoc["ssid"].as<String>();
+    
+    // Sanitize the SSID
+    ssid = sanitizeString(ssid);
+    
+    Serial.print("Connecting to WiFi network: ");
+    Serial.println(ssid);
+    
+    // Check if this network is in our saved networks
+    Preferences prefs;
+    String wifiListJson;
+    String password = "";
+    bool networkFound = false;
+    
+    if (prefs.begin(WIFI_NAMESPACE, true)) { // Read-only mode
+        wifiListJson = prefs.getString(WIFI_CREDENTIALS_KEY, "[]");
+        prefs.end();
+        
+        // Parse saved networks
+        DynamicJsonDocument wifiDoc(WIFI_CREDENTIALS_JSON_SIZE);
+        DeserializationError error = deserializeJson(wifiDoc, wifiListJson);
+        
+        if (!error && wifiDoc.is<JsonArray>()) {
+            JsonArray networks = wifiDoc.as<JsonArray>();
+            
+            // Find the network in our saved list
+            for (JsonObject network : networks) {
+                if (network.containsKey("ssid") && network["ssid"].as<String>() == ssid) {
+                    networkFound = true;
+                    if (network.containsKey("password")) {
+                        password = network["password"].as<String>();
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (!networkFound) {
+        sendErrorResponse(client, "Network not found in saved networks");
+        return;
+    }
+    
+    // Try to connect to the WiFi network
+    bool connectSuccess = false;
+    
+    // Disconnect from current network if connected
+    if (WiFi.status() == WL_CONNECTED) {
+        WiFi.disconnect();
+        delay(500);
+    }
+    
+    // Set WiFi mode to station (client)
+    WiFi.mode(WIFI_STA);
+    
+    // Begin connection attempt
+    WiFi.begin(ssid.c_str(), password.c_str());
+    
+    // Wait for connection with timeout
+    int timeout = 30; // 30 seconds timeout
+    while (WiFi.status() != WL_CONNECTED && timeout > 0) {
+        delay(1000);
+        timeout--;
+        Serial.print(".");
+    }
+    
+    // Check if connected
+    if (WiFi.status() == WL_CONNECTED) {
+        connectSuccess = true;
+        Serial.println("\nConnected to WiFi!");
+        Serial.print("IP Address: ");
+        Serial.println(WiFi.localIP().toString());
+    } else {
+        Serial.println("\nFailed to connect to WiFi");
+    }
+    
+    // Send response to client
+    DynamicJsonDocument responseDoc(256);
+    responseDoc["action"] = "connectWifiResponse";
+    responseDoc["success"] = connectSuccess;
+    responseDoc["ssid"] = ssid;
+    
+    if (connectSuccess) {
+        responseDoc["ip"] = WiFi.localIP().toString();
+        responseDoc["rssi"] = WiFi.RSSI();
+    } else {
+        responseDoc["error"] = "Failed to connect to network";
+    }
+    
+    String response;
+    serializeJson(responseDoc, response);
+    client->text(response);
+}

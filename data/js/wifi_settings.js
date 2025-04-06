@@ -1106,13 +1106,19 @@
         }
     }
 
-    // Improved connectToNetwork function to handle connection state
+    // Improved connectToNetwork function to actually connect to the network
     function connectToNetwork(ssid) {
         console.log(`Connecting to network: ${ssid}`);
         
         // Check if we're already connected to this network
         if (currentWifiStatus && currentWifiStatus.ssid === ssid && currentWifiStatus.status === 'connected') {
             alert(`Already connected to ${ssid}`);
+            return;
+        }
+        
+        // Check WebSocket connection before attempting to connect
+        if (!window.websocketConnected) {
+            alert('Cannot connect to network: WebSocket not connected. Please check your connection.');
             return;
         }
         
@@ -1129,17 +1135,100 @@
             console.warn("Error refreshing networks while connecting:", error.message);
         });
         
-        // This function would need to be implemented on the backend
-        // For now, simulate a connection attempt
-        alert(`Feature not implemented: Connect to ${ssid}`);
+        // Keep track of whether we've received a response
+        let receivedResponse = false;
         
-        // After the simulated attempt, restore the previous status
-        setTimeout(() => {
-            currentWifiStatus = oldStatus;
-            fetchSavedNetworks().catch(error => {
-                console.warn("Error refreshing networks after connection attempt:", error.message);
+        // Send connect request via WebSocket
+        if (typeof window.whenWebsocketReady === 'function') {
+            window.whenWebsocketReady(() => {
+                // Create a one-time event listener for the response
+                const messageHandler = function(event) {
+                    const data = event.detail;
+                    console.log("Received WebSocket response for connect:", data);
+                    
+                    if (data && data.action === 'connectWifiResponse') {
+                        // Mark that we've received a response
+                        receivedResponse = true;
+                        
+                        // Clean up listener
+                        document.removeEventListener('websocket-message', messageHandler);
+                        
+                        if (data.success) {
+                            // Successful connection
+                            console.log(`Successfully connected to ${ssid}`);
+                            
+                            // Fetch the new WiFi status after a short delay
+                            // to allow the connection to stabilize
+                            setTimeout(() => {
+                                refreshWifiStatusAndNetworks()
+                                    .then(() => {
+                                        // Inform the user of the successful connection
+                                        const ipAddress = currentWifiStatus.ip || 'no IP yet';
+                                        alert(`Connected to ${ssid}\nIP Address: ${ipAddress}`);
+                                    })
+                                    .catch(error => {
+                                        console.warn("Error refreshing status after connect:", error);
+                                    });
+                            }, 3000);
+                        } else {
+                            // Failed connection
+                            console.error(`Failed to connect to ${ssid}:`, data.error);
+                            alert(`Failed to connect to ${ssid}: ${data.error || 'Unknown error'}`);
+                            
+                            // Restore previous status
+                            currentWifiStatus = oldStatus;
+                            
+                            // Refresh the networks list to show correct state
+                            refreshWifiStatusAndNetworks();
+                        }
+                    }
+                };
+                
+                // Add the event listener
+                document.addEventListener('websocket-message', messageHandler);
+                
+                // Prepare the command
+                const command = {
+                    action: 'connectWifi',
+                    ssid: ssid
+                };
+                
+                console.log("Sending connectWifi command:", command);
+                
+                // Send the command
+                const success = window.sendCommand(command);
+                
+                // If sending fails immediately, alert the user
+                if (!success) {
+                    alert(`Failed to send connect request for ${ssid}. Please try again.`);
+                    currentWifiStatus = oldStatus;
+                    refreshWifiStatusAndNetworks();
+                    return;
+                }
+                
+                // Set a timeout to prevent hanging
+                setTimeout(() => {
+                    if (!receivedResponse) {
+                        document.removeEventListener('websocket-message', messageHandler);
+                        console.warn('Connect request timed out');
+                        
+                        // Restore previous status
+                        currentWifiStatus = oldStatus;
+                        
+                        // Show timeout message
+                        alert(`Connection attempt to ${ssid} timed out. The network might be out of range or password protected.`);
+                        
+                        // Refresh networks list
+                        refreshWifiStatusAndNetworks();
+                    }
+                }, 20000); // Allow 20 seconds for WiFi connection
             });
-        }, 2000);
+        } else {
+            // Fallback if whenWebsocketReady is not available
+            alert('Cannot connect to network: WebSocket helper not available.');
+            currentWifiStatus = oldStatus;
+            refreshWifiStatusAndNetworks();
+        }
     }
 
     // Add function to manually refresh networks
