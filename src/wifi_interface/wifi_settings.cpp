@@ -132,12 +132,55 @@ bool saveWiFiCredentialsToNVS(const String& ssid, const String& password) {
     return saveWiFiCredentialsToNVS(ssid, password, -1); // -1 means lowest priority
 }
 
+// Load WiFi credentials from NVS with proper error handling
 String loadWiFiCredentialsFromNVS() {
     Preferences prefs;
-    prefs.begin(WIFI_NAMESPACE, true); // Read-only mode
-    String wifiListJson = prefs.getString(WIFI_CREDENTIALS_KEY, "[]");
-    prefs.end();
-    return wifiListJson;
+    String result = "[]";  // Always start with a valid empty array
+    
+    if (prefs.begin(WIFI_NAMESPACE, true)) {
+        if (prefs.isKey(WIFI_CREDENTIALS_KEY)) {
+            result = prefs.getString(WIFI_CREDENTIALS_KEY, "[]");
+        } else {
+            // No credentials saved yet, initialize with empty array
+            Serial.println("No WiFi credentials found, initializing empty array.");
+            prefs.end();
+            if (prefs.begin(WIFI_NAMESPACE, false)) {
+                prefs.putString(WIFI_CREDENTIALS_KEY, "[]");
+            }
+        }
+        prefs.end();
+        
+        // Validate JSON
+        DynamicJsonDocument doc(WIFI_CREDENTIALS_JSON_SIZE);
+        DeserializationError error = deserializeJson(doc, result);
+        
+        if (error) {
+            Serial.println("Warning: Invalid JSON format in stored WiFi credentials. Resetting.");
+            result = "[]";
+            
+            // Reset the stored data
+            if (prefs.begin(WIFI_NAMESPACE, false)) {
+                prefs.putString(WIFI_CREDENTIALS_KEY, "[]");
+                prefs.end();
+            }
+        } else if (!doc.is<JsonArray>()) {
+            // Ensure it's actually an array
+            Serial.println("Warning: WiFi credentials not stored as array. Resetting.");
+            result = "[]";
+            
+            if (prefs.begin(WIFI_NAMESPACE, false)) {
+                prefs.putString(WIFI_CREDENTIALS_KEY, "[]");
+                prefs.end();
+            }
+        } else {
+            // Log the parsed structure
+            Serial.print("Loaded WiFi networks: ");
+            serializeJson(doc, Serial);
+            Serial.println();
+        }
+    }
+    
+    return result;
 }
 
 bool resetWiFi() {

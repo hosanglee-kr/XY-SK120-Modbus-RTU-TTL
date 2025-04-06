@@ -125,6 +125,9 @@
         // Add the event listener
         document.addEventListener('websocket-message', messageHandler);
         
+        // Log what we're sending - helpful for debugging
+        console.log(`Adding WiFi network: SSID=${ssid}, priority=${priority}`);
+        
         // Send the command with priority
         const success = window.sendCommand({
             action: 'addWifiNetwork',
