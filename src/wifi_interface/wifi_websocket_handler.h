@@ -1,4 +1,5 @@
-#pragma once
+#ifndef WIFI_WEBSOCKET_HANDLER_H
+#define WIFI_WEBSOCKET_HANDLER_H
 
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
@@ -7,3 +8,5 @@
 // Function declarations
 void handleAddWifiNetworkCommand(AsyncWebSocketClient* client, DynamicJsonDocument& doc);
 void sendErrorResponse(AsyncWebSocketClient* client, const String& error);
+
+#endif // WIFI_WEBSOCKET_HANDLER_H

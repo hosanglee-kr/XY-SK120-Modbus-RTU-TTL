@@ -28,6 +28,9 @@ void sendErrorResponse(AsyncWebSocketClient* client, const String& error) {
     client->text(response);
 }
 
+// Make sure to include our sanitization function
+extern String sanitizeString(const String& input);
+
 // Handle adding a new WiFi network
 void handleAddWifiNetworkCommand(AsyncWebSocketClient* client, DynamicJsonDocument& doc) {
     if (!doc.containsKey("ssid") || !doc.containsKey("password")) {
@@ -35,8 +38,18 @@ void handleAddWifiNetworkCommand(AsyncWebSocketClient* client, DynamicJsonDocume
         return;
     }
     
-    String ssid = doc["ssid"].as<String>();
-    String password = doc["password"].as<String>();
+    // Get and sanitize the SSID and password
+    String originalSsid = doc["ssid"].as<String>();
+    String originalPassword = doc["password"].as<String>();
+    
+    String ssid = sanitizeString(originalSsid);
+    String password = sanitizeString(originalPassword);
+    
+    // Alert if there was sanitization
+    if (originalSsid != ssid || originalPassword != password) {
+        Serial.println("Input sanitized: Control characters removed from WiFi credentials");
+    }
+    
     int priority = doc.containsKey("priority") ? doc["priority"].as<int>() : 1;
     
     // Get saved networks JSON - use the same logic as the serial interface

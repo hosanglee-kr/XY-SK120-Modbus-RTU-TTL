@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include "XY-SKxxx.h"
+#include "../wifi_interface/wifi_settings.h"
 
 // Display the WiFi settings menu
 void displayWiFiMenu();
@@ -25,7 +26,7 @@ bool setupWiFiAP(const String& ssid, const String& password);
 void displaySavedWiFiNetworks();
 
 // Helper function to extract quoted parameters from a command
-bool extractQuotedParameters(const String& input, String& command, String& param1, String& param2);
+bool extractQuotedParameters(const String& input, String& param1, String& param2, String& remaining);
 
 // Exit AP mode and return to station mode
 bool exitAPMode();
@@ -42,6 +43,5 @@ void syncCurrentWiFi();
 // Dedicated function to handle adding WiFi networks
 void handleAddWifi(const String& input, String ssid, String password, int priority);
 
-// External declaration of the function from wifi_settings.cpp
-// This prevents us from redefining it in menu_wifi_core.cpp
-extern String loadWiFiCredentialsFromNVS();
+// External declaration of the function from menu_main.cpp
+extern void displayMainMenu();

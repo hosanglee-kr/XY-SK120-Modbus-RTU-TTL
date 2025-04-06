@@ -26,6 +26,91 @@ String getWifiStatus() {
   return jsonString;
 }
 
+// Add this helper function to sanitize input strings
+String sanitizeString(const String& input) {
+    String result = "";
+    for (size_t i = 0; i < input.length(); i++) {
+        char c = input.charAt(i);
+        // Only allow printable ASCII characters, skip control chars
+        if (c >= 32 && c <= 126) {
+            result += c;
+        }
+    }
+    return result;
+}
+
+// Function to repair corrupted WiFi credentials
+bool repairWiFiCredentials() {
+    Preferences prefs;
+    if (!prefs.begin(WIFI_NAMESPACE, true)) {
+        Serial.println("Failed to access WiFi settings");
+        return false;
+    }
+    
+    String wifiListJson = prefs.getString(WIFI_CREDENTIALS_KEY, "[]");
+    prefs.end();
+    
+    // Parse existing JSON
+    DynamicJsonDocument doc(WIFI_CREDENTIALS_JSON_SIZE);
+    DeserializationError error = deserializeJson(doc, wifiListJson);
+    
+    if (error) {
+        Serial.println("Error parsing WiFi credentials, resetting to empty array");
+        if (prefs.begin(WIFI_NAMESPACE, false)) {
+            prefs.putString(WIFI_CREDENTIALS_KEY, "[]");
+            prefs.end();
+        }
+        return true;
+    }
+    
+    // Check if it's an array
+    if (!doc.is<JsonArray>()) {
+        Serial.println("WiFi credentials not stored as array, resetting");
+        if (prefs.begin(WIFI_NAMESPACE, false)) {
+            prefs.putString(WIFI_CREDENTIALS_KEY, "[]");
+            prefs.end();
+        }
+        return true;
+    }
+    
+    // Process each network entry to sanitize
+    bool needsUpdate = false;
+    JsonArray networks = doc.as<JsonArray>();
+    
+    for (JsonObject network : networks) {
+        if (network.containsKey("ssid") && network.containsKey("password")) {
+            String originalSsid = network["ssid"].as<String>();
+            String originalPassword = network["password"].as<String>();
+            
+            String cleanSsid = sanitizeString(originalSsid);
+            String cleanPassword = sanitizeString(originalPassword);
+            
+            // Check if anything changed
+            if (originalSsid != cleanSsid || originalPassword != cleanPassword) {
+                network["ssid"] = cleanSsid;
+                network["password"] = cleanPassword;
+                needsUpdate = true;
+            }
+        }
+    }
+    
+    // If we sanitized anything, save the updated data
+    if (needsUpdate) {
+        String cleanJson;
+        serializeJson(doc, cleanJson);
+        
+        if (prefs.begin(WIFI_NAMESPACE, false)) {
+            bool success = prefs.putString(WIFI_CREDENTIALS_KEY, cleanJson);
+            prefs.end();
+            
+            Serial.println("Sanitized WiFi credentials saved");
+            return success;
+        }
+    }
+    
+    return true;
+}
+
 bool saveWiFiCredentialsToNVS(const String& ssid, const String& password, int priority) {
     Preferences prefs;
     prefs.begin(WIFI_NAMESPACE, false); // Read-write mode
@@ -110,7 +195,7 @@ bool saveWiFiCredentialsToNVS(const String& ssid, const String& password, int pr
     size_t jsonSize = updatedWifiListJson.length();
     Serial.println("WiFi credentials JSON size: " + String(jsonSize) + " bytes");
     
-    if (jsonSize > WIFI_CREDENTIALS_MAX_SIZE) {
+    if (jsonSize > WIFI_CREDENTIALS_JSON_SIZE) {
         Serial.println("WiFi credentials JSON too large for NVS storage");
         prefs.end();
         return false;
@@ -178,6 +263,15 @@ String loadWiFiCredentialsFromNVS() {
             serializeJson(doc, Serial);
             Serial.println();
         }
+    }
+    
+    // After loading but before returning, attempt to repair any corrupted data
+    repairWiFiCredentials();
+    
+    // Reload after repair
+    if (prefs.begin(WIFI_NAMESPACE, true)) {
+        result = prefs.getString(WIFI_CREDENTIALS_KEY, "[]");
+        prefs.end();
     }
     
     return result;

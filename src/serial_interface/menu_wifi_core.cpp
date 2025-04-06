@@ -15,230 +15,7 @@ void handleAddWifi(const String& input, String ssid, String password, int priori
 // External declarations for functions in other files
 extern bool extractQuotedParameters(const String& input, String& command, String& param1, String& param2);
 extern bool exitConfigPortal();
-
-void displayWiFiMenu() {
-  Serial.println("\n==== WiFi Settings ====");
-  Serial.println("scan - Scan for available WiFi networks");
-  Serial.println("connect [ssid] [password] - Connect to a WiFi network");
-  Serial.println("connect \"ssid with spaces\" \"password\" - Connect to a WiFi with spaces in name");
-  Serial.println("disconnect - Disconnect from current WiFi network");
-  Serial.println("wifistatus - Display current WiFi status");
-  Serial.println("ap [ssid] [password] - Create WiFi Access Point");
-  Serial.println("ap \"ssid with spaces\" \"password\" - Create AP with spaces in name");
-  Serial.println("sta - Switch to WiFi Station mode");
-  Serial.println("exit - Exit AP mode and switch to station mode");
-  Serial.println("exitcp - Exit WiFiManager config portal");
-  Serial.println("save - Save currently connected WiFi credentials with highest priority");
-  Serial.println("syncwifi - Sync current WiFi connection to saved networks");
-  Serial.println("addwifi [ssid] [password] [priority] - Add WiFi to saved networks without connecting");
-  Serial.println("addwifi \"ssid with spaces\" \"password\" [priority] - Add WiFi with spaces");
-  Serial.println("savedwifi - Display saved WiFi networks");
-  Serial.println("ip - Display current IP address information");
-  Serial.println("menu - Return to main menu");
-  Serial.println("help - Show this menu");
-}
-
-void handleWiFiMenu(const String& input, XY_SKxxx* ps) {
-  // First try to parse as quoted parameters
-  String command, ssid, password;
-  bool quoted = extractQuotedParameters(input, command, ssid, password);
-  
-  if (input == "scan") {
-    scanWiFiNetworks();
-  } else if (input.startsWith("connect ")) {
-    if (quoted && command == "connect") {
-      // Handle quoted parameters
-      if (ssid.isEmpty()) {
-        Serial.println("Invalid format. Use: connect \"ssid\" \"password\"");
-        return;
-      }
-      
-      Serial.print("Connecting to WiFi network: ");
-      Serial.println(ssid);
-      
-      if (connectToWiFi(ssid, password)) {
-        Serial.println("Successfully connected to WiFi!");
-        displayWiFiStatus();
-      } else {
-        Serial.println("Failed to connect to WiFi. Please check credentials and try again.");
-      }
-    } else {
-      // Legacy space-based parsing
-      int firstSpace = input.indexOf(' ');
-      int secondSpace = input.indexOf(' ', firstSpace + 1);
-      
-      if (secondSpace > 0) {
-        String ssid = input.substring(firstSpace + 1, secondSpace);
-        String password = input.substring(secondSpace + 1);
-        
-        ssid.trim();
-        password.trim();
-        
-        Serial.print("Connecting to WiFi network: ");
-        Serial.println(ssid);
-        
-        if (connectToWiFi(ssid, password)) {
-          Serial.println("Successfully connected to WiFi!");
-          displayWiFiStatus();
-        } else {
-          Serial.println("Failed to connect to WiFi. Please check credentials and try again.");
-        }
-      } else {
-        Serial.println("Invalid format. Use: connect [ssid] [password] or connect \"ssid with spaces\" \"password\"");
-      }
-    }
-  } else if (input == "disconnect") {
-    WiFi.disconnect();
-    Serial.println("Disconnected from WiFi");
-  } else if (input == "wifistatus") {
-    displayWiFiStatus();
-  } else if (input.startsWith("ap ")) {
-    // ... similar code pattern for AP setup with quoted or space-based parameters
-    if (quoted && command == "ap") {
-      // Handle quoted parameters
-      if (ssid.isEmpty()) {
-        Serial.println("Invalid format. Use: ap \"ssid\" \"password\"");
-        return;
-      }
-      
-      if (password.length() < 8) {
-        Serial.println("Password must be at least 8 characters long for AP mode");
-        return;
-      }
-      
-      Serial.print("Setting up WiFi Access Point: ");
-      Serial.println(ssid);
-      
-      if (setupWiFiAP(ssid, password)) {
-        Serial.println("WiFi Access Point created successfully!");
-        displayWiFiStatus();
-      } else {
-        Serial.println("Failed to create WiFi Access Point");
-      }
-    } else {
-      // Legacy space-based parsing for AP setup
-      int firstSpace = input.indexOf(' ');
-      int secondSpace = input.indexOf(' ', firstSpace + 1);
-      
-      if (secondSpace > 0) {
-        String ssid = input.substring(firstSpace + 1, secondSpace);
-        String password = input.substring(secondSpace + 1);
-        
-        ssid.trim();
-        password.trim();
-        
-        if (password.length() < 8) {
-          Serial.println("Password must be at least 8 characters long for AP mode");
-          return;
-        }
-        
-        Serial.print("Setting up WiFi Access Point: ");
-        Serial.println(ssid);
-        
-        if (setupWiFiAP(ssid, password)) {
-          Serial.println("WiFi Access Point created successfully!");
-          displayWiFiStatus();
-        } else {
-          Serial.println("Failed to create WiFi Access Point");
-        }
-      } else {
-        Serial.println("Invalid format. Use: ap [ssid] [password] or ap \"ssid with spaces\" \"password\"");
-      }
-    }
-  } else if (input.startsWith("addwifi ")) {
-    // New command to add WiFi without connecting
-    if (quoted && command == "addwifi") {
-      // Handle quoted parameters
-      if (ssid.isEmpty()) {
-        Serial.println("Invalid format. Use: addwifi \"ssid\" \"password\" [priority]");
-        return;
-      }
-      
-      // Check for priority (optional parameter)
-      int priority = 1; // Default priority
-      
-      // Extract priority if present - it would be after the second quote
-      int lastSpace = input.lastIndexOf(' ');
-      int lastQuote = input.lastIndexOf('"');
-      
-      if (lastSpace > lastQuote) {
-        // There's text after the last quote, likely the priority
-        String priorityStr = input.substring(lastSpace + 1);
-        priorityStr.trim();
-        
-        if (priorityStr.length() > 0 && isDigit(priorityStr.charAt(0))) {
-          priority = priorityStr.toInt();
-        }
-      }
-      
-      // Use the common handler
-      handleAddWifi(input, ssid, password, priority);
-    } else {
-      // Legacy space-based parsing
-      int firstSpace = input.indexOf(' ');
-      int secondSpace = input.indexOf(' ', firstSpace + 1);
-      
-      if (secondSpace <= 0) {
-        Serial.println("Invalid format. Use: addwifi [ssid] [password] [priority]");
-        return;
-      }
-      
-      String ssid = input.substring(firstSpace + 1, secondSpace);
-      String password = "";
-      int priority = 1; // Default priority
-      
-      // Check if there's a third parameter (priority)
-      int thirdSpace = input.indexOf(' ', secondSpace + 1);
-      
-      if (thirdSpace > 0) {
-        // We have all three parameters: ssid, password, priority
-        password = input.substring(secondSpace + 1, thirdSpace);
-        String priorityStr = input.substring(thirdSpace + 1);
-        priorityStr.trim();
-        
-        if (priorityStr.length() > 0 && isDigit(priorityStr.charAt(0))) {
-          priority = priorityStr.toInt();
-        }
-      } else {
-        // Just ssid and password
-        password = input.substring(secondSpace + 1);
-      }
-      
-      ssid.trim();
-      password.trim();
-      
-      // Use the common handler
-      handleAddWifi(input, ssid, password, priority);
-    }
-  } else if (input == "sta" || input == "exit") {
-    if (exitAPMode()) {
-      Serial.println("Exited AP mode and switched to station mode");
-    } else {
-      Serial.println("Switched to WiFi Station mode");
-    }
-  } else if (input == "exitcp") {
-    // Call our properly implemented exit function
-    Serial.println("Attempting to exit WiFiManager config portal...");
-    
-    if (exitConfigPortal()) {
-      Serial.println("Config portal stopped. WiFi credentials saved if entered.");
-    } else {
-      Serial.println("Failed to stop config portal. You may need to reset the device.");
-    }
-  } else if (input == "syncwifi") {
-    syncCurrentWiFi();
-  } else if (input == "save") {
-    handleSaveCurrentWiFi();
-  } else if (input == "savedwifi") {
-    displaySavedWiFiNetworks();
-  } else if (input == "ip") {
-    displayIPInfo();
-  } else if (input == "help") {
-    displayWiFiMenu();
-  } else {
-    Serial.println("Unknown command. Type 'help' for options.");
-  }
-}
+extern String sanitizeString(const String& input);
 
 // Helper function to handle saving current WiFi
 void handleSaveCurrentWiFi() {
@@ -440,6 +217,19 @@ void syncCurrentWiFi() {
 
 // New command to add WiFi without connecting
 void handleAddWifi(const String& input, String ssid, String password, int priority) {
+  // Sanitize inputs
+  String cleanSsid = sanitizeString(ssid);
+  String cleanPassword = sanitizeString(password);
+  
+  // Alert if there was sanitization
+  if (ssid != cleanSsid || password != cleanPassword) {
+    Serial.println("Input sanitized: Control characters removed from WiFi credentials");
+    
+    // Update to use clean versions
+    ssid = cleanSsid;
+    password = cleanPassword;
+  }
+  
   Serial.print("Adding WiFi network to saved list: ");
   Serial.print(ssid);
   Serial.print(" with priority: ");
