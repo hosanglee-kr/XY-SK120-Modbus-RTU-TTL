@@ -16,6 +16,46 @@
         rssi: 0
     };
 
+    // Add a function to determine the next available priority
+    function getNextAvailablePriority() {
+        return new Promise((resolve, reject) => {
+            // Default priority if we can't determine a better one
+            let nextPriority = 1;
+            
+            // Try to load existing networks to find the highest priority
+            if (window.websocketConnected) {
+                window.wifiInterface.loadWifiCredentials()
+                    .then(networks => {
+                        if (Array.isArray(networks) && networks.length > 0) {
+                            // Find the highest priority currently in use
+                            let highestPriority = 0;
+                            
+                            networks.forEach(network => {
+                                const priority = parseInt(network.priority) || 0;
+                                if (priority > highestPriority) {
+                                    highestPriority = priority;
+                                }
+                            });
+                            
+                            // Next priority is one higher than the current highest
+                            nextPriority = highestPriority + 1;
+                            console.log(`Determined next priority: ${nextPriority} (highest existing: ${highestPriority})`);
+                        } else {
+                            console.log('No existing networks found, using default priority: 1');
+                        }
+                        resolve(nextPriority);
+                    })
+                    .catch(error => {
+                        console.warn('Error fetching networks for priority determination:', error);
+                        resolve(nextPriority); // Use default on error
+                    });
+            } else {
+                console.log('WebSocket not connected, using default priority: 1');
+                resolve(nextPriority);
+            }
+        });
+    }
+
     // Initialize WiFi settings module
     function initWifiSettings() {
         // Only initialize once
@@ -194,7 +234,10 @@
                 
                 const ssid = ssidInput.value.trim();
                 const password = passwordInput.value;
-                const priority = priorityInput ? parseInt(priorityInput.value) || -1 : -1;
+                
+                // Use the priority from the input or auto-assign
+                const useAutoPriority = priorityInput && priorityInput.hasAttribute('data-auto');
+                let manualPriority = priorityInput ? parseInt(priorityInput.value) || -1 : -1;
                 
                 if (!ssid) {
                     alert('Please enter an SSID');
@@ -211,8 +254,19 @@
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Adding...';
                 
-                // Add WiFi network with better error handling
-                window.wifiInterface.addWifiNetwork(ssid, password, priority)
+                // Determine priority automatically if needed
+                const processPriorityAndAdd = useAutoPriority || manualPriority <= 0 ? 
+                    getNextAvailablePriority().then(priority => {
+                        console.log(`Using auto-assigned priority: ${priority}`);
+                        return priority;
+                    }) : 
+                    Promise.resolve(manualPriority);
+                
+                processPriorityAndAdd
+                    .then(priority => {
+                        // Now add the WiFi network with the determined priority
+                        return window.wifiInterface.addWifiNetwork(ssid, password, priority);
+                    })
                     .then(result => {
                         if (result.success) {
                             alert(`WiFi network "${ssid}" added successfully!`);
@@ -220,9 +274,15 @@
                             // Clear form
                             ssidInput.value = '';
                             passwordInput.value = '';
-                            if (priorityInput) priorityInput.value = '1';
                             
-                            // Perform a combined refresh (status and networks)
+                            // Reset priority input to auto
+                            if (priorityInput) {
+                                priorityInput.value = 'auto';
+                                priorityInput.setAttribute('data-auto', 'true');
+                                priorityInput.placeholder = 'Auto (next available)';
+                            }
+                            
+                            // Perform a combined refresh
                             refreshWifiStatusAndNetworks();
                         } else {
                             alert(`Failed to add WiFi network: ${result.error || 'Unknown error'}`);
@@ -239,21 +299,97 @@
                     });
             });
             
-            // Check if we need to add the priority field
+            // Modify the priority field to support auto mode
             if (!newForm.querySelector('#new-wifi-priority')) {
                 const passwordField = newForm.querySelector('#new-wifi-password').parentNode;
                 
-                // Create priority field container div
+                // Create priority field container div with auto option
                 const priorityField = document.createElement('div');
                 priorityField.innerHTML = `
-                    <label for="new-wifi-priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority (1 = highest)</label>
-                    <input type="number" id="new-wifi-priority" placeholder="1" min="1" value="1" 
-                        class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Lower number = higher connection priority</p>
+                    <label for="new-wifi-priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
+                    <div class="flex space-x-2 items-center">
+                        <select id="new-wifi-priority" data-auto="true"
+                            class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
+                            <option value="auto" selected>Auto (next available)</option>
+                            <option value="1">1 (highest)</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                        <button type="button" id="refresh-priority-btn" 
+                            class="inline-flex items-center px-2 py-1 border border-transparent text-xs leading-5 font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Check
+                        </button>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Lower number = higher connection priority. Auto will use the next available priority.</p>
                 `;
                 
                 // Insert the priority field after the password field
                 passwordField.parentNode.insertBefore(priorityField, passwordField.nextSibling);
+                
+                // Add event handler for the priority select
+                const prioritySelect = priorityField.querySelector('#new-wifi-priority');
+                if (prioritySelect) {
+                    prioritySelect.addEventListener('change', function() {
+                        const value = this.value;
+                        if (value === 'auto') {
+                            this.setAttribute('data-auto', 'true');
+                        } else {
+                            this.removeAttribute('data-auto');
+                        }
+                    });
+                }
+                
+                // Add event handler for the refresh button
+                const refreshBtn = priorityField.querySelector('#refresh-priority-btn');
+                if (refreshBtn) {
+                    refreshBtn.addEventListener('click', function() {
+                        this.disabled = true;
+                        this.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" class="animate-spin h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Checking...
+                        `;
+                        
+                        getNextAvailablePriority()
+                            .then(priority => {
+                                const select = document.getElementById('new-wifi-priority');
+                                if (select) {
+                                    // Add the option if it doesn't exist
+                                    let autoOption = select.querySelector('option[value="auto"]');
+                                    if (!autoOption) {
+                                        autoOption = document.createElement('option');
+                                        autoOption.value = 'auto';
+                                        select.prepend(autoOption);
+                                    }
+                                    
+                                    // Update the auto option text
+                                    autoOption.text = `Auto (next: ${priority})`;
+                                    
+                                    // Select the auto option
+                                    select.value = 'auto';
+                                    select.setAttribute('data-auto', 'true');
+                                    
+                                    // Show a tooltip or message
+                                    console.log(`Next available priority: ${priority}`);
+                                }
+                            })
+                            .finally(() => {
+                                this.disabled = false;
+                                this.innerHTML = `
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    Check
+                                `;
+                            });
+                    });
+                }
             }
         }
     }
