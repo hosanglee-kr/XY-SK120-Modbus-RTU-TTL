@@ -56,6 +56,111 @@
         });
     }
 
+    // Add a request queue system for WebSocket operations
+    const wsRequestQueue = {
+        queue: [],
+        processing: false,
+        
+        // Add a request to the queue
+        add(fn, priority = 0) {
+            const request = { fn, priority };
+            this.queue.push(request);
+            console.log(`Added request to WebSocket queue (${this.queue.length} total)`);
+            this.processNext();
+            return new Promise((resolve, reject) => {
+                request.resolve = resolve;
+                request.reject = reject;
+            });
+        },
+        
+        // Process the next request in the queue
+        processNext() {
+            if (this.processing || this.queue.length === 0) return;
+            
+            // Sort the queue by priority (higher priority first)
+            this.queue.sort((a, b) => b.priority - a.priority);
+            
+            // If WebSocket isn't connected, don't process yet
+            if (!window.websocketConnected) {
+                console.log('WebSocket not connected, delaying queue processing');
+                setTimeout(() => this.processNext(), 500);
+                return;
+            }
+            
+            this.processing = true;
+            const request = this.queue.shift();
+            console.log(`Processing WebSocket request (${this.queue.length} remaining)`);
+            
+            Promise.resolve().then(() => request.fn())
+                .then(result => {
+                    request.resolve(result);
+                })
+                .catch(error => {
+                    console.error('Error processing WebSocket request:', error);
+                    request.reject(error);
+                })
+                .finally(() => {
+                    this.processing = false;
+                    this.processNext();
+                });
+        },
+        
+        // Clear the queue (used for cleanup)
+        clear() {
+            const queueLength = this.queue.length;
+            this.queue.forEach(request => {
+                request.reject(new Error('WebSocket queue cleared'));
+            });
+            this.queue = [];
+            this.processing = false;
+            console.log(`Cleared WebSocket queue (${queueLength} requests cancelled)`);
+        }
+    };
+
+    // Wait for WebSocket to be ready, with retry
+    function waitForWebSocket(timeout = 5000, retry = 3) {
+        return new Promise((resolve, reject) => {
+            if (window.websocketConnected && window.websocket && window.websocket.readyState === 1) {
+                resolve();
+                return;
+            }
+            
+            let retryCount = 0;
+            const waitInterval = 500; // 500ms check interval
+            let totalWait = 0;
+            
+            const checkWebSocket = setInterval(() => {
+                totalWait += waitInterval;
+                
+                if (window.websocketConnected && window.websocket && window.websocket.readyState === 1) {
+                    clearInterval(checkWebSocket);
+                    resolve();
+                    return;
+                }
+                
+                if (totalWait >= timeout) {
+                    clearInterval(checkWebSocket);
+                    
+                    if (retryCount < retry) {
+                        retryCount++;
+                        console.log(`WebSocket not ready, retrying (${retryCount}/${retry})...`);
+                        
+                        // Try to initialize WebSocket if function exists
+                        if (typeof window.initWebSocket === 'function') {
+                            window.initWebSocket();
+                        }
+                        
+                        // Reset wait time and start checking again
+                        totalWait = 0;
+                    } else {
+                        console.error(`WebSocket not ready after ${timeout * retry}ms and ${retry} retries`);
+                        reject(new Error('WebSocket connection timeout'));
+                    }
+                }
+            }, waitInterval);
+        });
+    }
+
     // Initialize WiFi settings module
     function initWifiSettings() {
         // Only initialize once
@@ -72,17 +177,22 @@
         setupAddWifiForm();
         setupRefreshNetworksButton();
         
-        // Listen for WebSocket connection events
+        // Listen for WebSocket connection and disconnection events
         document.addEventListener('websocket-connected', handleWebSocketConnected);
-        document.addEventListener('websocket-disconnected', handleWebSocketDisconnected);
+        document.addEventListener('websocket-disconnected', () => {
+            handleWebSocketDisconnected();
+            // Clear the WebSocket request queue on disconnect
+            wsRequestQueue.clear();
+        });
         
         // Check if WebSocket is already connected
         if (window.websocketConnected && window.websocket && window.websocket.readyState === 1) {
             console.log("WebSocket already connected, fetching WiFi status");
-            fetchWifiStatus();
+            // Still use a small delay for stability
+            setTimeout(() => fetchWifiStatus(), 200);
         } else {
-            console.log("WebSocket not yet connected, showing disconnected state");
-            // Show disconnected state
+            console.log("WebSocket not yet connected, showing waiting state");
+            // Show waiting state
             updateWifiStatusUI({
                 status: 'waiting',
                 ssid: 'Waiting for connection...',
@@ -90,351 +200,44 @@
                 rssi: 0,
                 mac: '--'
             });
+            
+            // Display a connecting message in the saved networks area
+            const networksContainer = document.getElementById('saved-wifi-networks');
+            if (networksContainer) {
+                networksContainer.innerHTML = `
+                    <div class="p-4 flex items-center justify-center">
+                        <svg class="animate-spin h-5 w-5 mr-2 text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-sm text-gray-600 dark:text-gray-300">Waiting for connection...</span>
+                    </div>
+                `;
+            }
         }
         
         initialized = true;
-    }
-
-    // Set up WiFi refresh button
-    function setupWifiRefreshButton() {
-        const refreshBtn = document.getElementById('wifi-refresh-btn');
-        if (refreshBtn) {
-            // Remove any existing listeners to prevent duplicates
-            const newRefreshBtn = refreshBtn.cloneNode(true);
-            refreshBtn.parentNode.replaceChild(newRefreshBtn, refreshBtn);
-            
-            // Add new event listener
-            newRefreshBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Show loading state
-                this.disabled = true;
-                const originalText = this.innerHTML;
-                this.innerHTML = `
-                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Refreshing...
-                `;
-                
-                // Check WebSocket connection first
-                if (!window.websocketConnected) {
-                    console.log("WebSocket not connected, trying to reconnect");
-                    
-                    // Attempt to trigger a reconnection
-                    if (typeof window.initWebSocket === 'function') {
-                        window.initWebSocket();
-                    }
-                    
-                    // Show error message after a short delay if still disconnected
-                    setTimeout(() => {
-                        if (!window.websocketConnected) {
-                            alert("Cannot refresh WiFi status: WebSocket not connected");
-                            
-                            // Restore button state
-                            this.disabled = false;
-                            this.innerHTML = originalText;
-                        } else {
-                            // If now connected, fetch the status
-                            fetchWifiStatus()
-                                .finally(() => {
-                                    // Restore button state after 2 seconds
-                                    setTimeout(() => {
-                                        this.disabled = false;
-                                        this.innerHTML = originalText;
-                                    }, 2000);
-                                });
-                        }
-                    }, 2000);
-                    
-                    return;
-                }
-                
-                // Fetch WiFi status if connected
-                refreshWifiStatusAndNetworks()
-                    .finally(() => {
-                        // Restore button state after 2 seconds
-                        setTimeout(() => {
-                            this.disabled = false;
-                            this.innerHTML = originalText;
-                        }, 2000);
-                    });
-            });
-        }
-    }
-
-    // Set up WiFi reset button
-    function setupWifiResetButton() {
-        const resetBtn = document.getElementById('wifi-reset-btn');
-        if (resetBtn) {
-            // Remove any existing listeners to prevent duplicates
-            const newResetBtn = resetBtn.cloneNode(true);
-            resetBtn.parentNode.replaceChild(newResetBtn, resetBtn);
-            
-            // Add new event listener
-            newResetBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                if (confirm('Are you sure you want to reset WiFi settings? This will remove all saved networks and the device will restart.')) {
-                    // Show loading state
-                    this.disabled = true;
-                    this.textContent = 'Resetting...';
-                    
-                    // Reset WiFi
-                    window.wifiInterface.resetWifi()
-                        .then(result => {
-                            if (result.success) {
-                                alert('WiFi settings reset successfully. The device will restart.');
-                            } else {
-                                alert(`Failed to reset WiFi settings: ${result.error || 'Unknown error'}`);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error resetting WiFi:', error);
-                            alert('Error resetting WiFi: ' + error.message);
-                        })
-                        .finally(() => {
-                            // Restore button state
-                            this.disabled = false;
-                            this.innerHTML = `
-                                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5m0 0l9-5-9 5-9 5 9 5m0 0v8"></path>
-                                </svg>
-                                Reset WiFi
-                            `;
-                        });
-                }
-            });
-        }
-    }
-
-    // Set up add WiFi form
-    function setupAddWifiForm() {
-        const form = document.getElementById('add-wifi-form');
-        if (form) {
-            // Remove any existing listeners to prevent duplicates
-            const newForm = form.cloneNode(true);
-            form.parentNode.replaceChild(newForm, form);
-            
-            // Add new event listener
-            newForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // Get form values
-                const ssidInput = this.querySelector('#new-wifi-ssid');
-                const passwordInput = this.querySelector('#new-wifi-password');
-                const priorityInput = this.querySelector('#new-wifi-priority');
-                const submitBtn = this.querySelector('[type="submit"]');
-                
-                if (!ssidInput || !passwordInput) {
-                    alert('Form inputs not found');
-                    return;
-                }
-                
-                const ssid = ssidInput.value.trim();
-                const password = passwordInput.value;
-                
-                // Use the priority from the input or auto-assign
-                const useAutoPriority = priorityInput && priorityInput.hasAttribute('data-auto');
-                let manualPriority = priorityInput ? parseInt(priorityInput.value) || -1 : -1;
-                
-                if (!ssid) {
-                    alert('Please enter an SSID');
-                    return;
-                }
-                
-                // Check WebSocket connection before attempting to add
-                if (!window.websocketConnected) {
-                    alert('Cannot add network: WebSocket not connected. Please check your connection.');
-                    return;
-                }
-                
-                // Show loading state
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Adding...';
-                
-                // Determine priority automatically if needed
-                const processPriorityAndAdd = useAutoPriority || manualPriority <= 0 ? 
-                    getNextAvailablePriority().then(priority => {
-                        console.log(`Using auto-assigned priority: ${priority}`);
-                        return priority;
-                    }) : 
-                    Promise.resolve(manualPriority);
-                
-                processPriorityAndAdd
-                    .then(priority => {
-                        // Now add the WiFi network with the determined priority
-                        return window.wifiInterface.addWifiNetwork(ssid, password, priority);
-                    })
-                    .then(result => {
-                        if (result.success) {
-                            alert(`WiFi network "${ssid}" added successfully!`);
-                            
-                            // Clear form
-                            ssidInput.value = '';
-                            passwordInput.value = '';
-                            
-                            // Reset priority input to auto
-                            if (priorityInput) {
-                                priorityInput.value = 'auto';
-                                priorityInput.setAttribute('data-auto', 'true');
-                                priorityInput.placeholder = 'Auto (next available)';
-                            }
-                            
-                            // Perform a combined refresh
-                            refreshWifiStatusAndNetworks();
-                        } else {
-                            alert(`Failed to add WiFi network: ${result.error || 'Unknown error'}`);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error adding WiFi network:', error);
-                        alert('Error adding WiFi network: ' + error.message);
-                    })
-                    .finally(() => {
-                        // Restore button state
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Add Network';
-                    });
-            });
-            
-            // Modify the priority field to support auto mode
-            if (!newForm.querySelector('#new-wifi-priority')) {
-                const passwordField = newForm.querySelector('#new-wifi-password').parentNode;
-                
-                // Create priority field container div with auto option
-                const priorityField = document.createElement('div');
-                priorityField.innerHTML = `
-                    <label for="new-wifi-priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
-                    <div class="flex space-x-2 items-center">
-                        <select id="new-wifi-priority" data-auto="true"
-                            class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
-                            <option value="auto" selected>Auto (next available)</option>
-                            <option value="1">1 (highest)</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <button type="button" id="refresh-priority-btn" 
-                            class="inline-flex items-center px-2 py-1 border border-transparent text-xs leading-5 font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            Check
-                        </button>
-                    </div>
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Lower number = higher connection priority. Auto will use the next available priority.</p>
-                `;
-                
-                // Insert the priority field after the password field
-                passwordField.parentNode.insertBefore(priorityField, passwordField.nextSibling);
-                
-                // Add event handler for the priority select
-                const prioritySelect = priorityField.querySelector('#new-wifi-priority');
-                if (prioritySelect) {
-                    prioritySelect.addEventListener('change', function() {
-                        const value = this.value;
-                        if (value === 'auto') {
-                            this.setAttribute('data-auto', 'true');
-                        } else {
-                            this.removeAttribute('data-auto');
-                        }
-                    });
-                }
-                
-                // Add event handler for the refresh button
-                const refreshBtn = priorityField.querySelector('#refresh-priority-btn');
-                if (refreshBtn) {
-                    refreshBtn.addEventListener('click', function() {
-                        this.disabled = true;
-                        this.innerHTML = `
-                            <svg xmlns="http://www.w3.org/2000/svg" class="animate-spin h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            Checking...
-                        `;
-                        
-                        getNextAvailablePriority()
-                            .then(priority => {
-                                const select = document.getElementById('new-wifi-priority');
-                                if (select) {
-                                    // Add the option if it doesn't exist
-                                    let autoOption = select.querySelector('option[value="auto"]');
-                                    if (!autoOption) {
-                                        autoOption = document.createElement('option');
-                                        autoOption.value = 'auto';
-                                        select.prepend(autoOption);
-                                    }
-                                    
-                                    // Update the auto option text
-                                    autoOption.text = `Auto (next: ${priority})`;
-                                    
-                                    // Select the auto option
-                                    select.value = 'auto';
-                                    select.setAttribute('data-auto', 'true');
-                                    
-                                    // Show a tooltip or message
-                                    console.log(`Next available priority: ${priority}`);
-                                }
-                            })
-                            .finally(() => {
-                                this.disabled = false;
-                                this.innerHTML = `
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                    Check
-                                `;
-                            });
-                    });
-                }
-            }
-        }
-    }
-
-    // Add setup for the refresh networks button
-    function setupRefreshNetworksButton() {
-        const refreshBtn = document.getElementById('refresh-networks-btn');
-        if (refreshBtn) {
-            // Remove any existing listeners to prevent duplicates
-            const newRefreshBtn = refreshBtn.cloneNode(true);
-            refreshBtn.parentNode.replaceChild(newRefreshBtn, refreshBtn);
-            
-            // Add new event listener
-            newRefreshBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Show loading state
-                this.disabled = true;
-                const originalText = this.innerHTML;
-                this.innerHTML = `
-                    <svg class="animate-spin -ml-1 mr-1 h-3 w-3 text-current inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Refreshing...
-                `;
-                
-                // Use combined refresh function
-                refreshWifiStatusAndNetworks()
-                    .finally(() => {
-                        // Restore button state after 1 second
-                        setTimeout(() => {
-                            this.disabled = false;
-                            this.innerHTML = originalText;
-                        }, 1000);
-                    });
-            });
-        }
     }
 
     // Handle WebSocket connected event
     function handleWebSocketConnected() {
         console.log('WebSocket connected - updating WiFi status');
         
-        // Wait a moment for the connection to fully stabilize
+        // Display a connecting message in the UI
+        const networksContainer = document.getElementById('saved-wifi-networks');
+        if (networksContainer) {
+            networksContainer.innerHTML = `
+                <div class="p-4 flex items-center justify-center">
+                    <svg class="animate-spin h-5 w-5 mr-2 text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-sm text-gray-600 dark:text-gray-300">Connecting to device...</span>
+                </div>
+            `;
+        }
+        
+        // Wait longer for the connection to fully stabilize - increased to 1.5 seconds
         setTimeout(() => {
             // Add try-catch to handle any errors that might occur
             try {
@@ -448,12 +251,16 @@
                     })
                     .catch(error => {
                         console.warn("Error during automatic WiFi status fetch:", error.message);
-                        // Error is now handled
+                        // Attempt a retry after a brief delay
+                        setTimeout(() => {
+                            console.log("Retrying WiFi status fetch after error...");
+                            refreshWifiStatusAndNetworks();
+                        }, 2000);
                     });
             } catch (error) {
                 console.error("Unexpected error during WebSocket connected handler:", error);
             }
-        }, 500);
+        }, 1500); // Increased from 500ms to 1500ms
     }
 
     // Handle WebSocket disconnected event
@@ -477,22 +284,17 @@
         // Show loading state
         setWifiStatusLoading(true);
         
-        // Check if WebSocket is connected
-        if (!window.websocketConnected) {
-            console.warn('Cannot fetch WiFi status: WebSocket not connected');
-            setWifiStatusError('WebSocket disconnected');
+        // Use the request queue system
+        return wsRequestQueue.add(() => {
+            // Double-check WebSocket connection
+            if (!window.websocketConnected) {
+                console.warn('Cannot fetch WiFi status: WebSocket not connected');
+                setWifiStatusError('WebSocket disconnected');
+                return Promise.reject(new Error('WebSocket not connected'));
+            }
             
-            // Return rejected promise but make sure it's caught somewhere
-            return Promise.reject(new Error('WebSocket not connected'))
-                .catch(err => {
-                    // This ensures the promise rejection is handled at this level
-                    // even if the caller doesn't have a catch block
-                    console.warn("WiFi status fetch failed (handled):", err.message);
-                    throw err; // Still propagate the error for external catch blocks
-                });
-        }
-        
-        return window.wifiInterface.getWifiStatus()
+            return window.wifiInterface.getWifiStatus();
+        }, 10) // High priority (10)
             .then(wifiStatus => {
                 console.log('WiFi status received:', wifiStatus);
                 
@@ -507,8 +309,7 @@
                 // Show error state
                 setWifiStatusError(error.message);
                 
-                // Make sure this doesn't become an unhandled rejection
-                // The error is handled here but still propagated
+                // Propagate the error
                 return Promise.reject(error);
             });
     }
@@ -523,16 +324,28 @@
             networksContainer.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">Loading saved networks...</div>';
         }
         
-        // Debug - ensure WebSocket is connected
-        if (!window.websocketConnected) {
-            console.warn('Cannot fetch networks: WebSocket not connected');
-            if (networksContainer) {
-                networksContainer.innerHTML = '<div class="p-4 text-sm text-gray-500 dark:text-gray-400">Cannot load networks: WebSocket disconnected</div>';
+        // Use the request queue system
+        return wsRequestQueue.add(() => {
+            // Double-check WebSocket connection
+            if (!window.websocketConnected) {
+                console.warn('Cannot fetch networks: WebSocket not connected');
+                if (networksContainer) {
+                    networksContainer.innerHTML = `
+                        <div class="p-4 flex flex-col items-center justify-center space-y-3">
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Waiting for connection...</p>
+                            <div class="animate-pulse flex space-x-1">
+                                <div class="w-2 h-2 bg-secondary rounded-full"></div>
+                                <div class="w-2 h-2 bg-secondary rounded-full"></div>
+                                <div class="w-2 h-2 bg-secondary rounded-full"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+                return Promise.reject(new Error('WebSocket not connected'));
             }
-            return Promise.reject(new Error('WebSocket not connected'));
-        }
-        
-        return window.wifiInterface.loadWifiCredentials()
+            
+            return window.wifiInterface.loadWifiCredentials();
+        }, 5) // Medium priority (5)
             .then(networks => {
                 console.log('Saved networks received:', networks);
                 
@@ -603,51 +416,6 @@
             });
     }
 
-    // Set WiFi status elements to loading state
-    function setWifiStatusLoading(loading) {
-        const elements = ['wifi-status', 'wifi-ssid', 'wifi-ip', 'wifi-rssi'];
-        
-        elements.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                if (loading) {
-                    el.classList.add('loading');
-                    el.setAttribute('data-previous', el.textContent);
-                    el.textContent = 'Loading...';
-                } else {
-                    el.classList.remove('loading');
-                    const previous = el.getAttribute('data-previous');
-                    if (previous) {
-                        el.textContent = previous;
-                    }
-                }
-            }
-        });
-    }
-
-    // Show a more specific error message
-    function setWifiStatusError(errorMessage = 'Error') {
-        const statusEl = document.getElementById('wifi-status');
-        if (statusEl) {
-            statusEl.classList.remove('loading');
-            statusEl.textContent = 'Error';
-            statusEl.className = 'text-base font-semibold text-danger';
-        }
-        
-        const elements = ['wifi-ssid', 'wifi-ip', 'wifi-rssi'];
-        elements.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.classList.remove('loading');
-                if (id === 'wifi-ssid') {
-                    el.textContent = errorMessage || 'Connection error';
-                } else {
-                    el.textContent = '--';
-                }
-            }
-        });
-    }
-
     // Update WiFi status UI
     function updateWifiStatusUI(data) {
         // Store the current status for later reference
@@ -704,10 +472,113 @@
             rssiEl.textContent = `${rssi} dBm (${signalStrength})`;
         }
         
-        // After updating the status, also update the saved networks display
-        // to reflect the current connection status
-        fetchSavedNetworks().catch(error => {
-            console.warn("Error refreshing saved networks after status update:", error.message);
+        // After updating the status, try to update saved networks but don't log warnings on failure
+        // This prevents the console warning about WebSocket not being connected
+        waitForWebSocket(2000, 1)
+            .then(() => fetchSavedNetworks())
+            .catch(error => {
+                // Only log debugging info, not warnings
+                console.debug("Couldn't refresh networks after status update:", error.message);
+            });
+    }
+
+    // Add a combined refresh function
+    function refreshWifiStatusAndNetworks() {
+        console.log('Performing combined WiFi refresh');
+        
+        // First check if WebSocket is connected
+        if (!window.websocketConnected) {
+            console.log('WebSocket not connected, waiting for connection...');
+            
+            // Show waiting state
+            const networksContainer = document.getElementById('saved-wifi-networks');
+            if (networksContainer) {
+                networksContainer.innerHTML = `
+                    <div class="p-4 flex items-center justify-center">
+                        <svg class="animate-spin h-5 w-5 mr-2 text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-sm text-gray-600 dark:text-gray-300">Waiting for connection...</span>
+                    </div>
+                `;
+            }
+            
+            // Try to wait for the WebSocket with a timeout
+            return waitForWebSocket(5000, 2)
+                .then(() => {
+                    // Now try the refresh
+                    return fetchWifiStatus()
+                        .then(status => fetchSavedNetworks())
+                        .catch(error => {
+                            console.warn('Error during combined WiFi refresh:', error.message);
+                            return fetchSavedNetworks();
+                        });
+                })
+                .catch(error => {
+                    console.error('WebSocket connection failed:', error.message);
+                    return Promise.reject(error);
+                });
+        }
+        
+        // If already connected, do the regular flow
+        return fetchWifiStatus()
+            .then(status => {
+                // After status is updated, fetch the networks
+                return fetchSavedNetworks();
+            })
+            .catch(error => {
+                console.warn('Error during combined WiFi refresh:', error.message);
+                // Even if fetching status fails, try to fetch networks
+                return fetchSavedNetworks()
+                    .catch(networkError => {
+                        console.warn('Error fetching networks after status error:', networkError.message);
+                    });
+            });
+    }
+
+    // Set WiFi status elements to loading state
+    function setWifiStatusLoading(loading) {
+        const elements = ['wifi-status', 'wifi-ssid', 'wifi-ip', 'wifi-rssi'];
+        
+        elements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                if (loading) {
+                    el.classList.add('loading');
+                    el.setAttribute('data-previous', el.textContent);
+                    el.textContent = 'Loading...';
+                } else {
+                    el.classList.remove('loading');
+                    const previous = el.getAttribute('data-previous');
+                    if (previous) {
+                        el.textContent = previous;
+                    }
+                }
+            }
+        });
+    }
+
+    // Show a more specific error message
+    function setWifiStatusError(errorMessage = 'Error') {
+        const statusEl = document.getElementById('wifi-status');
+        if (statusEl) {
+            statusEl.classList.remove('loading');
+            statusEl.textContent = 'Error';
+            statusEl.className = 'text-base font-semibold text-danger';
+        }
+        
+        const elements = ['wifi-ssid', 'wifi-ip', 'wifi-rssi'];
+        elements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('loading');
+                if (id === 'wifi-ssid') {
+                    el.textContent = errorMessage || 'Connection error';
+                } else {
+                    el.textContent = '--';
+                }
+            }
         });
     }
 
@@ -1249,26 +1120,6 @@
         }
     }
 
-    // Add a combined refresh function
-    function refreshWifiStatusAndNetworks() {
-        console.log('Performing combined WiFi refresh');
-        
-        // First fetch the WiFi status
-        return fetchWifiStatus()
-            .then(status => {
-                // After status is updated, fetch the networks
-                return fetchSavedNetworks();
-            })
-            .catch(error => {
-                console.warn('Error during combined WiFi refresh:', error.message);
-                // Even if fetching status fails, try to fetch networks
-                return fetchSavedNetworks()
-                    .catch(networkError => {
-                        console.warn('Error fetching networks after status error:', networkError.message);
-                    });
-            });
-    }
-
     // Add function to ensure the container is properly sized and visible
     function ensureNetworksContainerVisibility() {
         const networksContainer = document.getElementById('saved-wifi-networks');
@@ -1296,6 +1147,363 @@
         }, 100);
     }
 
+    // Set up WiFi refresh button
+    function setupWifiRefreshButton() {
+        const refreshBtn = document.getElementById('wifi-refresh-btn');
+        if (refreshBtn) {
+            // Remove any existing listeners to prevent duplicates
+            const newRefreshBtn = refreshBtn.cloneNode(true);
+            refreshBtn.parentNode.replaceChild(newRefreshBtn, refreshBtn);
+            
+            // Add new event listener
+            newRefreshBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Show loading state
+                this.disabled = true;
+                const originalText = this.innerHTML;
+                this.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Refreshing...
+                `;
+                
+                // Check WebSocket connection first
+                if (!window.websocketConnected) {
+                    console.log("WebSocket not connected, trying to reconnect");
+                    
+                    // Attempt to trigger a reconnection
+                    if (typeof window.initWebSocket === 'function') {
+                        window.initWebSocket();
+                    }
+                    
+                    // Show error message after a short delay if still disconnected
+                    setTimeout(() => {
+                        if (!window.websocketConnected) {
+                            alert("Cannot refresh WiFi status: WebSocket not connected");
+                            
+                            // Restore button state
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+                        } else {
+                            // If now connected, fetch the status
+                            fetchWifiStatus()
+                                .finally(() => {
+                                    // Restore button state after 2 seconds
+                                    setTimeout(() => {
+                                        this.disabled = false;
+                                        this.innerHTML = originalText;
+                                    }, 2000);
+                                });
+                        }
+                    }, 2000);
+                    
+                    return;
+                }
+                
+                // Fetch WiFi status if connected
+                refreshWifiStatusAndNetworks()
+                    .finally(() => {
+                        // Restore button state after 2 seconds
+                        setTimeout(() => {
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+                        }, 2000);
+                    });
+            });
+        }
+    }
+
+    // Set up WiFi reset button
+    function setupWifiResetButton() {
+        const resetBtn = document.getElementById('wifi-reset-btn');
+        if (resetBtn) {
+            // Remove any existing listeners to prevent duplicates
+            const newResetBtn = resetBtn.cloneNode(true);
+            resetBtn.parentNode.replaceChild(newResetBtn, resetBtn);
+            
+            // Add new event listener
+            newResetBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                if (confirm('Are you sure you want to reset WiFi settings? This will remove all saved networks and the device will restart.')) {
+                    // Show loading state
+                    this.disabled = true;
+                    this.textContent = 'Resetting...';
+                    
+                    // Reset WiFi
+                    window.wifiInterface.resetWifi()
+                        .then(result => {
+                            if (result.success) {
+                                alert('WiFi settings reset successfully. The device will restart.');
+                            } else {
+                                alert(`Failed to reset WiFi settings: ${result.error || 'Unknown error'}`);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error resetting WiFi:', error);
+                            alert('Error resetting WiFi: ' + error.message);
+                        })
+                        .finally(() => {
+                            // Restore button state
+                            this.disabled = false;
+                            this.innerHTML = `
+                                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5m0 0l9-5-9 5-9 5 9 5m0 0v8"></path>
+                                </svg>
+                                Reset WiFi
+                            `;
+                        });
+                }
+            });
+        }
+    }
+
+    // Set up add WiFi form with improved validation and debugging
+    function setupAddWifiForm() {
+        const form = document.getElementById('add-wifi-form');
+        if (form) {
+            // Remove any existing listeners to prevent duplicates
+            const newForm = form.cloneNode(true);
+            form.parentNode.replaceChild(newForm, form);
+            
+            // Add new event listener with better debugging
+            newForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.log('Add WiFi form submitted');
+                
+                // Get form values
+                const ssidInput = this.querySelector('#new-wifi-ssid');
+                const passwordInput = this.querySelector('#new-wifi-password');
+                const priorityInput = this.querySelector('#new-wifi-priority');
+                const submitBtn = this.querySelector('[type="submit"]');
+                
+                if (!ssidInput || !passwordInput) {
+                    alert('Form inputs not found');
+                    console.error('Form inputs not found:', {
+                        ssidInput: !!ssidInput,
+                        passwordInput: !!passwordInput,
+                        priorityInput: !!priorityInput
+                    });
+                    return;
+                }
+                
+                const ssid = ssidInput.value.trim();
+                const password = passwordInput.value;
+                
+                // Log form values (except password)
+                console.log('Form values:', {
+                    ssid,
+                    passwordProvided: !!password,
+                    priorityInputExists: !!priorityInput,
+                    priorityValue: priorityInput ? priorityInput.value : 'N/A'
+                });
+                
+                // Use the priority from the input or auto-assign
+                const useAutoPriority = priorityInput && priorityInput.hasAttribute('data-auto');
+                let manualPriority = priorityInput ? parseInt(priorityInput.value) || -1 : -1;
+                
+                if (!ssid) {
+                    alert('Please enter an SSID');
+                    return;
+                }
+                
+                // Check WebSocket connection before attempting to add
+                if (!window.websocketConnected) {
+                    alert('Cannot add network: WebSocket not connected. Please check your connection.');
+                    return;
+                }
+                
+                // Show loading state
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Adding...';
+                
+                // Log the connection attempt
+                console.log(`Attempting to add WiFi network: ${ssid} with priority: ${useAutoPriority ? 'auto' : manualPriority}`);
+                
+                // Determine priority automatically if needed
+                const processPriorityAndAdd = useAutoPriority || manualPriority <= 0 ? 
+                    getNextAvailablePriority().then(priority => {
+                        console.log(`Using auto-assigned priority: ${priority}`);
+                        return priority;
+                    }) : 
+                    Promise.resolve(manualPriority);
+                
+                processPriorityAndAdd
+                    .then(priority => {
+                        console.log(`Adding network with priority: ${priority}`);
+                        // Now add the WiFi network with the determined priority
+                        return window.wifiInterface.addWifiNetwork(ssid, password, priority);
+                    })
+                    .then(result => {
+                        console.log('Add network result:', result);
+                        if (result.success) {
+                            alert(`WiFi network "${ssid}" added successfully!`);
+                            
+                            // Clear form
+                            ssidInput.value = '';
+                            passwordInput.value = '';
+                            
+                            // Reset priority input to auto
+                            if (priorityInput) {
+                                priorityInput.value = 'auto';
+                                priorityInput.setAttribute('data-auto', 'true');
+                                priorityInput.placeholder = 'Auto (next available)';
+                            }
+                            
+                            // Perform a combined refresh with a short delay
+                            setTimeout(() => {
+                                console.log('Refreshing networks after adding new network');
+                                refreshWifiStatusAndNetworks();
+                            }, 500);
+                        } else {
+                            alert(`Failed to add WiFi network: ${result.error || 'Unknown error'}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error adding WiFi network:', error);
+                        alert('Error adding WiFi network: ' + error.message);
+                    })
+                    .finally(() => {
+                        // Restore button state
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Add Network';
+                    });
+            });
+            
+            // Add or update the priority field
+            const passwordField = newForm.querySelector('#new-wifi-password');
+            if (passwordField && !newForm.querySelector('#new-wifi-priority')) {
+                // Create priority field container div with auto option
+                const priorityField = document.createElement('div');
+                priorityField.innerHTML = `
+                    <label for="new-wifi-priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
+                    <div class="flex space-x-2 items-center">
+                        <select id="new-wifi-priority" data-auto="true"
+                            class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
+                            <option value="auto" selected>Auto (next available)</option>
+                            <option value="1">1 (highest)</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                        <button type="button" id="refresh-priority-btn" 
+                            class="inline-flex items-center px-2 py-1 border border-transparent text-xs leading-5 font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Check
+                        </button>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Lower number = higher connection priority. Auto will use the next available priority.</p>
+                `;
+                
+                // Insert the priority field after the password field
+                const parentNode = passwordField.parentNode.parentNode;
+                parentNode.insertBefore(priorityField, passwordField.parentNode.nextSibling);
+                
+                // Add event handlers
+                const prioritySelect = priorityField.querySelector('#new-wifi-priority');
+                const refreshBtn = priorityField.querySelector('#refresh-priority-btn');
+                
+                if (prioritySelect) {
+                    prioritySelect.addEventListener('change', function() {
+                        const value = this.value;
+                        if (value === 'auto') {
+                            this.setAttribute('data-auto', 'true');
+                        } else {
+                            this.removeAttribute('data-auto');
+                        }
+                    });
+                }
+                
+                if (refreshBtn) {
+                    refreshBtn.addEventListener('click', function() {
+                        this.disabled = true;
+                        this.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" class="animate-spin h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Checking...
+                        `;
+                        
+                        getNextAvailablePriority()
+                            .then(priority => {
+                                const select = document.getElementById('new-wifi-priority');
+                                if (select) {
+                                    // Add the option if it doesn't exist
+                                    let autoOption = select.querySelector('option[value="auto"]');
+                                    if (!autoOption) {
+                                        autoOption = document.createElement('option');
+                                        autoOption.value = 'auto';
+                                        select.prepend(autoOption);
+                                    }
+                                    
+                                    // Update the auto option text
+                                    autoOption.text = `Auto (next: ${priority})`;
+                                    
+                                    // Select the auto option
+                                    select.value = 'auto';
+                                    select.setAttribute('data-auto', 'true');
+                                    
+                                    // Show a tooltip or message
+                                    console.log(`Next available priority: ${priority}`);
+                                }
+                            })
+                            .finally(() => {
+                                this.disabled = false;
+                                this.innerHTML = `
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    Check
+                                `;
+                            });
+                    });
+                }
+            }
+        }
+    }
+
+    // Add setup for the refresh networks button
+    function setupRefreshNetworksButton() {
+        const refreshBtn = document.getElementById('refresh-networks-btn');
+        if (refreshBtn) {
+            // Remove any existing listeners to prevent duplicates
+            const newRefreshBtn = refreshBtn.cloneNode(true);
+            refreshBtn.parentNode.replaceChild(newRefreshBtn, refreshBtn);
+            
+            // Add new event listener
+            newRefreshBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Show loading state
+                this.disabled = true;
+                const originalText = this.innerHTML;
+                this.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-1 h-3 w-3 text-current inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Refreshing...
+                `;
+                
+                // Use combined refresh function
+                refreshWifiStatusAndNetworks()
+                    .finally(() => {
+                        // Restore button state after 1 second
+                        setTimeout(() => {
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+                        }, 1000);
+                    });
+            });
+        }
+    }
+
     // Export functions for global access
     window.wifiSettings = {
         initWifiSettings,
@@ -1305,7 +1513,9 @@
         refreshNetworks,
         refreshWifiStatusAndNetworks,
         movePriorityUp,
-        movePriorityDown
+        movePriorityDown,
+        waitForWebSocket,
+        ensureNetworksContainerVisibility
     };
 
     // Make initWifiSettings available directly
