@@ -3,9 +3,10 @@
 #include <ArduinoJson.h>
 #include <WiFi.h>
 #include <WiFiManager.h>
+#include "wifi_manager_instance.h"
 
-// WiFi manager instance
-WiFiManager wifiManager;
+// Reference the globally defined WiFiManager instance instead of defining it here
+extern WiFiManager wifiManager;
 
 // Global flag to track if WiFiManager saved credentials
 bool wifiCredentialsSaved = false;

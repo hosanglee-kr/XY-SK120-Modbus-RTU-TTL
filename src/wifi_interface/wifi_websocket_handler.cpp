@@ -3,6 +3,7 @@
 #include <ArduinoJson.h>
 #include <Preferences.h>
 #include "wifi_settings.h"
+#include "wifi_manager_helper.h"
 
 // Define constants if not already defined elsewhere
 #ifndef WIFI_NAMESPACE
@@ -16,6 +17,9 @@
 #ifndef WIFI_CREDENTIALS_JSON_SIZE
 #define WIFI_CREDENTIALS_JSON_SIZE 2048
 #endif
+
+// Add extern declaration of the WiFiManager instance
+extern WiFiManager wifiManager;
 
 // Helper function to send error response
 void sendErrorResponse(AsyncWebSocketClient* client, const String& error) {
@@ -112,6 +116,12 @@ void handleAddWifiNetworkCommand(AsyncWebSocketClient* client, DynamicJsonDocume
     if (prefs.begin(WIFI_NAMESPACE, false)) { // Write mode
         success = prefs.putString(WIFI_CREDENTIALS_KEY, updatedJson);
         prefs.end();
+    }
+    
+    // If we're connected to WiFi, check if the password in WiFiManager is more accurate
+    if (success && WiFi.status() == WL_CONNECTED && WiFi.SSID() == ssid) {
+        // This is the network we're currently connected to, update with the correct password from WiFiManager
+        updateSavedWiFiPasswordFromWiFiManager(ssid, wifiManager);
     }
     
     // Send response
@@ -317,6 +327,9 @@ void handleConnectWifiCommand(AsyncWebSocketClient* client, DynamicJsonDocument&
         Serial.println("\nConnected to WiFi!");
         Serial.print("IP Address: ");
         Serial.println(WiFi.localIP().toString());
+        
+        // Update NVS with password from WiFiManager if this was successful
+        updateSavedWiFiPasswordFromWiFiManager(ssid, wifiManager);
     } else {
         Serial.println("\nFailed to connect to WiFi");
     }
