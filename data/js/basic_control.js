@@ -17,39 +17,39 @@ export function initBasicControls() {
     
     // Request status when connected
     document.addEventListener('websocket-connected', () => {
-        console.log("✅ WebSocket connected event received, starting auto-refresh");
+        console.log("✅ WebSocket connected event received");
         requestPsuStatus();
-        // Start auto-refresh when connected
-        setTimeout(() => startAutoRefresh(), 500);
         // Start key lock monitor when connected
         setTimeout(() => startKeyLockStatusMonitor(), 1000);
+        
+        // Register with auto-refresh service
+        import('./auto_refresh.js').then(module => {
+            module.registerRefreshTask('psu-status', updateAllStatus, 10);
+            module.startAutoRefresh(5000);
+        });
     });
     
     // Stop auto-refresh when disconnected
     document.addEventListener('websocket-disconnected', () => {
-        console.log("❌ WebSocket disconnected event received, stopping auto-refresh");
-        stopAutoRefresh();
+        console.log("❌ WebSocket disconnected event received");
         stopKeyLockStatusMonitor();
+        
+        import('./auto_refresh.js').then(module => {
+            module.stopAutoRefresh();
+        });
     });
     
     // Initialize auto-refresh if already connected - with a delay
     setTimeout(() => {
         if (window.websocketConnected) {
-            console.log("WebSocket already connected on init, starting auto-refresh");
-            startAutoRefresh();
-            startKeyLockStatusMonitor();
+            console.log("WebSocket already connected on init, waiting for connection event");
         } else {
             console.log("WebSocket not connected on init, waiting for connection event");
         }
     }, 1000);
     
-    // Fallback: force auto-refresh after 5 seconds regardless of connection status
+    // Fallback: force key lock monitor after 5 seconds regardless of connection status
     setTimeout(() => {
-        if (!window.autoRefreshTimer) {  // Use window.autoRefreshTimer consistently
-            console.log("⚠️ Auto-refresh not started after 5 seconds, starting as fallback");
-            startAutoRefresh();
-        }
-        
         if (!window.keyLockMonitorActive) {
             console.log("⚠️ Key lock monitor not started after 5 seconds, starting as fallback");
             startKeyLockStatusMonitor();
@@ -69,103 +69,11 @@ export function initBasicControls() {
 
 // Setup timer reference object properly at the top of the file
 let timers = {
-    autoRefresh: null,
     keyLock: null
 };
 
 // Expose timers globally for debugging
 window.psuTimers = timers;
-
-// Start auto-refresh timer to update status every second - Improved with better connection readiness check
-function startAutoRefresh() {
-    console.log("🔄 Attempting to start auto-refresh");
-    
-    // Clear any existing timer first
-    stopAutoRefresh();
-    
-    // Use our new connection readiness check
-    window.whenWebsocketReady(() => {
-        console.log("WebSocket ready, starting auto-refresh timer");
-        
-        // First do an immediate status update
-        try {
-            updateAllStatus();
-        } catch (err) {
-            console.error("Error in initial status update:", err);
-        }
-        
-        // Set up new timer for auto-refresh - Use our timer object structure
-        timers.autoRefresh = setInterval(() => {
-            // Debug in case the timer is running but updates aren't happening
-            console.log("⏱️ Auto-refresh tick - checking connection status:", window.websocketConnected);
-            
-            // Double-check that websocket is defined and connected
-            if (window.websocket && window.websocket.readyState === WebSocket.OPEN) {
-                console.log("Sending status update via auto-refresh");
-                try {
-                    updateAllStatus();
-                } catch (err) {
-                    console.error("Error in auto-refresh status update:", err);
-                }
-            } else if (window.websocketConnected) {
-                // If flag says connected but socket doesn't exist or isn't open
-                console.log("⚠️ websocketConnected flag is true but socket is not ready");
-                window.websocketConnected = false;
-                stopAutoRefresh();
-            } else {
-                console.log("❌ WebSocket disconnected, pausing auto-refresh");
-                stopAutoRefresh();
-                
-                // Show manual refresh buttons
-                showManualRefreshButtons();
-            }
-        }, 5000); // Update every 5 seconds
-        
-        // Also store in window for backward compatibility
-        window.autoRefreshTimer = timers.autoRefresh;
-        
-        // Hide manual refresh buttons since we don't need them anymore
-        hideManualRefreshButtons();
-        
-        // Show the auto-refresh indicator
-        const indicator = document.querySelector('.auto-refresh-indicator');
-        if (indicator) {
-            console.log("Making auto-refresh indicator visible");
-            indicator.style.display = 'flex';
-        } else {
-            console.warn("Auto-refresh indicator element not found");
-        }
-    });
-}
-
-// Stop auto-refresh timer - updated to handle all timers
-function stopAutoRefresh() {
-    if (timers.autoRefresh || window.autoRefreshTimer) {
-        console.log("⏹️ Stopping all auto-refresh timers");
-        
-        if (timers.autoRefresh) {
-            clearInterval(timers.autoRefresh);
-            timers.autoRefresh = null;
-        }
-        
-        if (window.autoRefreshTimer) {
-            clearInterval(window.autoRefreshTimer);
-            window.autoRefreshTimer = null;
-        }
-        
-        // Also clear the key lock monitor
-        stopKeyLockStatusMonitor();
-        
-        // Show manual refresh buttons again
-        showManualRefreshButtons();
-        
-        // Hide the auto-refresh indicator
-        const indicator = document.querySelector('.auto-refresh-indicator');
-        if (indicator) {
-            indicator.style.display = 'none';
-        }
-    }
-}
 
 // Hide manual refresh buttons when auto-refresh is active
 function hideManualRefreshButtons() {
@@ -842,8 +750,6 @@ window.toggleKeyLock = toggleKeyLock;
 window.togglePower = togglePower;
 window.refreshPsuStatus = updateAllStatus;
 window.updateAllStatus = updateAllStatus;
-window.startAutoRefresh = startAutoRefresh;
-window.stopAutoRefresh = stopAutoRefresh;
 window.requestKeyLockStatus = requestKeyLockStatus;
 window.startKeyLockStatusMonitor = startKeyLockStatusMonitor;
 window.stopKeyLockStatusMonitor = stopKeyLockStatusMonitor;
