@@ -12,6 +12,9 @@
 # - Full web interface preserved
 #
 # Name,     Type, SubType, Offset,   Size,     Purpose
-nvs,        data, nvs,     0x9000,   0x5000,   # 20KB: NVS storage for settings
-factory,    app,  factory, 0x10000,  0x200000, # 2MB: Main application (1.365MB used)
-spiffs,     data, spiffs,  0x210000, 0x1F0000, # 1.968MB: Web interface files (808KB used)
+# NVS: 20KB for settings storage
+nvs,        data, nvs,     0x9000,   0x5000,
+# Factory: 2MB for main application (1.365MB used)
+factory,    app,  factory, 0x10000,  0x200000,
+# SPIFFS: 1.968MB for web interface files (808KB used)
+spiffs,     data, spiffs,  0x210000, 0x1F0000,

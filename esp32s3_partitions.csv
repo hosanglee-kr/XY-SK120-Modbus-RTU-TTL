@@ -13,8 +13,13 @@
 # - PSRAM support for memory-intensive operations
 #
 # Name,     Type, SubType, Offset,   Size,     Purpose
-nvs,        data, nvs,     0x9000,   0x5000,   # 20KB: NVS storage for settings
-otadata,    data, ota,     0xe000,   0x2000,   # 8KB: OTA metadata and boot selection
-app0,       app,  ota_0,   0x10000,  0x280000, # 2.5MB: Primary app partition (OTA slot 0)
-app1,       app,  ota_1,   0x290000, 0x280000, # 2.5MB: Secondary app partition (OTA slot 1)
-spiffs,     data, spiffs,  0x510000, 0x2F0000, # 3MB: Web interface + expansion space
+# NVS: 20KB for settings storage
+nvs,        data, nvs,     0x9000,   0x5000,
+# OTA Data: 8KB for OTA metadata and boot selection
+otadata,    data, ota,     0xe000,   0x2000,
+# App0: 2.5MB primary app partition (OTA slot 0)
+app0,       app,  ota_0,   0x10000,  0x280000,
+# App1: 2.5MB secondary app partition (OTA slot 1)
+app1,       app,  ota_1,   0x290000, 0x280000,
+# SPIFFS: 3MB for web interface + expansion space
+spiffs,     data, spiffs,  0x510000, 0x2F0000,
