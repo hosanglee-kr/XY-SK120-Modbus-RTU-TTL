@@ -1,8 +1,20 @@
 # ESP32S3 Partition Table (8MB Flash)
 # Optimized for dual OTA and larger storage with PSRAM support
-# Name,   Type, SubType, Offset,   Size,    Flags
-nvs,      data, nvs,     0x9000,   0x5000,
-otadata,  data, ota,     0xe000,   0x2000,
-app0,     app,  ota_0,   0x10000,  0x280000,
-app1,     app,  ota_1,   0x290000, 0x280000,
-spiffs,   data, spiffs,  0x510000, 0x2F0000,
+#
+# Rationale: ESP32S3 has 8MB flash (2x ESP32C3) + 16MB PSRAM, enabling advanced
+# features like OTA updates and dual boot capability with generous space allocation.
+# Base firmware: ~1.365MB, Web interface: ~808KB, Total usage: ~2.17MB/8MB
+#
+# Benefits:
+# - Dual OTA partitions for safe firmware updates
+# - Firmware rollback capability on update failure
+# - Web-based OTA updates (no USB required)
+# - Large filesystem for future expansion
+# - PSRAM support for memory-intensive operations
+#
+# Name,     Type, SubType, Offset,   Size,     Purpose
+nvs,        data, nvs,     0x9000,   0x5000,   # 20KB: NVS storage for settings
+otadata,    data, ota,     0xe000,   0x2000,   # 8KB: OTA metadata and boot selection
+app0,       app,  ota_0,   0x10000,  0x280000, # 2.5MB: Primary app partition (OTA slot 0)
+app1,       app,  ota_1,   0x290000, 0x280000, # 2.5MB: Secondary app partition (OTA slot 1)
+spiffs,     data, spiffs,  0x510000, 0x2F0000, # 3MB: Web interface + expansion space
