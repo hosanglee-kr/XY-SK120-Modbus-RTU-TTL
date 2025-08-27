@@ -5,7 +5,7 @@
 
 #include <Arduino.h>
 #include <Preferences.h>
-#include <String>
+// #include <String>
 #include <vector>
 #include <algorithm>
 
