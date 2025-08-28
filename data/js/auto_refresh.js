@@ -1,144 +1,117 @@
 /**
- * Auto Refresh Module
- * Handles periodic refreshing of power supply data
+ * Auto Refresh Service
+ * Centralized management of auto-refresh functionality
  */
 
-// Make sure to define functions immediately in the global scope
-// AVOID REDECLARING GLOBAL VARIABLES
-window.autoRefreshInterval = window.autoRefreshInterval || 5000;
+// Store all refresh tasks
+const refreshTasks = new Map();
 
-// Check if variable already exists before declaring
-if (typeof window.autoRefreshTimer === 'undefined') {
-    window.autoRefreshTimer = null;
+// Global refresh timer
+let globalRefreshTimer = null;
+
+/**
+ * Register a new auto-refresh task
+ * @param {string} id - Unique identifier for the task
+ * @param {Function} callback - Function to execute on refresh
+ * @param {number} [priority=0] - Priority level (higher numbers run first)
+ */
+export function registerRefreshTask(id, callback, priority = 0) {
+    refreshTasks.set(id, { callback, priority, enabled: true });
+    console.log(`Registered refresh task: ${id}`);
 }
 
-// Define the auto-refresh function in the global scope immediately
-window.startAutoRefresh = function() {
-    // Check if auto-refresh is already running
-    if (window.autoRefreshTimer) {
+/**
+ * Start the auto-refresh service
+ * @param {number} [interval=5000] - Refresh interval in milliseconds
+ */
+export function startAutoRefresh(interval = 5000) {
+    if (globalRefreshTimer) {
         console.log("Auto-refresh already running");
         return;
     }
+
+    console.log("Starting auto-refresh service");
     
-    // Get the refresh interval from localStorage or use default
-    const savedInterval = localStorage.getItem('refreshInterval');
-    if (savedInterval) {
-        window.autoRefreshInterval = parseInt(savedInterval);
-    }
+    // Initial refresh
+    executeRefreshTasks();
     
-    console.log(`Starting auto-refresh with interval ${window.autoRefreshInterval}ms`);
+    // Set up periodic refresh
+    globalRefreshTimer = setInterval(executeRefreshTasks, interval);
     
-    // Update the heartbeat indicator
-    const heartbeatIndicator = document.getElementById('heartbeat-indicator');
-    if (heartbeatIndicator) {
-        heartbeatIndicator.classList.remove('hidden');
+    // Update UI indicator if exists
+    updateRefreshIndicator(true);
+}
+
+/**
+ * Stop the auto-refresh service
+ */
+export function stopAutoRefresh() {
+    if (globalRefreshTimer) {
+        clearInterval(globalRefreshTimer);
+        globalRefreshTimer = null;
+        console.log("Auto-refresh service stopped");
         
-        // Add pulse animation to the dot
-        const dot = heartbeatIndicator.querySelector('.dot');
-        if (dot) {
-            dot.classList.add('pulse');
-        }
+        // Update UI indicator
+        updateRefreshIndicator(false);
     }
-    
-    // Start the auto-refresh timer - USE GLOBAL VARIABLE
-    window.autoRefreshTimer = setInterval(() => {
-        // Call the update function if it exists
-        if (typeof window.updateAllStatus === 'function') {
-            window.updateAllStatus();
-        } else {
-            console.warn("updateAllStatus function not available for auto-refresh");
-        }
-    }, window.autoRefreshInterval);
-};
+}
 
-// Define the stop function also in the global scope
-window.stopAutoRefresh = function() {
-    if (window.autoRefreshTimer) {
-        console.log("Stopping auto-refresh");
-        clearInterval(window.autoRefreshTimer);
-        window.autoRefreshTimer = null;
-        
-        // Update the heartbeat indicator
-        const heartbeatIndicator = document.getElementById('heartbeat-indicator');
-        if (heartbeatIndicator) {
-            heartbeatIndicator.classList.add('hidden');
-            
-            // Remove pulse animation
-            const dot = heartbeatIndicator.querySelector('.dot');
-            if (dot) {
-                dot.classList.remove('pulse');
-            }
-        }
+/**
+ * Enable/disable specific refresh task
+ * @param {string} id - Task identifier
+ * @param {boolean} enabled - Enable/disable flag
+ */
+export function setTaskEnabled(id, enabled) {
+    const task = refreshTasks.get(id);
+    if (task) {
+        task.enabled = enabled;
+        console.log(`${id} refresh task ${enabled ? 'enabled' : 'disabled'}`);
     }
-};
+}
 
-// Define the update interval function
-window.updateRefreshInterval = function(interval) {
-    if (!interval || isNaN(interval)) return;
-    
-    // Convert to milliseconds if it's in seconds
-    const msInterval = interval < 100 ? interval * 1000 : interval;
-    window.autoRefreshInterval = msInterval;
-    
-    // Store in localStorage
-    localStorage.setItem('refreshInterval', msInterval);
-    
-    // Restart auto-refresh if it's running
-    if (window.autoRefreshTimer) {
-        window.stopAutoRefresh();
-        window.startAutoRefresh();
+/**
+ * Execute all registered refresh tasks
+ */
+function executeRefreshTasks() {
+    if (!window.websocketConnected) {
+        console.log("WebSocket disconnected, pausing refresh tasks");
+        stopAutoRefresh();
+        return;
     }
-    
-    console.log(`Auto-refresh interval updated to ${msInterval}ms`);
-};
 
-console.log("Auto-refresh functions defined and available globally");
-
-// DOM ready handler - set up UI interactions
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("Setting up auto-refresh UI interactions");
-    
-    // Setup auto-refresh toggle
-    const autoRefreshToggle = document.getElementById('auto-refresh-toggle');
-    if (autoRefreshToggle) {
-        // Clean any existing event listeners
-        const newToggle = autoRefreshToggle.cloneNode(true);
-        if (autoRefreshToggle.parentNode) {
-            autoRefreshToggle.parentNode.replaceChild(newToggle, autoRefreshToggle);
-        }
-        
-        // Add fresh event listener
-        newToggle.addEventListener('change', function() {
-            if (this.checked) {
-                window.startAutoRefresh();
-            } else {
-                window.stopAutoRefresh();
+    // Sort tasks by priority and execute
+    Array.from(refreshTasks.entries())
+        .filter(([_, task]) => task.enabled)
+        .sort((a, b) => b[1].priority - a[1].priority)
+        .forEach(([id, task]) => {
+            try {
+                task.callback();
+            } catch (error) {
+                console.error(`Error in refresh task ${id}:`, error);
             }
         });
-    }
-    
-    // Start auto-refresh when appropriate
-    const uiConfig = localStorage.getItem('uiConfig');
-    let shouldAutoRefresh = true;
-    
-    try {
-        if (uiConfig) {
-            const config = JSON.parse(uiConfig);
-            shouldAutoRefresh = config.autoRefresh !== false;
-        }
-    } catch (e) {
-        console.error("Error parsing UI config:", e);
-    }
-    
-    if (shouldAutoRefresh) {
-        // Wait for components if needed
-        if (document.querySelector('[data-component]')) {
-            console.log("Waiting for components before starting auto-refresh");
-            document.addEventListener('components-loaded', function() {
-                setTimeout(window.startAutoRefresh, 500);
-            });
-        } else {
-            setTimeout(window.startAutoRefresh, 500);
+}
+
+/**
+ * Update refresh indicator in UI
+ */
+function updateRefreshIndicator(active) {
+    const indicator = document.querySelector('.auto-refresh-indicator');
+    if (indicator) {
+        indicator.style.display = active ? 'flex' : 'none';
+        
+        // Update pulse animation
+        const dot = indicator.querySelector('.dot');
+        if (dot) {
+            dot.classList.toggle('pulse', active);
         }
     }
-});
+}
+
+// Make functions available globally
+window.autoRefreshService = {
+    register: registerRefreshTask,
+    start: startAutoRefresh,
+    stop: stopAutoRefresh,
+    setTaskEnabled
+};

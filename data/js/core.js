@@ -6,12 +6,11 @@
 // WebSocket connection variables - CENTRAL DECLARATION
 let websocket = null;
 let websocketConnected = false;
-let autoRefreshTimer = null; // SINGLE GLOBAL DECLARATION - all modules should use this
+// DO NOT redeclare autoRefreshTimer - use the global one
 
 // Declare global connection management functions
 window.websocket = null;
 window.websocketConnected = false;
-window.autoRefreshTimer = null;
 
 // Add a connection ready promise that other modules can await
 window.websocketReadyPromise = new Promise((resolve) => {
@@ -90,12 +89,14 @@ function loadBasicControls() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing core functionality');
     
-    // Listen for splash screen completion
-    document.addEventListener('splash-screen-hidden', function() {
-        console.log('Splash screen animation complete, initializing UI');
-        if (typeof window.initializeUI === 'function') {
-            window.initializeUI();
-        }
+    // Remove auto-refresh setup, use service instead
+    import('./auto_refresh.js').then(module => {
+        // Register core refresh tasks
+        module.registerRefreshTask('websocket-heartbeat', () => {
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                sendCommand({ action: 'ping' });
+            }
+        }, 1);
     });
 
     // Initialize core functionality
@@ -103,14 +104,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup base WebSocket connection with a delay
     setTimeout(initWebSocket, 1000);
-    
-    // Add a ping mechanism to keep the connection alive
-    setInterval(() => {
-        if (websocket && websocket.readyState === WebSocket.OPEN) {
-            // Send a lightweight ping message
-            sendCommand({ action: 'ping' });
-        }
-    }, 30000); // Send a ping every 30 seconds
 });
 
 // Initialize modules
@@ -168,6 +161,11 @@ function initializeModules() {
     import('./menu_settings.js').then(module => {
         if(module.initSettings) module.initSettings();
     }).catch(err => console.error('Failed to load settings:', err));
+
+    // Import wifi settings
+    import('./wifi_settings.js').then(module => {
+        window.initWifiSettings = module.initWifiSettings;
+    }).catch(err => console.error('Failed to load wifi settings:', err));
     
     // Import device manager
     import('./device_manager.js').then(module => {
@@ -177,6 +175,15 @@ function initializeModules() {
 
 // WebSocket connection function
 function initWebSocket() {
+    // Prevent multiple simultaneous connection attempts
+    if (window.isConnecting) {
+        console.log("WebSocket connection already in progress, skipping initialization");
+        return;
+    }
+    
+    // Set connecting flag
+    window.isConnecting = true;
+    
     // Get device IP - with fallback to current hostname
     // Check for manual override first (for device manager connections)
     let deviceIP = window.manualDeviceIP || localStorage.getItem('selectedDeviceIP') || window.location.hostname;
@@ -543,30 +550,6 @@ window.sendCommand = window.sendCommand || sendCommand;
 window.getCurrentDeviceIP = function() {
     return window.currentDeviceIP || localStorage.getItem('selectedDeviceIP') || window.location.hostname;
 };
-
-// Fallback initialization for auto-refresh
-document.addEventListener('DOMContentLoaded', function() {
-    // Check for auto-refresh after 3 seconds
-    setTimeout(() => {
-        if (typeof window.startAutoRefresh === 'function') {
-            if (window.websocketConnected) {
-                window.startAutoRefresh();
-            }
-        } else {
-            // Try to manually import the basic_control.js module
-            import('./basic_control.js')
-                .then(module => {
-                    if (typeof module.startAutoRefresh === 'function') {
-                        window.startAutoRefresh = module.startAutoRefresh;
-                        if (window.websocketConnected) {
-                            window.startAutoRefresh();
-                        }
-                    }
-                })
-                .catch(err => console.error("Failed to import basic_control.js"));
-        }
-    }, 3000);
-});
 
 // Track WebSocket connection status
 window.lastWebSocketMessage = 0; 

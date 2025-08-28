@@ -19,6 +19,7 @@
 #include <AsyncWebSocket.h>
 #include <WiFi.h>
 #include "wifi_interface/wifi_manager_wrapper.h"
+#include "wifi_interface/wifi_settings.h" // Include the new wifi_settings header
 #include "modbus_handler.h"
 #include "config_manager.h"
 #include "web_interface/log_utils.h" // Update to use the web_interface-specific log utils
@@ -26,8 +27,14 @@
 // Include XY-SKxxx header to access power supply functions
 #include "XY-SKxxx.h"
 
+// Include WiFi WebSocket handler
+#include "../wifi_interface/wifi_websocket_handler.h"
+
 // Declare external power supply instance
 extern XY_SKxxx* powerSupply;
+
+// Ensure we have the function declaration
+extern void handleAddWifiNetworkCommand(AsyncWebSocketClient* client, DynamicJsonDocument& doc);
 
 // Forward declarations for functions used before definition
 bool isPSUKeyLocked(XY_SKxxx* powerSupply);
@@ -351,7 +358,113 @@ void handleSetKeyLock(AsyncWebSocketClient* client, const JsonObject &json) {
   client->text(response);
 }
 
-void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* client, 
+// Add this function to handle the WiFi network addition
+void handleAddWifiNetworkWebSocketCommand(AsyncWebSocketClient* client, DynamicJsonDocument& doc) {
+    if (!doc.containsKey("ssid") || !doc.containsKey("password")) {
+        DynamicJsonDocument responseDoc(128);
+        responseDoc["action"] = "addWifiNetworkResponse";
+        responseDoc["success"] = false;
+        responseDoc["error"] = "Missing SSID or password";
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+        return;
+    }
+    
+    String ssid = doc["ssid"].as<String>();
+    String password = doc["password"].as<String>();
+    int priority = doc.containsKey("priority") ? doc["priority"].as<int>() : 1;
+    
+    // Get saved networks JSON - use the same logic as the serial interface
+    Preferences prefs;
+    String wifiListJson;
+    
+    if (prefs.begin(WIFI_NAMESPACE, true)) { // Read-only mode first
+        wifiListJson = prefs.getString(WIFI_CREDENTIALS_KEY, "[]");
+        prefs.end();
+    } else {
+        DynamicJsonDocument responseDoc(128);
+        responseDoc["action"] = "addWifiNetworkResponse";
+        responseDoc["success"] = false;
+        responseDoc["error"] = "Failed to access saved WiFi information";
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+        return;
+    }
+    
+    // Parse existing JSON
+    DynamicJsonDocument wifiDoc(WIFI_CREDENTIALS_JSON_SIZE);
+    DeserializationError error = deserializeJson(wifiDoc, wifiListJson);
+    
+    if (error) {
+        Serial.println("Error parsing saved WiFi networks. Creating new list.");
+        wifiDoc.clear();
+        wifiDoc = JsonArray(); // Ensure it's initialized as an array
+    }
+    
+    // Check if this network already exists
+    JsonArray networks = wifiDoc.as<JsonArray>();
+    bool networkExists = false;
+    
+    for (JsonObject network : networks) {
+        String savedSSID = network["ssid"].as<String>();
+        if (savedSSID == ssid) {
+            // Update existing network
+            network["password"] = password;
+            network["priority"] = priority;
+            networkExists = true;
+            break;
+        }
+    }
+    
+    // If network doesn't exist, add it
+    if (!networkExists) {
+        JsonObject network = networks.createNestedObject();
+        network["ssid"] = ssid;
+        network["password"] = password;
+        network["priority"] = priority;
+    }
+    
+    // Serialize back to string
+    String updatedJson;
+    serializeJson(wifiDoc, updatedJson);
+    
+    // Debug output
+    Serial.print("WiFi credentials JSON size: ");
+    Serial.println(updatedJson.length());
+    Serial.print("WiFi credentials JSON content: ");
+    Serial.println(updatedJson);
+    
+    // Save back to NVS
+    bool success = false;
+    if (prefs.begin(WIFI_NAMESPACE, false)) { // Write mode
+        success = prefs.putString(WIFI_CREDENTIALS_KEY, updatedJson);
+        prefs.end();
+    }
+    
+    // Send response
+    DynamicJsonDocument responseDoc(128);
+    responseDoc["action"] = "addWifiNetworkResponse";
+    responseDoc["success"] = success;
+    responseDoc["ssid"] = ssid;
+    
+    String response;
+    serializeJson(responseDoc, response);
+    
+    client->text(response);
+    
+    // Log success/failure
+    if (success) {
+        Serial.println("WiFi credentials saved successfully from WebSocket request");
+    } else {
+        Serial.println("Failed to save WiFi credentials from WebSocket request");
+    }
+}
+
+void handleWebSocketMessage(AsyncWebSocket* server, AsyncWebSocketClient* client, 
                            AwsFrameInfo* info, uint8_t* data, size_t len) {
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
@@ -627,19 +740,65 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
     }
     // Add a WebSocket handler for WiFi status
     else if (action == "getWifiStatus") {
-      DynamicJsonDocument responseDoc(256);
-      responseDoc["action"] = "wifiStatusResponse"; 
-      responseDoc["status"] = isWiFiConnected() ? "connected" : "disconnected";
-      responseDoc["ssid"] = getWiFiSSID();
-      responseDoc["ip"] = getWiFiIP();
-      responseDoc["rssi"] = getWiFiRSSI();
-      responseDoc["mac"] = getWiFiMAC();
-      
-      String response;
-      serializeJson(responseDoc, response);
-      client->text(response);
-      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        // Get WiFi status
+        String wifiStatusStr = getWifiStatus(); // This returns a JSON string
+
+        // Parse the JSON string to extract the data
+        DynamicJsonDocument wifiDoc(512);
+        deserializeJson(wifiDoc, wifiStatusStr);
+        
+        // Create a response using the direct format
+        DynamicJsonDocument responseDoc(512);
+        responseDoc["action"] = "wifiStatusResponse";
+        responseDoc["status"] = wifiDoc["status"];
+        responseDoc["ssid"] = wifiDoc["ssid"];
+        responseDoc["ip"] = wifiDoc["ip"];
+        responseDoc["rssi"] = wifiDoc["rssi"];
+        responseDoc["mac"] = wifiDoc["mac"];
+
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+        Serial.print("WebSocket sent: "); // Debug print
+        Serial.println(response); // Debug print
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        return;
     }
+
+    if (action == "addWifiNetwork") {
+        handleAddWifiNetworkCommand(client, doc);
+        return;
+    }
+
+    if (action == "loadWifiCredentials") {
+        String wifiCredentials = loadWiFiCredentialsFromNVS();
+        
+        DynamicJsonDocument responseDoc(1024);
+        responseDoc["action"] = "loadWifiCredentialsResponse";
+        responseDoc["success"] = true;
+        responseDoc["credentials"] = serialized(wifiCredentials);
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        return;
+    }
+
+    if (action == "resetWifi") {
+        bool success = resetWiFi();
+        
+        DynamicJsonDocument responseDoc(256);
+        responseDoc["action"] = "resetWifiResponse";
+        responseDoc["success"] = success;
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        return;
+    }
+    
     // Handle incoming message...
     if (action == "getKeyLockStatus") {
       handleKeyLockRequest(client);
@@ -690,6 +849,109 @@ void handleWebSocketMessage(AsyncWebSocket* webSocket, AsyncWebSocketClient* cli
       client->text(response);
       LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
       return;
+    }
+    
+    // Handle save wifi credentials request
+    if (action == "saveWifiCredentials") {
+      String ssid = doc["ssid"];
+      String password = doc["password"];
+
+      bool success = saveWiFiCredentialsToNVS(ssid, password); // Use the new function
+
+      DynamicJsonDocument responseDoc(256);
+      responseDoc["action"] = "saveWifiCredentialsResponse";
+      responseDoc["success"] = success;
+
+      String response;
+      serializeJson(responseDoc, response);
+      client->text(response);
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+      return;
+    }
+
+    // Handle load wifi credentials request
+    if (action == "loadWifiCredentials") {
+      String wifiCredentials = loadWiFiCredentialsFromNVS(); // Use the new function
+
+      DynamicJsonDocument responseDoc(WIFI_CREDENTIALS_JSON_SIZE);
+      responseDoc["action"] = "loadWifiCredentialsResponse";
+      responseDoc["wifiCredentials"] = wifiCredentials;
+
+      String response;
+      serializeJson(responseDoc, response);
+      client->text(response);
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+      return;
+    }
+    
+    // Handle reset wifi request
+    if (action == "resetWifi") {
+      bool success = resetWiFi(); // Use the new function
+
+      DynamicJsonDocument responseDoc(256);
+      responseDoc["action"] = "resetWifiResponse";
+      responseDoc["success"] = success;
+
+      String response;
+      serializeJson(responseDoc, response);
+      client->text(response);
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+      return;
+    }
+    
+    // Handle get wifi status request
+    if (action == "getWifiStatus") {
+      String wifiStatus = getWifiStatus();
+
+      DynamicJsonDocument responseDoc(512);
+      responseDoc["action"] = "wifiStatusResponse";
+      responseDoc["wifiStatus"] = wifiStatus;
+
+      String response;
+      serializeJson(responseDoc, response);
+      client->text(response);
+      Serial.print("WebSocket sent: "); // Debug print
+      Serial.println(response); // Debug print
+      LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+      return;
+    }
+
+    if (action == "removeWifiNetwork") {
+        handleRemoveWifiNetworkCommand(client, doc);
+        return;
+    }
+
+    if (action == "updateWifiPriority") {
+        int index = doc["index"];
+        int newPriority = doc["priority"];
+        
+        Serial.print("Received WiFi priority update request: index=");
+        Serial.print(index);
+        Serial.print(", newPriority=");
+        Serial.println(newPriority);
+        
+        // Try to update the priority
+        bool success = updateWiFiNetworkPriority(index, newPriority);
+        
+        DynamicJsonDocument responseDoc(256);
+        responseDoc["action"] = "updateWifiPriorityResponse";
+        responseDoc["success"] = success;
+        
+        if (!success) {
+            responseDoc["error"] = "Failed to update network priority";
+        }
+        
+        String response;
+        serializeJson(responseDoc, response);
+        client->text(response);
+        LOG_WS(serverIP, clientIP, "WebSocket sent: " + response);
+        return;
+    }
+
+    // Add the new action handler
+    if (action == "connectWifi") {
+        handleConnectWifiCommand(client, doc);
+        return;
     }
   }
 }
@@ -812,42 +1074,6 @@ void setupWebServer(AsyncWebServer* server) {
       }
     });
 
-    // WiFi management API endpoints
-    server->on("/api/wifi/status", HTTP_GET, [](AsyncWebServerRequest *request){
-      DynamicJsonDocument doc(256);
-      
-      // More robust status response
-      doc["status"] = isWiFiConnected() ? "connected" : "disconnected";
-      doc["ssid"] = getWiFiSSID();
-      doc["ip"] = getWiFiIP();
-      doc["rssi"] = getWiFiRSSI();
-      doc["mac"] = getWiFiMAC();
-      
-      // Ensure the response is valid JSON with proper error handling
-      String response;
-      serializeJson(doc, response);
-      
-      // Add CORS headers for this specific endpoint
-      AsyncWebServerResponse *resp = request->beginResponse(200, "application/json", response);
-      resp->addHeader("Access-Control-Allow-Origin", "*");
-      resp->addHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-      resp->addHeader("Access-Control-Allow-Headers", "Content-Type");
-      request->send(resp);
-    });
-    
-    server->on("/api/wifi/reset", HTTP_POST, [](AsyncWebServerRequest *request){
-      // This will trigger a WiFi settings reset and device restart
-      AsyncWebServerResponse *response = request->beginResponse(200, "application/json", 
-                                                              "{\"status\":\"success\",\"message\":\"WiFi settings reset. Device will restart...\"}");
-      request->send(response);
-      
-      // Schedule WiFi reset for after the response is sent
-      delay(500);
-      resetWiFiSettings();
-      delay(500);
-      ESP.restart();
-    });
-    
     // Add an API endpoint for time zone settings
     server->on("/api/timezone", HTTP_GET, [](AsyncWebServerRequest *request){
       String timeZones = getAvailableTimeZones();

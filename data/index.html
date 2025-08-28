@@ -103,6 +103,48 @@
             from { width: 0%; }
             to { width: 100%; }
         }
+
+        /* Add styles to improve WiFi status display */
+        #wifi-status.loading, #wifi-ssid.loading, #wifi-ip.loading, #wifi-rssi.loading {
+            opacity: 0.7;
+            position: relative;
+        }
+        
+        #wifi-status.loading::after, #wifi-ssid.loading::after, 
+        #wifi-ip.loading::after, #wifi-rssi.loading::after {
+            content: "...";
+            display: inline-block;
+            animation: ellipsis 1.5s infinite;
+        }
+        
+        @keyframes ellipsis {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+        
+        /* Prevent WiFi UI elements from collapsing */
+        #wifi-status, #wifi-ssid, #wifi-ip, #wifi-rssi {
+            min-height: 1.5rem; /* Ensures even empty elements maintain height */
+        }
+
+        /* Remove max-height and scrolling properties for the saved networks container */
+        #saved-wifi-networks {
+            /* Remove these properties:
+            max-height: 400px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            */
+        }
+        
+        /* Remove scrollbar styling since we won't need it */
+        /*
+        #saved-wifi-networks::-webkit-scrollbar { ... }
+        #saved-wifi-networks::-webkit-scrollbar-track { ... }
+        #saved-wifi-networks::-webkit-scrollbar-thumb { ... }
+        .dark #saved-wifi-networks::-webkit-scrollbar-track { ... }
+        .dark #saved-wifi-networks::-webkit-scrollbar-thumb { ... }
+        */
     </style>
     
     <!-- Immediate splash screen display - Critical for preventing FOUC -->
@@ -356,28 +398,69 @@
                         <!-- Tab panel content remains the same, just add ARIA attributes -->
                         <div id="wifi-settings-tab" role="tabpanel" aria-labelledby="tab-wifi" tabindex="0" aria-hidden="false" class="settings-panel px-4 py-5 sm:p-6">
                             <!-- Existing Wi-Fi settings content -->
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <div class="mt-6 grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-6">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-2">
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Status</p>
-                                    <p id="wifi-status" class="text-lg font-semibold text-gray-700 dark:text-gray-200">--</p>
+                                    <p id="wifi-status" class="text-base font-semibold text-gray-700 dark:text-gray-200 truncate">--</p>
                                 </div>
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:col-span-2">
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">SSID</p>
-                                    <p id="wifi-ssid" class="text-lg font-semibold text-gray-700 dark:text-gray-200 truncate">--</p>
+                                    <p id="wifi-ssid" class="text-base font-semibold text-gray-700 dark:text-gray-200 truncate">--</p>
                                 </div>
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 sm:col-span-2">
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">IP</p>
-                                    <p id="wifi-ip" class="text-lg font-semibold text-gray-700 dark:text-gray-200">--</p>
+                                    <p id="wifi-ip" class="text-base font-semibold text-gray-700 dark:text-gray-200">--</p>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-2">
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">RSSI</p>
+                                    <p id="wifi-rssi" class="text-base font-semibold text-gray-700 dark:text-gray-200">--</p>
                                 </div>
                             </div>
+
+                            <div class="mt-6">
+                                <div class="flex justify-between items-center mb-3">
+                                    <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Saved Networks</h3>
+                                    <button id="refresh-networks-btn" class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none">
+                                        <svg class="h-3 w-3 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                        </svg>
+                                        Refresh
+                                    </button>
+                                </div>
+                                <div id="saved-wifi-networks" class="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
+                                    <!-- Saved networks will be listed here dynamically -->
+                                    <div class="p-4 text-sm text-gray-500 dark:text-gray-400">Loading saved networks...</div>
+                                </div>
+                            </div>
+
+                            <div class="mt-6">
+                                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Add Network</h3>
+                                <form id="add-wifi-form" class="space-y-4">
+                                    <div>
+                                        <label for="new-wifi-ssid" class="block text-sm font-medium text-gray-700 dark:text-gray-300">SSID</label>
+                                        <input type="text" id="new-wifi-ssid" placeholder="MyWiFi" required class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
+                                    </div>
+                                    <div>
+                                        <label for="new-wifi-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                                        <input type="text" id="new-wifi-password" placeholder="Password" autocomplete="off" class="appearance-none mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-secondary focus:border-secondary">
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-secondary hover:bg-opacity-90 focus:outline-none">
+                                            Add Network
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <!-- Replace the two separate buttons with a single combined refresh button -->
                             <div class="mt-6 flex justify-end">
-                                <button id="wifi-refresh-btn" onclick="fetchWifiStatus()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none">
+                                <button id="wifi-refresh-btn" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none">
                                     <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                     </svg>
-                                    Refresh WiFi Status
+                                    Refresh WiFi
                                 </button>
-                                <button id="wifi-reset-btn" onclick="resetWifiSettings()" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-danger hover:bg-opacity-90 focus:outline-none">
+                                <button id="wifi-reset-btn" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-danger hover:bg-opacity-90 focus:outline-none">
                                     <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9-5m0 0l9-5-9 5-9 5 9 5m0 0v8"></path>
                                     </svg>
@@ -700,11 +783,16 @@
         });
     </script>
 
-    <!-- Critical scripts in the correct order - Load connectivity_check.js AFTER core.js -->
+    <!-- Critical scripts in the correct order -->
+    <script src="js/global_variables.js"></script>
     <script src="js/component_loader.js"></script>
     <script src="js/auto_refresh.js"></script>
     <script src="js/core.js" onload="window.appLoadingState.coreScriptsLoaded = true; updateSplashStatus('Core scripts loaded'); hideSplashScreen();"></script>
     <script src="js/connectivity_check.js"></script>
+
+    <!-- WiFi modules - Make sure interface loads before settings -->
+    <script src="js/wifi_interface.js"></script>
+    <script src="js/wifi_settings.js"></script>
 
     <!-- Connection handler for device change requests -->
     <script>

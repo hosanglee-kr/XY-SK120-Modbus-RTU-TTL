@@ -12,9 +12,9 @@ let toggleHeartbeatIndicator = function(visible) {
     console.log("Placeholder toggleHeartbeatIndicator called with visible:", visible);
 };
 
-// Auto-refresh timer reference - declare once at the top level
-// KEEP THIS DECLARATION - this will be our only declaration
-let autoRefreshTimer = null;
+// IMPORTANT: DO NOT declare autoRefreshTimer here - use the global instance
+// Reference the global timer variable instead
+window.autoRefreshTimer = window.autoRefreshTimer || null;
 
 // Use dynamic import to get the actual implementations
 document.addEventListener('DOMContentLoaded', function() {
