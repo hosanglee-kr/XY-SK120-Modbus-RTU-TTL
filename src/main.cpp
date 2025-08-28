@@ -13,8 +13,12 @@
 #include "wifi_interface/wifi_manager_wrapper.h" // Include wrapper instead of WiFiManager directly
 #include "web_interface/log_utils.h" // Use the web_interface version of the logging utilities
 
-// Define WiFi reset button pin
-#define WIFI_RESET_PIN 0  // Using GPIO0 as reset button (customize as needed)
+// Define WiFi reset button pin based on board
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+  #define WIFI_RESET_PIN DEFAULT_WIFI_RESET_PIN  // Use board-specific pin from config
+#else
+  #define WIFI_RESET_PIN 0  // Original ESP32S3 pin
+#endif
 
 // Global configuration instance - renamed to avoid conflict
 XYModbusConfig xyConfig;
@@ -30,7 +34,29 @@ ModbusMaster modbus;
 
 void setup() {
   Serial.begin(115200);
-  delay(1000); // Give more time for serial to initialize
+  
+  #ifdef CONFIG_IDF_TARGET_ESP32C3
+    // ESP32C3 specific initialization
+    delay(2000); // ESP32C3 needs more time for serial
+    Serial.println("=== XY-SK120 for ESP32C3 ===");
+    Serial.printf("Free heap at start: %d bytes\n", ESP.getFreeHeap());
+    
+    // Check if we have enough memory to proceed
+    if (ESP.getFreeHeap() < MIN_FREE_HEAP) {
+      Serial.println("ERROR: Insufficient memory to start!");
+      Serial.printf("Available: %d, Required: %d\n", ESP.getFreeHeap(), MIN_FREE_HEAP);
+      while(1) delay(1000); // Halt execution
+    }
+    
+    // Set conservative CPU frequency for stability
+    setCpuFrequencyMhz(160);
+    Serial.printf("CPU frequency set to: %d MHz\n", ESP.getCpuFreqMHz());
+
+    #else
+    // ESP32S3 initialization
+    delay(1000);
+    Serial.println("=== XY-SK120 for ESP32S3 ===");
+  #endif
   
   LOG_INFO("Starting XY-SK120 Modbus RTU System");
   LOG_INFO("WiFi Setup Process Starting...");
@@ -186,6 +212,8 @@ void setup() {
   } else {
     Serial.println("Connection failed. Please check wiring and settings.");
   }
+  
+  initializeSerialInterface();
 }
 
 void loop() {
@@ -231,6 +259,39 @@ void loop() {
     }
   }
   
+  // ESP32C3 specific memory monitoring and stability measures
+  #ifdef CONFIG_IDF_TARGET_ESP32C3
+    static unsigned long lastMemCheck = 0;
+    if (millis() - lastMemCheck > 30000) { // Check every 30 seconds
+      lastMemCheck = millis();
+      
+      size_t freeHeap = ESP.getFreeHeap();
+      Serial.printf("Memory check - Free heap: %d bytes\n", freeHeap);
+      
+      // Critical memory check
+      if (freeHeap < (MIN_FREE_HEAP / 2)) {
+        Serial.println("CRITICAL: Very low memory detected!");
+        Serial.printf("Free: %d, Critical threshold: %d\n", freeHeap, MIN_FREE_HEAP / 2);
+        Serial.println("Restarting to prevent crash...");
+        delay(1000);
+        ESP.restart();
+      }
+      
+      // Warning check
+      if (freeHeap < MIN_FREE_HEAP) {
+        Serial.println("WARNING: Low memory detected!");
+        // Could implement feature disable here if needed
+      }
+    }
+    
+    // Yield more frequently on ESP32C3 for stability
+    yield();
+  #endif
+  
   // Add a small delay to prevent throttling the CPU
-  delay(100);
+  #ifdef CONFIG_IDF_TARGET_ESP32C3
+    delay(150); // Slightly longer delay for ESP32C3
+  #else
+    delay(100);
+  #endif
 }

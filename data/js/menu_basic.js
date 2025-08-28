@@ -41,7 +41,7 @@ export function initBasicControls() {
     
     // Fallback: force auto-refresh after 5 seconds regardless of connection status
     setTimeout(() => {
-        if (!autoRefreshTimer) {
+        if (!window.autoRefreshTimer) {  // FIXED: Use window.autoRefreshTimer consistently
             console.log("⚠️ Auto-refresh not started after 5 seconds, starting as fallback");
             startAutoRefresh();
         }
@@ -51,11 +51,8 @@ export function initBasicControls() {
     window.autoRefreshTimer = window.autoRefreshTimer || null;
 }
 
-// Auto-refresh timer variable
-let autoRefreshTimer = null;
-
 // Make autoRefreshTimer globally accessible for debugging
-window.autoRefreshTimer = null;
+window.autoRefreshTimer = window.autoRefreshTimer || null;
 
 // Start auto-refresh timer to update status every second
 function startAutoRefresh() {
@@ -128,10 +125,10 @@ function startAutoRefresh() {
 
 // Stop auto-refresh timer
 function stopAutoRefresh() {
-    if (autoRefreshTimer) {
+    if (window.autoRefreshTimer) {  // FIXED: Use window.autoRefreshTimer consistently
         console.log("⏹️ Stopping auto-refresh");
-        clearInterval(autoRefreshTimer);
-        autoRefreshTimer = null;
+        clearInterval(window.autoRefreshTimer);
+        window.autoRefreshTimer = null;
         
         // Show manual refresh buttons again
         showManualRefreshButtons();
