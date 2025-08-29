@@ -2,7 +2,7 @@
 #include "XY-SKxxx.h"
 #include "XY-SKxxx_Config.h"
 #include "serial_monitor_interface.h"
-#include "../config_manager/config_manager.h"  //"config_manager.h"
+#include "config/config_manager.h"  //"config_manager.h"
 #include "wifi_interface/wifi_settings.h" // Include the new wifi_settings header
 #include "wifi_interface/wifi_manager_wrapper.h"
 
