@@ -1,0 +1,197 @@
+# .github/workflows/ci_005_main_dev1.yml
+name: PR
+
+on:
+  pull_request:
+    branches: [main_dev1]
+    paths:
+      - 'platformio.ini'
+      - '.github/**/*.yml'
+      - 'lib/**'
+      - 'include/**'
+      - 'src/**/*.c'
+      - 'src/**/*.cpp'
+      - 'src/**/*.h'
+      - 'src/**/*.hpp'
+      - 'src/**/*.ino'
+      - 'src/**/*.S'
+
+jobs:
+  get_environments:
+    runs-on: ubuntu-latest
+    outputs:
+      environments: ${{ steps.read_output.outputs.envs }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Cache PlatformIO core and packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+          key: ${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-pio-
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install "platformio==6.1.*"
+
+      - name: Parse environments from platformio.ini
+        id: list_envs
+        shell: bash
+        run: |
+          python - <<'PY' > envs.json
+          import configparser, json
+          cfg = configparser.ConfigParser(allow_no_value=True, strict=False)
+          cfg.read('platformio.ini', encoding='utf-8')
+          envs = [s.split(':',1)[1] for s in cfg.sections() if s.startswith('env:')]
+          if not envs:
+              envs = ["seeed_xiao_esp32s3"]
+          print(json.dumps(envs))
+          PY
+
+      - name: Set environments output
+        id: read_output
+        shell: bash
+        run: |
+          ENVS=$(<envs.json)
+          echo "envs=${ENVS}" >> $GITHUB_OUTPUT
+
+  build:
+    runs-on: ubuntu-latest
+    needs: get_environments
+    strategy:
+      fail-fast: false
+      matrix:
+        environments: ${{ fromJson(needs.get_environments.outputs.environments) }}
+
+    env:
+      VERSION: "0.0.${{ github.event.number }}"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Cache PlatformIO core and packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+          key: ${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-pio-
+
+      - name: Cache libdeps for ${{ matrix.environments }}
+        uses: actions/cache@v4
+        with:
+          path: .pio/libdeps/${{ matrix.environments }}
+          key: ${{ runner.os }}-libdeps-${{ matrix.environments }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-libdeps-${{ matrix.environments }}-
+
+      - name: Cache build folder for ${{ matrix.environments }}
+        uses: actions/cache@v4
+        with:
+          path: .pio/build/${{ matrix.environments }}
+          key: ${{ runner.os }}-build-${{ matrix.environments }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ matrix.environments }}-${{ github.ref_name }}-
+            ${{ runner.os }}-build-${{ matrix.environments }}-
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install "platformio==6.1.*"
+
+      - name: Install ccache
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+
+      - name: Enable ccache
+        run: |
+          echo 'PATH=/usr/lib/ccache:$PATH' >> $GITHUB_ENV
+          echo "CCACHE_DIR=${{ runner.temp }}/.ccache" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
+          echo "CCACHE_COMPILERCHECK=content" >> $GITHUB_ENV
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/.ccache
+          key: ${{ runner.os }}-ccache-${{ matrix.environments }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-${{ matrix.environments }}-
+
+      - name: Prefetch packages
+        run: |
+          pio pkg install
+
+      - name: Build firmware for ${{ matrix.environments }}
+        run: |
+          pio run -e ${{ matrix.environments }}
+
+      - name: Build filesystem image for ${{ matrix.environments }}
+        run: |
+          pio run -e ${{ matrix.environments }} --target buildfs
+        continue-on-error: true
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.environments }}-firmware
+          path: .pio/build/${{ matrix.environments }}/firmware*.bin
+          if-no-files-found: ignore
+
+      - name: Upload littlefs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.environments }}-littlefs
+          path: .pio/build/${{ matrix.environments }}/littlefs.bin
+          if-no-files-found: ignore
+
+      - name: Upload partitions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.environments }}-partitions
+          path: .pio/build/${{ matrix.environments }}/partitions.bin
+          if-no-files-found: ignore
+
+      - name: Upload bootloader artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.environments }}-bootloader
+          path: .pio/build/${{ matrix.environments }}/bootloader.bin
+          if-no-files-found: ignore
