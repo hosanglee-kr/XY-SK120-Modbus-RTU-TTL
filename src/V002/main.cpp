@@ -3,9 +3,9 @@
 #include <ModbusMaster.h>
 #include <FS.h>
 #include <LittleFS.h>                    // Built-in ESP32 LittleFS
-#include "web_interface/web_interface.h" // "web_interface.h"
-#include "modbus/modbus_handler.h"       //"modbus_handler.h"
-#include "config/config_manager.h"       //"config_manager.h"
+#include "web_interface.h" // "web_interface.h"
+#include "modbus_handler.h"       //"modbus_handler.h"
+#include "config_manager.h"       //"config_manager.h"
 #include "XY-SKxxx.h"
 #include "XY-SKxxx_Config.h"
 #include "serial_monitor_interface.h"
