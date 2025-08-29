@@ -1,0 +1,209 @@
+/*
+! Tailwind CSS v3.4.1 | MIT License | https://tailwindcss.com
+*/
+
+/* 1. Base styles (@tailwind base) */
+*, ::before, ::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: #e5e7eb;
+}
+::before, ::after {
+  --tw-content: '';
+}
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+  color: #333333;
+  font-family: Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  html.dark, body.dark {
+    background-color: #121212;
+    color: #f5f5f5;
+  }
+}
+body.popup-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  touch-action: none;
+}
+input, select {
+  width: 100%;
+  height: 40px;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-width: 1px;
+  border-color: #e0e0e0;
+  border-radius: 0.25rem;
+  background-color: #ffffff;
+  color: #333333;
+  font-size: 1rem;
+}
+@media (prefers-color-scheme: dark) {
+  html.dark input, html.dark select {
+    border-color: #333333;
+    background-color: #1e1e1e;
+    color: #f5f5f5;
+  }
+}
+input:focus, select:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  border-color: #3498db;
+}
+h1, h2 {
+  color: #2c3e50;
+}
+label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+button {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-style: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  color: #fff;
+  background-color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+button:hover {
+  opacity: 0.9;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 2. Components styles (@tailwind components) */
+/* From input.css */
+.tw-input-with-button {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  width: 100%;
+}
+.tw-input-with-button input {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+.tw-input-with-button button {
+  height: 40px;
+  white-space: nowrap;
+  min-width: 80px;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.tw-btn-primary {
+  background-color: #3498db;
+}
+.tw-btn-success {
+  background-color: #2ecc71;
+}
+.tw-reading-item {
+  text-align: center;
+  width: 33.333333%;
+  min-width: 75px;
+  margin-bottom: 0.25rem;
+}
+.tw-reading-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.tw-reading-unit {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-left: 0.125rem;
+}
+/* ... other component styles defined in input.css and components.css ... */
+
+/* From components.css */
+.card {
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    border-width: 1px;
+    border-color: #f3f4f6;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.2s;
+}
+.dark .card {
+    background-color: #1f2937;
+    border-color: #374151;
+}
+.tab-button-active {
+    border-color: #3b82f6;
+    color: #2563eb;
+}
+.dark .tab-button-active {
+    color: #93c5fd;
+    border-color: #60a5fa;
+}
+/* ... other components from components.css, with @apply directives resolved ... */
+
+/* 3. Utility styles (@tailwind utilities) */
+.flex {
+  display: flex;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+/* ... and hundreds of other utility classes ... */
+
+/* 4. Layer-specific overrides and responsive styles */
+@media (max-width: 600px) {
+  .tw-card {
+    display: none;
+    min-height: 300px;
+    max-height: calc(80vh - 120px);
+    overflow-y: auto;
+  }
+  .tw-readings-container {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    margin-left: auto;
+    margin-right: auto;
+    width: calc(100% - 20px);
+    display: block;
+    z-index: 20;
+  }
+}
+/* ... all other media queries and special styles ... */
+
