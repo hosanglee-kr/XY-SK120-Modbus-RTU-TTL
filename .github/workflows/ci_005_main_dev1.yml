@@ -149,9 +149,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ccache-${{ matrix.environments }}-
 
-      - name: Prefetch packages
-        run: |
-          pio pkg install
+      #- name: Prefetch packages
+      #  run: |
+      #    pio pkg install
 
       - name: Build firmware for ${{ matrix.environments }}
         run: |
