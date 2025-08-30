@@ -63,7 +63,7 @@ jobs:
           cfg.read('platformio.ini', encoding='utf-8')
           envs = [s.split(':',1)[1] for s in cfg.sections() if s.startswith('env:')]
           if not envs:
-              envs = ["seeed_xiao_esp32s3"]
+              envs = ["esp32s3"]
           print(json.dumps(envs))
           PY
 
@@ -133,25 +133,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install "platformio==6.1.*"
 
-      # ccache는 이미 설치되어 있으므로 바로 활성화
-      - name: Enable ccache
-        run: |
-          echo 'PATH=/usr/lib/ccache:$PATH' >> $GITHUB_ENV
-          echo "CCACHE_DIR=${{ runner.temp }}/.ccache" >> $GITHUB_ENV
-          echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
-          echo "CCACHE_COMPILERCHECK=content" >> $GITHUB_ENV
+      # - name: Enable ccache
+      #   run: |
+      #     echo 'PATH=/usr/lib/ccache:$PATH' >> $GITHUB_ENV
+      #     echo "CCACHE_DIR=${{ runner.temp }}/.ccache" >> $GITHUB_ENV
+      #     echo "CCACHE_COMPRESS=1" >> $GITHUB_ENV
+      #     echo "CCACHE_COMPILERCHECK=content" >> $GITHUB_ENV
 
-      - name: Cache ccache
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.temp }}/.ccache
-          key: ${{ runner.os }}-ccache-${{ matrix.environments }}-${{ hashFiles('platformio.ini') }}
-          restore-keys: |
-            ${{ runner.os }}-ccache-${{ matrix.environments }}-
-
-      #- name: Prefetch packages
-      #  run: |
-      #    pio pkg install
+      # - name: Cache ccache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ${{ runner.temp }}/.ccache
+      #     key: ${{ runner.os }}-ccache-${{ matrix.environments }}-${{ hashFiles('platformio.ini') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-ccache-${{ matrix.environments }}-
 
       - name: Build firmware for ${{ matrix.environments }}
         run: |
@@ -189,3 +184,4 @@ jobs:
           name: ${{ matrix.environments }}-bootloader
           path: .pio/build/${{ matrix.environments }}/bootloader.bin
           if-no-files-found: ignore
+          
