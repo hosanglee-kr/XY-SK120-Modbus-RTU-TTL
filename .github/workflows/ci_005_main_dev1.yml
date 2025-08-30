@@ -1,4 +1,4 @@
-# .github/workflows/ci_005_main_dev1.yml
+# .github/workflows/pr.yml
 name: PR
 
 on:
@@ -43,8 +43,7 @@ jobs:
       - name: Cache PlatformIO core and packages
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.platformio
+          path: ~/.platformio
           key: ${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-pio-${{ hashFiles('platformio.ini') }}
           restore-keys: |
             ${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-pio-
@@ -107,8 +106,7 @@ jobs:
       - name: Cache PlatformIO core and packages
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.platformio
+          path: ~/.platformio
           key: ${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-pio-${{ hashFiles('platformio.ini') }}
           restore-keys: |
             ${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-pio-
@@ -135,11 +133,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install "platformio==6.1.*"
 
-      - name: Install ccache
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ccache
-
+      # ccache는 이미 설치되어 있으므로 바로 활성화
       - name: Enable ccache
         run: |
           echo 'PATH=/usr/lib/ccache:$PATH' >> $GITHUB_ENV
