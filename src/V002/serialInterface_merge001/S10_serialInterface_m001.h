@@ -6,9 +6,11 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <Preferences.h>
+#include <ArduinoJson.h>
 
 #include "XY-SKxxx.h"
 #include "XY-SKxxx_Config.h" // Make sure XYModbusConfig is included
+#include "../wifi_interface/wifi_settings.h"
 
 
 // Menu states for navigation
