@@ -32,6 +32,8 @@ static bool serialInputComplete = false;
 
 
 namespace serial_interface {
+extern String sanitizeString(const String& input);
+
 void displayBasicControlMenu();
 void handleBasicControl(const String& input, XY_SKxxx* ps);
 void displayCDDataMenu();
