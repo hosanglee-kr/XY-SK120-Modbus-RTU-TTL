@@ -25,6 +25,10 @@ enum class MenuState {
   WIFI_MENU      // Add new menu state for WiFi Settings
 };
 
+// Global variables for serial interface
+static MenuState currentMenu = MenuState::MAIN_MENU;
+static String serialBuffer = "";
+static bool serialInputComplete = false;
 
 
 namespace serial_interface {
