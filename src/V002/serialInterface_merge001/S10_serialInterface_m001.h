@@ -7,6 +7,24 @@
 #include <WiFi.h>
 #include <Preferences.h>
 
+#include "XY-SKxxx.h"
+#include "XY-SKxxx_Config.h" // Make sure XYModbusConfig is included
+
+
+// Menu states for navigation
+enum class MenuState {
+  MAIN_MENU,
+  BASIC_CONTROL,
+  MEASUREMENT_MENU,
+  PROTECTION_MENU,
+  SETTINGS_MENU,
+  DEBUG_MENU,
+  CD_DATA_MENU,  // Add new menu state for CD Data Groups
+  WIFI_MENU      // Add new menu state for WiFi Settings
+};
+
+
+
 namespace serial_interface {
 void displayBasicControlMenu();
 void handleBasicControl(const String& input, XY_SKxxx* ps);
