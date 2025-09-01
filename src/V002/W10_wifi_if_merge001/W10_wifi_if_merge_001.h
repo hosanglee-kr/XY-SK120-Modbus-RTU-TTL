@@ -83,7 +83,7 @@ String sanitizeString(const String& input);
 bool repairWiFiCredentials();
 
 // Function to save WiFi credentials to NVS
-bool saveWiFiCredentialsToNVS(const String& ssid, const String& password, int priority = -1);
+bool saveWiFiCredentialsToNVS(const String& ssid, const String& password, int priority);
 
 // Function to remove a WiFi credential by index
 bool removeWiFiCredentialByIndex(int index);
