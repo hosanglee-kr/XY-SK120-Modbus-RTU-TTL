@@ -7,7 +7,6 @@
 #include <ArduinoJson.h>
 #include <WiFi.h>
 #include <WiFiManager.h>
-#include <WiFiManager.h>
 
 
 // Implementations merged from original sources
