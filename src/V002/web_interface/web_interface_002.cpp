@@ -1,6 +1,8 @@
 // Fix HTTP method definition conflicts between ESPAsyncWebServer and WiFiManager
 #define WEBSERVER_H  // Prevent WebServer.h from being included directly
 
+
+/*
 // Define HTTP methods for ESPAsyncWebServer before including it
 // These match the WebRequestMethod enum in ESPAsyncWebServer.h
 #define HTTP_GET     0b00000001
@@ -11,6 +13,8 @@
 #define HTTP_HEAD    0b00100000
 #define HTTP_OPTIONS 0b01000000
 #define HTTP_ANY     0b01111111
+
+  */
 
 #include "web_interface_002.h"
 #include <ArduinoJson.h>
