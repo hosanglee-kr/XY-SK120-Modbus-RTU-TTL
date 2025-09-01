@@ -1,7 +1,7 @@
 // W10_wifi_if_merge_001.cpp
 
 // Auto-generated merged source from uploaded components
-#include "wifi_manager_merged.h"
+#include "wifi_manager_merged_001.h"
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
