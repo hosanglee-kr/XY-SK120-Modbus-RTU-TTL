@@ -24,8 +24,11 @@
 #include <LittleFS.h>
 #include <AsyncWebSocket.h>
 #include <WiFi.h>
-#include "wifi_interface/wifi_manager_wrapper.h"
-#include "wifi_interface/wifi_settings.h" // Include the new wifi_settings header
+
+
+#include "W10_wifi_if_merge001/W10_wifi_if_merge_002.h"
+// #include "wifi_interface/wifi_manager_wrapper.h"
+// #include "wifi_interface/wifi_settings.h" // Include the new wifi_settings header
 
 #include "modbus/modbus_handler_002.h"
 #include "config/config_manager_002.h"
@@ -38,7 +41,7 @@
 #include "XY-SKxxx.h"
 
 // Include WiFi WebSocket handler
-#include "../wifi_interface/wifi_websocket_handler.h"
+//// #include "../wifi_interface/wifi_websocket_handler.h"
 
 // Declare external power supply instance
 extern XY_SKxxx* powerSupply;
