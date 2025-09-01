@@ -4,23 +4,10 @@
 #include <vector>
 
 
-using serial_interface::sanitizeString;
+
 // ===== BEGIN menu_basic.cpp =====
 namespace serial_interface {
 
-
-// Add this helper function to sanitize input strings
-String sanitizeString(const String& input) {
-    String result = "";
-    for (size_t i = 0; i < input.length(); i++) {
-        char c = input.charAt(i);
-        // Only allow printable ASCII characters, skip control chars
-        if (c >= 32 && c <= 126) {
-            result += c;
-        }
-    }
-    return result;
-}
 
 void displayBasicControlMenu() {
   Serial.println("\n==== Basic Control ====");
