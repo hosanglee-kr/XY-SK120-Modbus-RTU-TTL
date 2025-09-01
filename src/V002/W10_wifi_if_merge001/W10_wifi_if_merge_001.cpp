@@ -223,10 +223,13 @@ bool saveWiFiCredentialsToNVS(const String& ssid, const String& password, int pr
     return success;
 }
 
+
+/*
 // Backward compatibility overload
 bool saveWiFiCredentialsToNVS(const String& ssid, const String& password) {
     return saveWiFiCredentialsToNVS(ssid, password, -1); // -1 means lowest priority
 }
+*/
 
 // Load WiFi credentials from NVS with proper error handling
 String loadWiFiCredentialsFromNVS() {
