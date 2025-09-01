@@ -122,7 +122,7 @@ bool repairWiFiCredentials() {
     return true;
 }
 
-bool saveWiFiCredentialsToNVS(const String& ssid, const String& password, int priority) {
+bool saveWiFiCredentialsToNVS(const String& ssid, const String& password, int priority = -1) {
     Preferences prefs;
     prefs.begin(WIFI_NAMESPACE, false); // Read-write mode
 
