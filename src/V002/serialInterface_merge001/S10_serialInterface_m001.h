@@ -10,7 +10,7 @@
 
 #include "../wifi_interface/wifi_settings.h"
 #include "XY-SKxxx.h"
-#include "XY-SKxxx_Config.h"  // Make sure XYModbusConfig is included
+#include "XY-SKxxx_Config_002.h"  // Make sure XYModbusConfig is included
 
 // Menu states for navigation
 enum class MenuState {

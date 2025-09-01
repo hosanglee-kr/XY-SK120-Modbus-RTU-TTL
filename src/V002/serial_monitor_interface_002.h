@@ -3,7 +3,8 @@
 
 #include <Arduino.h>
 #include "XY-SKxxx.h"
-#include "XY-SKxxx_Config.h"
+
+#include "XY-SKxxx_Config_002.h"
 
 // Function to display device status
 void displayStatus(XY_SKxxx* powerSupply);

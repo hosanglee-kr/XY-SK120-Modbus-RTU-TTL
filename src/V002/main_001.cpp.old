@@ -3,12 +3,12 @@
 #include <ModbusMaster.h>
 #include <FS.h>
 #include <LittleFS.h>                    // Built-in ESP32 LittleFS
-#include "web_interface.h" // "web_interface.h"
-#include "modbus_handler.h"       //"modbus_handler.h"
+#include "web_interface_002.h" // "web_interface_002.h"
+#include "modbus_handler_002.h"       //"modbus_handler.h"
 #include "config_manager.h"       //"config_manager.h"
 #include "XY-SKxxx.h"
-#include "XY-SKxxx_Config.h"
-#include "serial_monitor_interface.h"
+#include "XY-SKxxx_Config_002.h"
+#include "serial_monitor_interface_002.h"
 #include "serial_interface/serial_core.h"
 #include "wifi_interface/wifi_manager_wrapper.h" // Include wrapper instead of WiFiManager directly
 #include "web_interface/log_utils.h"             // Use the web_interface version of the logging utilities

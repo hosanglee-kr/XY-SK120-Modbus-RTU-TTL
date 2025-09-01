@@ -12,7 +12,7 @@
 #define HTTP_OPTIONS 0b01000000
 #define HTTP_ANY     0b01111111
 
-#include "web_interface.h"
+#include "web_interface_002.h"
 #include <ArduinoJson.h>
 #include <FS.h>
 #include <LittleFS.h>
@@ -20,8 +20,12 @@
 #include <WiFi.h>
 #include "wifi_interface/wifi_manager_wrapper.h"
 #include "wifi_interface/wifi_settings.h" // Include the new wifi_settings header
-#include "modbus_handler.h"
-#include "config_manager.h"
+
+#include "modbus/modbus_handler_002.h"
+#include "config/config_manager_002.h"
+// #include "modbus_handler.h"
+// #include "config_manager.h"
+
 #include "web_interface/log_utils.h" // Update to use the web_interface-specific log utils
 
 // Include XY-SKxxx header to access power supply functions
