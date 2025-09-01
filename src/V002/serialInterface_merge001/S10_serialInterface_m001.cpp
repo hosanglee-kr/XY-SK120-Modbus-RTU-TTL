@@ -3,12 +3,14 @@
 #include "S10_serialInterface_m001.h"
 #include <vector>
 
+
+using serial_interface::sanitizeString;
 // ===== BEGIN menu_basic.cpp =====
 namespace serial_interface {
 
 
 // Add this helper function to sanitize input strings
-String serial_interface::sanitizeString(const String& input) {
+String sanitizeString(const String& input) {
     String result = "";
     for (size_t i = 0; i < input.length(); i++) {
         char c = input.charAt(i);
