@@ -2550,7 +2550,7 @@ void handleAddWifi(const String& input, String ssid, String password, int priori
 // External declarations for functions in other files
 extern bool extractQuotedParameters(const String& input, String& command, String& param1, String& param2);
 extern bool exitConfigPortal();
-extern String sanitizeString(const String& input);
+// extern String sanitizeString(const String& input);
 
 // Helper function to handle saving current WiFi
 void handleSaveCurrentWiFi() {
