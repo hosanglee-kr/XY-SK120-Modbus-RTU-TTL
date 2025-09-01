@@ -2,30 +2,16 @@
 #include <ESPAsyncWebServer.h>
 #include <ModbusMaster.h>
 #include <FS.h>
-#include <LittleFS.h>             // Built-in ESP32 LittleFS
-
-
+#include <LittleFS.h>                    // Built-in ESP32 LittleFS
+#include "web_interface.h" // "web_interface.h"
+#include "modbus_handler.h"       //"modbus_handler.h"
+#include "config_manager.h"       //"config_manager.h"
 #include "XY-SKxxx.h"
 #include "XY-SKxxx_Config.h"
-
-#include "web_interface/web_interface.h"
+#include "serial_monitor_interface.h"
+#include "serial_interface/serial_core.h"
 #include "wifi_interface/wifi_manager_wrapper.h" // Include wrapper instead of WiFiManager directly
-
-#include "modbus/modbus_handler.h"
-#include "config/config_manager.h"
-
 #include "web_interface/log_utils.h"             // Use the web_interface version of the logging utilities
-#include "serialInterface_merge001/S10_serialInterface_m001.h"
-
-// #include "web_interface.h"        // "web_interface.h"
-// #include "modbus_handler.h"       //"modbus_handler.h"
-// #include "config_manager.h"       //"config_manager.h"
-
-
-
-// #include "serial_monitor_interface.h"
-// #include "serial_interface/serial_core.h"
-
 
 // Define WiFi reset button pin based on board
 #ifdef CONFIG_IDF_TARGET_ESP32C3
