@@ -1,7 +1,7 @@
 // W10_wifi_if_merge_002.cpp
 
 
-#include "W10_wifi_if.h"
+#include "W10_wifi_if_merge_002.h"
 #include <Arduino.h>
 #include <Preferences.h>
 
