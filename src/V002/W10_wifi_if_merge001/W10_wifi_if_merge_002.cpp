@@ -106,7 +106,7 @@ String loadWiFiCredentialsFromNVS() {
 }
 
 // NVS 저장
-bool saveWiFiCredentialsToNVS(const String& ssid, const String& password, int priority) {
+bool saveWiFiCredentialsToNVS(const String& ssid, const String& password, int priority=-1) {
   Preferences prefs;
   if (!prefs.begin(WIFI_NAMESPACE, true)) return false;
   String wifiListJson = prefs.getString(WIFI_CREDENTIALS_KEY, "[]");

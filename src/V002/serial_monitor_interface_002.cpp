@@ -87,7 +87,7 @@ void handleWifiSettingsCommands() {
       String password = Serial.readStringUntil('\n');
       password.trim();
 
-      if (saveWiFiCredentialsToNVS(ssid, password)) {
+      if (saveWiFiCredentialsToNVS(ssid, password, 1)) {
         Serial.println("WiFi credentials saved successfully!");
       } else {
         Serial.println("Failed to save WiFi credentials.");
