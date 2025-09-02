@@ -11,7 +11,7 @@
 #include "modbus/modbus_handler_002.h"
 #include "serialInterface_merge001/S10_serialInterface_m001.h"
 #include "web_interface/log_utils.h"  // Use the web_interface version of the logging utilities
-#include "web_interface/web_interface_002.h"
+#include "web_interface/web_interface_003.h"
 
 #include "W10_wifi_if_merge001/W10_wifi_if_merge_002.h"
 //#include "wifi_interface/wifi_manager_wrapper.h"  // Include wrapper instead of WiFiManager directly
