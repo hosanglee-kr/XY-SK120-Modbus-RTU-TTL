@@ -3,8 +3,10 @@
 #include "XY-SKxxx_Config_002.h"
 #include "serial_monitor_interface_002.h"
 #include "config/config_manager_002.h"  //"config_manager.h"
-#include "wifi_interface/wifi_settings.h" // Include the new wifi_settings header
-#include "wifi_interface/wifi_manager_wrapper.h"
+
+#include "W10_wifi_if_merge001/W10_wifi_if_merge_002.h"
+// #include "wifi_interface/wifi_settings.h" // Include the new wifi_settings header
+// #include "wifi_interface/wifi_manager_wrapper.h"
 
 // Include all the interface components
 
