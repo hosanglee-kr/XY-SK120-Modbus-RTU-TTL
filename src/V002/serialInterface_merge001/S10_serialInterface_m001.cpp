@@ -2605,7 +2605,7 @@ void syncCurrentWiFi() {
             prefs.end();
 
             // Test if it's valid JSON
-            DynamicJsonDocument  testDoc(WIFI_CREDENTIALS_JSON_SIZE);
+            JsonDocument  testDoc;  //DynamicJsonDocument  testDoc(WIFI_CREDENTIALS_JSON_SIZE);
             DeserializationError error = deserializeJson(testDoc, existingJson);
 
             if (error) {
@@ -2625,7 +2625,7 @@ void syncCurrentWiFi() {
 
         // Now explicitly create the proper JSON structure and save
         String              wifiListJson = loadWiFiCredentialsFromNVS();
-        DynamicJsonDocument doc(WIFI_CREDENTIALS_JSON_SIZE);
+        JsonDocument doc;  // DynamicJsonDocument doc(WIFI_CREDENTIALS_JSON_SIZE);
 
         if (wifiListJson == "[]") {
             // Create a new array
@@ -2738,7 +2738,7 @@ void handleAddWifi(const String& input, String ssid, String password, int priori
     }
 
     // Parse existing JSON
-    DynamicJsonDocument  doc(WIFI_CREDENTIALS_JSON_SIZE);
+    JsonDocument  doc; //DynamicJsonDocument  doc(WIFI_CREDENTIALS_JSON_SIZE);
     DeserializationError error = deserializeJson(doc, wifiListJson);
 
     if (error) {
@@ -2914,7 +2914,8 @@ void displaySavedWiFiNetworks() {
         Serial.println("Raw saved data: " + wifiListJson);
 
         // Parse the JSON
-        DynamicJsonDocument  doc(WIFI_CREDENTIALS_JSON_SIZE);
+        JsonDocument  doc;
+        // DynamicJsonDocument  doc(WIFI_CREDENTIALS_JSON_SIZE);
         DeserializationError error = deserializeJson(doc, wifiListJson);
 
         if (error) {

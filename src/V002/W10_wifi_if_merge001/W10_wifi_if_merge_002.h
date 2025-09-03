@@ -4,7 +4,9 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WiFiManager.h>
+
+////W #include <WiFiManager.h>
+
 #include <ESPAsyncWebServer.h>
 #include <Preferences.h>
 #include <vector>
@@ -18,9 +20,10 @@
 #define MAX_SAVED_NETWORKS        10
 
 // 전역 WiFiManager 인스턴스 접근자
-class WiFiManager;
-extern WiFiManager wifiManager;
-WiFiManager& getWiFiManager();
+// class WiFiManager;
+// extern WiFiManager wifiManager;
+// WiFiManager& getWiFiManager();
+
 void initWiFiManagerInstance();
 
 // 유틸
@@ -33,6 +36,8 @@ String getWiFiIP();
 int    getWiFiRSSI();
 String getWiFiMAC();
 String getWifiStatus();            // JSON 문자열로 상태 반환
+
+static bool repairWiFiCredentials();
 
 // 저장소 조작
 String loadWiFiCredentialsFromNVS();
@@ -52,8 +57,9 @@ void syncCurrentWiFiToStorage();
 void saveWifiCallback();
 
 // WiFiManager 헬퍼
-bool   updateSavedWiFiPasswordFromWiFiManager(const String& ssid, WiFiManager& wm);
-String getWiFiPasswordFromWiFiManager(const String& ssid, WiFiManager& wm);
+// bool   updateSavedWiFiPasswordFromWiFiManager(const String& ssid, WiFiManager& wm);
+// String getWiFiPasswordFromWiFiManager(const String& ssid, WiFiManager& wm);
+
 // 전역 오버로드
 bool   updateSavedWiFiPasswordFromWiFiManager(const String& ssid);
 String getWiFiPasswordFromWiFiManager(const String& ssid);
