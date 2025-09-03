@@ -1,4 +1,4 @@
-#include "modbus_handler.h"
+#include "modbus_handler_002.h"
 #include <Arduino.h>
 
 // Default settings for XY-SK120
@@ -24,7 +24,7 @@ void updateModbusData() {
   // Empty implementation - we no longer use dummy data
 }
 
-void getModbusDataJson(DynamicJsonDocument &doc) {
+void getModbusDataJson(JsonDocument &doc) {
   // This function is kept for backwards compatibility
   // but no longer adds any dummy data
 }

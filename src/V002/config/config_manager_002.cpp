@@ -1,4 +1,4 @@
-#include "config_manager.h"
+#include "config_manager_002.h"
 #include <FS.h>
 #include <LittleFS.h>  // Built-in ESP32 LittleFS
 #include <ArduinoJson.h>
@@ -33,7 +33,7 @@ bool loadConfig() {
   configFile.readBytes(buf.get(), size);
   configFile.close();
 
-  DynamicJsonDocument doc(1024);
+  JsonDocument doc;    // DynamicJsonDocument doc(1024);
   DeserializationError error = deserializeJson(doc, buf.get());
   
   if (error) {
@@ -57,7 +57,7 @@ bool loadConfig() {
 }
 
 bool saveConfig() {
-  DynamicJsonDocument doc(1024);
+  JsonDocument doc;    // DynamicJsonDocument doc(1024);
   
   doc["modbusId"] = configData.modbusId;
   doc["baudRate"] = configData.baudRate;
