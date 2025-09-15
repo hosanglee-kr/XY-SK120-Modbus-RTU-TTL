@@ -1,4 +1,6 @@
 
+
+
 // W10_wifi_if_merge_003.cpp
 
 #include "W10_wifi_if_merge_003.h"
@@ -51,7 +53,7 @@ String getWifiStatus() {
     doc["rssi"]   = getWiFiRSSI();
     doc["mac"]    = getWiFiMAC();
     String out;
-    jSerialize(doc, out);
+    serializeJson(doc, out);
     return out;
 }
 
@@ -63,7 +65,7 @@ static bool repairWiFiCredentials() {
     prefs.end();
 
     JsonDocument doc;
-    if (jDeserialize(doc, wifiListJson)) {
+    if (deserializeJson(doc, wifiListJson)) {
         if (prefs.begin(WIFI_NAMESPACE, false)) {
             prefs.putString(WIFI_CREDENTIALS_KEY, "[]");
             prefs.end();
@@ -94,7 +96,7 @@ static bool repairWiFiCredentials() {
     }
     if (needsUpdate) {
         String updated;
-        jSerialize(doc, updated);
+        serializeJson(doc, updated);
         if (prefs.begin(WIFI_NAMESPACE, false)) {
             bool ok = prefs.putString(WIFI_CREDENTIALS_KEY, updated);
             prefs.end();
@@ -128,7 +130,7 @@ bool saveWiFiCredentialsToNVS(const String& ssid, const String& password, int pr
     prefs.end();
 
     JsonDocument doc;
-    if (jDeserialize(doc, wifiListJson)) {
+    if (deserializeJson(doc, wifiListJson)) {
         doc.clear();
         jToArray(doc);
     }
@@ -174,7 +176,7 @@ bool saveWiFiCredentialsToNVS(const String& ssid, const String& password, int pr
     }
 
     String updated;
-    jSerialize(doc, updated);
+    serializeJson(doc, updated);
     if (updated.length() > WIFI_CREDENTIALS_JSON_SIZE) return false;
 
     if (prefs.begin(WIFI_NAMESPACE, false)) {
@@ -192,7 +194,7 @@ bool removeWiFiCredentialByIndex(int index) {
     prefs.end();
 
     JsonDocument doc;
-    if (jDeserialize(doc, wifiListJson)) return false;
+    if (deserializeJson(doc, wifiListJson)) return false;
     if (!doc.is<JsonArray>()) return false;
 
     JsonArray arr = doc.as<JsonArray>();
@@ -200,7 +202,7 @@ bool removeWiFiCredentialByIndex(int index) {
     arr.remove(index);
 
     String updated;
-    jSerialize(doc, updated);
+    serializeJson(doc, updated);
     if (!prefs.begin(WIFI_NAMESPACE, false)) return false;
     bool ok = prefs.putString(WIFI_CREDENTIALS_KEY, updated);
     prefs.end();
@@ -214,7 +216,7 @@ bool updateWiFiNetworkPriority(int index, int newPriority) {
     prefs.end();
 
     JsonDocument doc;
-    if (jDeserialize(doc, wifiListJson)) return false;
+    if (deserializeJson(doc, wifiListJson)) return false;
     if (!doc.is<JsonArray>()) return false;
 
     struct NI {
@@ -257,7 +259,7 @@ bool updateWiFiNetworkPriority(int index, int newPriority) {
     }
 
     String updated;
-    jSerialize(doc, updated);
+    serializeJson(doc, updated);
     if (!prefs.begin(WIFI_NAMESPACE, false)) return false;
     bool ok = prefs.putString(WIFI_CREDENTIALS_KEY, updated);
     prefs.end();
@@ -295,7 +297,7 @@ void syncCurrentWiFiToStorage() {
         o["password"]  = "placeholder_";
         o["priority"]  = 1;
         String out;
-        jSerialize(doc, out);
+        serializeJson(doc, out);
         Preferences prefs;
         if (prefs.begin(WIFI_NAMESPACE, false)) {
             prefs.putString(WIFI_CREDENTIALS_KEY, out);
@@ -304,7 +306,7 @@ void syncCurrentWiFiToStorage() {
         return;
     }
     JsonDocument doc;
-    if (jDeserialize(doc, json)) return;
+    if (deserializeJson(doc, json)) return;
     JsonArray arr = doc.as<JsonArray>();
     for (JsonObject o : arr) {
         if (o["ssid"].as<String>() == ssid) return;
@@ -317,7 +319,7 @@ void syncCurrentWiFiToStorage() {
     n["password"] = "placeholder_";
     n["priority"] = 1;
     String out;
-    jSerialize(doc, out);
+    serializeJson(doc, out);
     Preferences prefs;
     if (prefs.begin(WIFI_NAMESPACE, false)) {
         prefs.putString(WIFI_CREDENTIALS_KEY, out);
@@ -339,8 +341,8 @@ bool connectToSavedNetworks() {
     String json = loadWiFiCredentialsFromNVS();
     if (json == "[]") return false;
 
-    JsonDocument doc(WIFI_CREDENTIALS_JSON_SIZE);
-    if (jDeserialize(doc, json)) return false;
+    JsonDocument doc;
+    if (deserializeJson(doc, json)) return false;
     JsonArray arr = doc.as<JsonArray>();
 
     struct NI {
@@ -430,8 +432,8 @@ bool resetWiFi() {
 //     String json = prefs.getString(WIFI_CREDENTIALS_KEY, "[]");
 //     prefs.end();
 
-//     JsonDoc doc(WIFI_CREDENTIALS_JSON_SIZE);
-//     if (jDeserialize(doc, json)) {
+//     JsonDocument doc;
+//     if (deserializeJson(doc, json)) {
 //         doc.clear();
 //         JsonArray  a  = jToArray(doc);
 //         JsonObject o  = a.createNestedObject();
@@ -456,7 +458,7 @@ bool resetWiFi() {
 //         }
 //     }
 //     String updated;
-//     jSerialize(doc, updated);
+//     serializeJson(doc, updated);
 //     if (!prefs.begin(WIFI_NAMESPACE, false)) return false;
 //     bool ok = prefs.putString(WIFI_CREDENTIALS_KEY, updated);
 //     prefs.end();
@@ -479,16 +481,16 @@ bool resetWiFi() {
 
 // WebSocket 에러 응답
 void sendErrorResponse(AsyncWebSocketClient* client, const String& error) {
-    JsonDoc v_jsondoc(128);
+    JsonDocument v_jsondoc;
     v_jsondoc["action"] = "error";
     v_jsondoc["error"]  = error;
     String out;
-    jSerialize(v_jsondoc, out);
+    serializeJson(v_jsondoc, out);
     client->text(out);
 }
 
 // WebSocket 명령
-void handleAddWifiNetworkCommand(AsyncWebSocketClient* client, JsonDoc& doc) {
+void handleAddWifiNetworkCommand(AsyncWebSocketClient* client, JsonDocument& doc) {
     if (!doc.containsKey("ssid") || !doc.containsKey("password")) {
         sendErrorResponse(client, "Missing SSID or password");
         return;
@@ -506,8 +508,8 @@ void handleAddWifiNetworkCommand(AsyncWebSocketClient* client, JsonDoc& doc) {
     String json = prefs.getString(WIFI_CREDENTIALS_KEY, "[]");
     prefs.end();
 
-    JsonDoc wdoc(WIFI_CREDENTIALS_JSON_SIZE);
-    if (jDeserialize(wdoc, json)) {
+    JsonDocument wdoc;
+    if (deserializeJson(wdoc, json)) {
         wdoc.clear();
         jToArray(wdoc);
     }
@@ -530,19 +532,19 @@ void handleAddWifiNetworkCommand(AsyncWebSocketClient* client, JsonDoc& doc) {
     }
 
     String updated;
-    jSerialize(wdoc, updated);
+    serializeJson(wdoc, updated);
     bool ok = false;
     if (prefs.begin(WIFI_NAMESPACE, false)) {
         ok = prefs.putString(WIFI_CREDENTIALS_KEY, updated);
         prefs.end();
     }
 
-    JsonDoc resp(128);
+    JsonDocument resp;
     resp["action"]  = "addWifiNetworkResponse";
     resp["success"] = ok;
     resp["ssid"]    = ssid;
     String out;
-    jSerialize(resp, out);
+    serializeJson(resp, out);
     client->text(out);
 
     if (ok && WiFi.status() == WL_CONNECTED && WiFi.SSID() == ssid) {
@@ -550,7 +552,7 @@ void handleAddWifiNetworkCommand(AsyncWebSocketClient* client, JsonDoc& doc) {
     }
 }
 
-void handleRemoveWifiNetworkCommand(AsyncWebSocketClient* client, JsonDoc& in) {
+void handleRemoveWifiNetworkCommand(AsyncWebSocketClient* client, JsonDocument& in) {
     if (!in.containsKey("index")) {
         sendErrorResponse(client, "Missing index");
         return;
@@ -565,8 +567,8 @@ void handleRemoveWifiNetworkCommand(AsyncWebSocketClient* client, JsonDoc& in) {
     String json = prefs.getString(WIFI_CREDENTIALS_KEY, "[]");
     prefs.end();
 
-    JsonDoc wdoc(WIFI_CREDENTIALS_JSON_SIZE);
-    if (jDeserialize(wdoc, json)) {
+    JsonDocument wdoc;
+    if (deserializeJson(wdoc, json)) {
         sendErrorResponse(client, "Parse error");
         return;
     }
@@ -583,23 +585,23 @@ void handleRemoveWifiNetworkCommand(AsyncWebSocketClient* client, JsonDoc& in) {
     nets.remove(index);
 
     String updated;
-    jSerialize(wdoc, updated);
+    serializeJson(wdoc, updated);
     bool ok = false;
     if (prefs.begin(WIFI_NAMESPACE, false)) {
         ok = prefs.putString(WIFI_CREDENTIALS_KEY, updated);
         prefs.end();
     }
 
-    JsonDoc resp(128);
+    JsonDocument resp;
     resp["action"]  = "removeWifiNetworkResponse";
     resp["success"] = ok;
     resp["index"]   = index;
     String out;
-    jSerialize(resp, out);
+    serializeJson(resp, out);
     client->text(out);
 }
 
-void handleConnectWifiCommand(AsyncWebSocketClient* client, JsonDoc& in) {
+void handleConnectWifiCommand(AsyncWebSocketClient* client, JsonDocument& in) {
     if (!in.containsKey("ssid")) {
         sendErrorResponse(client, "Missing SSID");
         return;
@@ -616,8 +618,8 @@ void handleConnectWifiCommand(AsyncWebSocketClient* client, JsonDoc& in) {
     prefs.end();
 
     String  pwd;
-    JsonDoc wdoc(WIFI_CREDENTIALS_JSON_SIZE);
-    if (!jDeserialize(wdoc, json) && wdoc.is<JsonArray>()) {
+    JsonDocument wdoc;
+    if (!deserializeJson(wdoc, json) && wdoc.is<JsonArray>()) {
         for (JsonObject n : wdoc.as<JsonArray>()) {
             if (n["ssid"].as<String>() == ssid) {
                 pwd = n["password"].as<String>();
@@ -643,7 +645,7 @@ void handleConnectWifiCommand(AsyncWebSocketClient* client, JsonDoc& in) {
     }
 
     bool    ok = WiFi.status() == WL_CONNECTED;
-    JsonDoc resp(256);
+    JsonDocument resp;
     resp["action"]  = "connectWifiResponse";
     resp["success"] = ok;
     resp["ssid"]    = ssid;
@@ -655,7 +657,6 @@ void handleConnectWifiCommand(AsyncWebSocketClient* client, JsonDoc& in) {
         resp["error"] = "Failed to connect";
     }
     String out;
-    jSerialize(resp, out);
+    serializeJson(resp, out);
     client->text(out);
 }
-
