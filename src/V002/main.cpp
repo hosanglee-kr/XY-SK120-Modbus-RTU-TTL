@@ -13,7 +13,7 @@
 #include "web_interface_003/log_utils.h"  // Use the web_interface version of the logging utilities
 #include "web_interface_003/web_interface_003.h"
 
-#include "W10_wifi_if_merge001/W10_wifi_if_merge_002.h"
+#include "W10_wifi_if_merge001/W10_wifi_if_merge_003.h"
 //#include "wifi_interface/wifi_manager_wrapper.h"  // Include wrapper instead of WiFiManager directly
 
 // #include "web_interface.h"        // "web_interface.h"
