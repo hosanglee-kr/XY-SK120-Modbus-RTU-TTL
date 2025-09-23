@@ -1,14 +1,18 @@
 #include <Arduino.h>
 #include "XY-SKxxx.h"
-#include "XY-SKxxx_Config.h"
-#include "serial_monitor_interface.h"
-#include "config/config_manager.h"  //"config_manager.h"
-#include "wifi_interface/wifi_settings.h" // Include the new wifi_settings header
-#include "wifi_interface/wifi_manager_wrapper.h"
+#include "XY-SKxxx_Config_002.h"
+#include "serial_monitor_interface_002.h"
+#include "config/config_manager_002.h"  //"config_manager.h"
+
+#include "W10_wifi_if_merge001/W10_wifi_if_merge_002.h"
+// #include "wifi_interface/wifi_settings.h" // Include the new wifi_settings header
+// #include "wifi_interface/wifi_manager_wrapper.h"
 
 // Include all the interface components
-#include "serial_interface/serial_interface.h"
-#include "serial_interface/serial_core.h"
+
+#include "serialInterface_merge001/S10_serialInterface_m001.h"
+// #include "serial_interface/serial_interface.h"
+// #include "serial_interface/serial_core.h"
 
 // Changed from object to pointer to match main.cpp
 extern XY_SKxxx* powerSupply;
@@ -83,7 +87,7 @@ void handleWifiSettingsCommands() {
       String password = Serial.readStringUntil('\n');
       password.trim();
 
-      if (saveWiFiCredentialsToNVS(ssid, password)) {
+      if (saveWiFiCredentialsToNVS(ssid, password, 1)) {
         Serial.println("WiFi credentials saved successfully!");
       } else {
         Serial.println("Failed to save WiFi credentials.");

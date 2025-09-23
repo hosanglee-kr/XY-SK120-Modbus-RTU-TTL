@@ -8,6 +8,6 @@ extern ModbusMaster modbus;
 
 void setupModbus();
 void updateModbusData();
-void getModbusDataJson(DynamicJsonDocument &doc);
+void getModbusDataJson(JsonDocument &doc);
 
 #endif // MODBUS_HANDLER_H
